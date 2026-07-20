@@ -25,7 +25,7 @@ export default async function Home() {
     ...products.filter((p) => p.id !== featured?.id),
   ]
     .filter((p): p is NonNullable<typeof p> => p != null)
-    .slice(0, 3);
+    .slice(0, 2);
   const gridProducts = products.slice(0, 8);
 
   const tiles = TILE_SLUGS.map(({ slug, label }) => {

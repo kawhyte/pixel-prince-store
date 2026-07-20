@@ -47,8 +47,13 @@ function HeroCard({ item, featured }: { item: FreeArt; featured?: boolean }) {
       )}
 
       {featured && (
-        <span className="absolute left-2 top-2 rounded-md bg-sage-500 px-2 py-1 text-[11px] font-medium text-white">
-          Featured this month
+        <span
+          className="absolute left-0 top-4 bg-sage-500 py-1 pl-3 pr-5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm"
+          style={{
+            clipPath: "polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%)",
+          }}
+        >
+          Featured
         </span>
       )}
 
@@ -64,7 +69,7 @@ function HeroCard({ item, featured }: { item: FreeArt; featured?: boolean }) {
 }
 
 export default function Hero({ items }: HeroProps) {
-  const [first, second, third] = items;
+  const [first, second] = items;
 
   return (
     <section className="relative overflow-hidden bg-cream py-14 lg:py-24">
@@ -93,18 +98,11 @@ export default function Hero({ items }: HeroProps) {
             </div>
           </div>
 
-          {/* Right: Staggered collage (Juniqe pattern) */}
+          {/* Right: Two featured cards, side by side */}
           {items.length > 0 && (
             <div className="grid grid-cols-2 gap-4 lg:gap-5">
-              <div className="flex flex-col gap-4 lg:gap-5">
-                {first && <HeroCard item={first} featured />}
-                {third && <HeroCard item={third} />}
-              </div>
-              {second && (
-                <div className="flex flex-col gap-4 pt-8 lg:gap-5 lg:pt-16">
-                  <HeroCard item={second} />
-                </div>
-              )}
+              {first && <HeroCard item={first} featured />}
+              {second && <HeroCard item={second} />}
             </div>
           )}
         </div>

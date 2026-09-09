@@ -44,10 +44,9 @@ npx sanity dataset export <dataset> <file>  # Export data
 
 ### Utilities
 ```bash
-npm run generate-zips    # [DEPRECATED] Generate ZIP bundles (not used with Cloudinary)
+npx tsx scripts/import-fourthwall-products.ts --apply   # Fourthwall catalog -> Sanity drafts (PLAN-40)
+npx tsx scripts/fourthwall-ids.ts                        # list Fourthwall product + variant ids
 ```
-
-**Note:** The `generate-zips` script is deprecated and not used in the current Cloudinary-based architecture. ZIP files are now hosted directly on Cloudinary or external services.
 
 ## Architecture
 
@@ -238,7 +237,7 @@ This provides:
 ### Download Limit Model
 - Weekly limit (3/email, `lib/subscriber-store.ts`) is tracked server-side per email in Sanity, not by cookie — clearing cookies no longer bypasses it, a new email address does
 - Download links are signed JWTs (`lib/download-token.ts`), 72-hour expiry, single artwork per token
-- `lib/download-tracking.ts` and `lib/use-download-tracking.ts` (cookie-based) are **dead code** left over from the pre-email-gate design — do not build on them; they have zero live imports
+- The old cookie-based tracking (`lib/download-tracking.ts`, `js-cookie`) was deleted in PLAN-41; do not reintroduce cookies for limits
 
 ### Commerce Model
 - Physical prints sell on-site via Fourthwall (merchant of record) with Printful as its manufacturer; Phase 2 swaps to Stripe + Printful (PLAN-34 decisions)
@@ -250,7 +249,7 @@ This provides:
 - `listing` splits the catalog: `getAllProducts`/`getProductBySlug`/`getFeaturedProduct`/`getRelatedProducts` return free prints only (so `/api/claim-art` can never serve a shop print); `getShopPrints`/`getShopPrintBySlug` return shop prints only
 
 ### Deprecated Features
-- `generate-zips.js` script — ZIPs are now built on-demand server-side by `lib/build-download-zip.ts`
+- `generate-zips.js` and the pre-PLAN-12 size migration scripts were deleted in PLAN-41; ZIPs are built on-demand by `lib/build-download-zip.ts`
 - Per-size uploads / `sizes[]` / `artSize` schema / `zipUrl` / `allSizesZip` — replaced by the single `artFile` model (PLAN-12)
 - Local file storage in `/private/free/` (migrated to Cloudinary)
 

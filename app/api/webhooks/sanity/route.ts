@@ -32,28 +32,11 @@ import {
   verifyWebhookSignature,
   parseWebhookBody,
   extractCloudinaryIds,
-  calculateDeletedIds,
   type SanityWebhookPayload,
 } from '@/lib/sanity-webhook-utils';
 import {
   deleteMultipleCloudinaryAssets,
-  type CloudinaryDeleteResult,
 } from '@/lib/cloudinary-utils';
-
-/**
- * Webhook payload structure with before/after snapshots
- */
-interface WebhookPayload {
-  _id: string;
-  _type: string;
-  _rev: string;
-  /** Current state of the document (after the change) */
-  current?: SanityWebhookPayload;
-  /** Previous state of the document (before the change) */
-  previous?: SanityWebhookPayload;
-  /** Transition information */
-  transition: 'update' | 'delete' | 'create';
-}
 
 /**
  * Disable body parsing so we can access raw body for signature verification
@@ -107,7 +90,7 @@ export async function POST(request: NextRequest) {
     const operation = request.headers.get('sanity-operation') as 'create' | 'update' | 'delete' | null;
 
     // 5. Parse webhook body
-    const payload = parseWebhookBody<any>(rawBody);
+    const payload = parseWebhookBody<SanityWebhookPayload>(rawBody);
     console.log('[Sanity Webhook] Operation:', operation);
     console.log('[Sanity Webhook] Document ID:', payload._id);
     console.log('[Sanity Webhook] Document type:', payload._type);

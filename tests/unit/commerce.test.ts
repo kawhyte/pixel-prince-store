@@ -164,3 +164,29 @@ describe("artwork versions", () => {
     expect(getActiveOffer(art, "framed", "Midnight")).toBe(midnight);
   });
 });
+
+describe("a finish with a shorter size ladder", () => {
+  it("shows only its own sizes and preselects 18x24, so canvas without 8x10 stays valid", async () => {
+    const { getActiveOffer, orderedSizes, popularSizeId, fromPriceCents } = await import("@/lib/commerce");
+    const size = (sizeId: string, priceCents: number) => ({ sizeId, priceCents, providerVariantId: `v-${sizeId}` });
+    const unframed = {
+      provider: "fourthwall" as const,
+      finish: "unframed" as const,
+      sizes: [size("8x10", 2399), size("11x14", 2700), size("16x20", 3400), size("18x24", 3700), size("24x36", 4500)],
+    };
+    // Kenny's Etsy canvas ladder has no 8x10
+    const canvas = {
+      provider: "fourthwall" as const,
+      finish: "canvas" as const,
+      sizes: [size("11x14", 5500), size("16x20", 11000), size("18x24", 13000), size("24x36", 19500)],
+    };
+    const art = { offers: [unframed, canvas] };
+
+    expect(orderedSizes(getActiveOffer(art, "canvas")!).map((s) => s.sizeId)).toEqual(["11x14", "16x20", "18x24", "24x36"]);
+    expect(orderedSizes(getActiveOffer(art, "unframed")!)).toHaveLength(5);
+    // switching finish never leaves a size the finish does not sell selected
+    expect(popularSizeId(getActiveOffer(art, "canvas"))).toBe("18x24");
+    expect(popularSizeId(getActiveOffer(art, "unframed"))).toBe("18x24");
+    expect(fromPriceCents(getActiveOffer(art, "canvas"))).toBe(5500);
+  });
+});

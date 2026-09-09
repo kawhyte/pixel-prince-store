@@ -50,3 +50,6 @@ next-env.d.ts
 !CLAUDE.md
 !README.md
 !**/README.md
+
+# Print masters for the Fourthwall create script (large source art, never committed)
+/masters/

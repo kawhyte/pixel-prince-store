@@ -182,3 +182,14 @@ Lists every public Fourthwall product with its product id and one variant id per
 
 Needs `FOURTHWALL_STOREFRONT_TOKEN` in `.env.local` (Fourthwall admin > Settings > For Developers > Storefront API). Reads `/v1/collections/all/products`; the bare `/v1/products` endpoint is 404.
 
+### `import-fourthwall-products.ts` (PLAN-40)
+
+Creates one Sanity **draft** shop print per public Fourthwall product (title, slug, mockup, full Fourthwall offer with ladder sizes, prices in cents, variant ids). Re-runs never duplicate: prints already linked to the Fourthwall product id are synced instead.
+
+    npx tsx scripts/import-fourthwall-products.ts                  # dry run
+    npx tsx scripts/import-fourthwall-products.ts --apply          # create drafts + sync existing
+    npx tsx scripts/import-fourthwall-products.ts --sync --apply   # sync prices/variant ids only
+    add --include-test to process products named "Test ..."
+
+Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`. Pure mapping helpers live in `lib/fourthwall-import.ts` (unit-tested). Exits with code 2 when a product has no ladder sizes under `--apply`.
+

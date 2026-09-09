@@ -241,6 +241,7 @@ This provides:
 - Physical prints sell on-site via Fourthwall (merchant of record) with Printful as its manufacturer; Phase 2 swaps to Stripe + Printful (PLAN-34 decisions)
 - `offers[]` on an artwork holds display prices in cents per size; the provider is the source of truth for the charge
 - `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
+- Display prices are refreshed from Fourthwall by `scripts/import-fourthwall-products.ts --sync --apply` (PLAN-40); never edit `priceCents` by hand when a Fourthwall offer exists. New shop prints are imported as drafts by the same script.
 - Buy buttons go through `CheckoutButton` and `resolveCheckout()`; never build a checkout URL in a component. Fourthwall link: `https://<domain>/cart/checkout?products=<variantUUID>:1&currency=USD&utm_*`
 - Free downloads are unchanged and never routed through a provider
 - `listing` splits the catalog: `getAllProducts`/`getProductBySlug`/`getFeaturedProduct`/`getRelatedProducts` return free prints only (so `/api/claim-art` can never serve a shop print); `getShopPrints`/`getShopPrintBySlug` return shop prints only

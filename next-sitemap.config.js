@@ -55,6 +55,12 @@ module.exports = {
       slugs.map((slug) => config.transform(config, `/blog/${slug}`))
     )
 
-    return [...collectionPaths, ...staticPaths, ...blogPaths]
+    // Shop prints (PLAN-36): /prints/[slug], listing == "shop" only.
+    const shopSlugs = await client.fetch(`*[_type == "product" && listing == "shop"].slug.current`)
+    const shopPaths = await Promise.all(
+      shopSlugs.map((slug) => config.transform(config, `/prints/${slug}`))
+    )
+
+    return [...collectionPaths, ...staticPaths, ...blogPaths, ...shopPaths]
   },
 }

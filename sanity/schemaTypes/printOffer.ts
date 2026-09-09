@@ -105,8 +105,17 @@ export const printOffer = defineType({
               name: 'providerVariantId',
               title: 'Provider variant id',
               type: 'string',
-              description: 'The Fourthwall variant id for this size.',
-              validation: (Rule) => Rule.required(),
+              description: 'The Fourthwall variant id for this size (a UUID, not the product id).',
+              validation: (Rule) =>
+                Rule.required().custom((value) => {
+                  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                  if (typeof value === 'string' && !uuid.test(value))
+                    return {
+                      message: 'Fourthwall variant ids look like 11111111-2222-3333-4444-555555555555. Check you copied the variant id, not the product id.',
+                      level: 'warning',
+                    }
+                  return true
+                }),
             }),
             defineField({
               name: 'popular',

@@ -43,3 +43,14 @@ export const DEFAULT_PRICE_CENTS: Record<string, number> = {
 export function getShopSize(id: string): ShopSize | undefined {
   return SHOP_SIZE_LADDER.find((s) => s.id === id);
 }
+
+/**
+ * Fourthwall checkout host. Custom domain (checkout.thepixelprince.com) once DNS is set,
+ * otherwise the shop's own fourthwall.com domain. No protocol, no trailing slash.
+ * Unset until Kenny's account exists: the Buy button then renders "Coming soon".
+ */
+export const FOURTHWALL_CHECKOUT_DOMAIN = process.env.NEXT_PUBLIC_FOURTHWALL_CHECKOUT_DOMAIN ?? "";
+
+/** Attribution on every checkout hand-off, mirrors etsyUrl(). */
+export const CHECKOUT_UTM = { utm_source: "pixelprince", utm_medium: "site" } as const;
+

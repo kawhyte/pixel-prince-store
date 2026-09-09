@@ -70,6 +70,7 @@ npm run generate-zips    # [DEPRECATED] Generate ZIP bundles (not used with Clou
 3. **Frontend Pages**
    - `/free-downloads` → Gallery of all free art (`app/free-downloads/page.tsx`)
    - `/art/[id]` → Art detail page with print-size info chips + one download button (`app/art/[id]/page.tsx`)
+   - `/prints/[slug]` → Shop print page, buy-first: size picker + `CheckoutButton` hand-off to Fourthwall checkout (`app/prints/[slug]/page.tsx`); shop prints only
    - Static generation at build time via `generateStaticParams()`
 
 4. **Download flow** (email-gated, signed links — no cookies)
@@ -140,6 +141,9 @@ RESEND_AUDIENCE_ID=<audience-id>
 EMAIL_FROM="The Pixel Prince <hello@thepixelprince.com>"
 DOWNLOAD_LINK_SECRET=<long-random-string>
 NEXT_PUBLIC_SITE_URL=https://www.thepixelprince.com
+
+# Fourthwall hosted checkout host (no protocol). Empty = Buy buttons show "Coming soon"
+NEXT_PUBLIC_FOURTHWALL_CHECKOUT_DOMAIN=checkout.thepixelprince.com
 ```
 
 **Development Only:**
@@ -237,6 +241,7 @@ This provides:
 - Physical prints sell on-site via Fourthwall (merchant of record) with Printful as its manufacturer; Phase 2 swaps to Stripe + Printful (PLAN-34 decisions)
 - `offers[]` on an artwork holds display prices in cents per size; the provider is the source of truth for the charge
 - `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
+- Buy buttons go through `CheckoutButton` and `resolveCheckout()`; never build a checkout URL in a component. Fourthwall link: `https://<domain>/cart/checkout?products=<variantUUID>:1&currency=USD&utm_*`
 - Free downloads are unchanged and never routed through a provider
 - `listing` splits the catalog: `getAllProducts`/`getProductBySlug`/`getFeaturedProduct`/`getRelatedProducts` return free prints only (so `/api/claim-art` can never serve a shop print); `getShopPrints`/`getShopPrintBySlug` return shop prints only
 

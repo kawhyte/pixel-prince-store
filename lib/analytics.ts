@@ -23,3 +23,7 @@ export function trackDownloadClaimed(artId: string) {
 export function trackEtsyClickOut(shop: "main" | "printables", page: string) {
   track("etsy_click_out", { shop, page });
 }
+export function trackCheckoutOpened(artId: string, sizeId: string, provider: string) {
+  track("checkout_opened", { artId, sizeId, provider });
+}
+

@@ -226,6 +226,14 @@ export async function getShopPrintBySlug(slug: string): Promise<FreeArt | null> 
   return product ? toFreeArt(product) : null
 }
 
+/** Up to 3 other shop prints in the same category ("Complete the set"). */
+export async function getRelatedShopPrints(category: string, currentSlug: string): Promise<FreeArt[]> {
+  if (!category) return []
+  const query = `*[${SHOP_FILTER} && category == $category && slug.current != $currentSlug] | order(_createdAt desc) [0...3] { ${PRODUCT_PROJECTION} }`
+  const products = await client.fetch<SanityProduct[]>(query, { category, currentSlug })
+  return products.map(toFreeArt)
+}
+
 /**
  * Fetch related products by category (excluding current product)
  * Returns up to 3 related products from the same category

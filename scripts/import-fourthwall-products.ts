@@ -56,7 +56,9 @@ const FW_BASE = "https://storefront-api.fourthwall.com/v1";
 const FINISH_ORDER: ImportFinish[] = ["unframed", "framed", "canvas"];
 
 async function fetchProducts(): Promise<FwProduct[]> {
-  const url = `${FW_BASE}/collections/all/products?pageSize=100&storefront_token=${encodeURIComponent(storefrontToken!)}`;
+  // the listing is CDN-cached for ~60s, which serves a stale catalogue right after a publish;
+  // an unused parameter makes the URL unique so the import always reads Fourthwall as it is now
+  const url = `${FW_BASE}/collections/all/products?pageSize=100&storefront_token=${encodeURIComponent(storefrontToken!)}&_=${Date.now()}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Fourthwall ${res.status} ${res.statusText}`);
   const data = (await res.json()) as { results?: FwProduct[]; paging?: { hasNextPage?: boolean } };

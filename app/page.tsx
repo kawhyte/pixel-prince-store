@@ -29,8 +29,9 @@ export default async function Home() {
   const bestSellers = [...shopPrints]
     .sort((a, b) => (b.sales ?? 0) - (a.sales ?? 0) || (b.createdAt > a.createdAt ? 1 : -1))
     .slice(0, 8);
-  const heroItems = shopPrints.length > 0 ? shopPrints : freePrints;
-  const freeGrid = freePrints.slice(0, 4);
+  // The wall holds four. Shop prints lead and free prints top it up, so it never shows gaps.
+  const heroItems = [...shopPrints, ...freePrints.filter((f) => !shopPrints.some((s) => s.id === f.id))].slice(0, 4);
+  const freeRow = freePrints.slice(0, 12);
 
   // A tile shows a print from its own collection or nothing: borrowing an unrelated print
   // put the same image on all three tiles while the shop held one print.
@@ -153,22 +154,22 @@ export default async function Home() {
           <h2 className="mt-2 text-[28px] font-semibold tracking-tight text-charcoal">Find your wall</h2>
           <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in, or the thing you love.</p>
         </div>
-        <div className="mt-8 flex snap-x gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:container lg:mx-auto [&::-webkit-scrollbar]:hidden">
+        <div className="mt-8 flex snap-x gap-5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:container lg:mx-auto [&::-webkit-scrollbar]:hidden">
           {tiles.map((tile) => (
             <Link
               key={tile.slug}
               href={`/collections/${tile.slug}`}
-              className="group relative block w-[220px] shrink-0 snap-start overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover"
+              className="group relative block w-[270px] shrink-0 snap-start overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:w-[300px]"
             >
               <div className="relative aspect-[4/5] bg-muted">
                 <Image
                   src={tile.image}
                   alt={tile.label}
                   fill
-                  sizes="220px"
+                  sizes="300px"
                   className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.45)_16%,rgba(0,0,0,0)_38%)]" />
               </div>
               <div className="absolute inset-x-0 bottom-0 p-3">
                 <span className="inline-block bg-white px-2 py-1 text-xs font-bold uppercase tracking-wide text-charcoal">
@@ -204,16 +205,12 @@ export default async function Home() {
             {HOME_FREE.cta} <ArrowRight className="size-4" />
           </Link>
         </div>
-        {freeGrid.length > 0 && (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
-            {freeGrid.map((art) => (
-              <ArtCard
-                key={art.id}
-                art={art}
-                href={`/art/${art.id}`}
-                subtitle={art.category}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              />
+        {freeRow.length > 0 && (
+          <div className="-mx-4 mt-8 flex snap-x gap-5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {freeRow.map((art) => (
+              <div key={art.id} className="w-[250px] shrink-0 snap-start sm:w-[270px]">
+                <ArtCard art={art} href={`/art/${art.id}`} subtitle={art.category} sizes="270px" />
+              </div>
             ))}
           </div>
         )}

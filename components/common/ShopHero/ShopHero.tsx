@@ -18,6 +18,8 @@ interface ShopHeroProps {
  */
 export default function ShopHero({ items }: ShopHeroProps) {
   const wall = items.slice(0, 4);
+  // one print fills the panel rather than sitting in half an empty grid
+  const single = wall.length === 1;
 
   return (
     <section className="border-b border-border">
@@ -25,15 +27,15 @@ export default function ShopHero({ items }: ShopHeroProps) {
         {/* The wall */}
         <div className="wall-band order-2 rounded-md p-6 sm:p-10 lg:order-1">
           {wall.length > 0 ? (
-            <div className="grid grid-cols-2 gap-5 sm:gap-8">
+            <div className={single ? "" : "grid grid-cols-2 gap-5 sm:gap-8"}>
               {wall.map((item, i) => {
                 const card = cardCommerce(item);
                 return (
                   <Link
                     key={item.id}
                     href={card.href}
-                    className={`group block bg-white p-2 wall-shadow transition-transform duration-200 hover:-translate-y-0.5 sm:p-3 ${
-                      i % 2 === 1 ? "mt-6 sm:mt-10" : ""
+                    className={`group block self-start bg-white p-2 wall-shadow transition-transform duration-200 hover:-translate-y-0.5 sm:p-3 ${
+                      !single && i % 2 === 1 ? "mt-6 sm:mt-10" : ""
                     }`}
                   >
                     <div className="relative aspect-[4/5] overflow-hidden bg-muted">
@@ -42,7 +44,7 @@ export default function ShopHero({ items }: ShopHeroProps) {
                         alt={item.title}
                         fill
                         priority={i < 2}
-                        sizes="(max-width: 1024px) 45vw, 25vw"
+                        sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
                         className="object-cover"
                       />
                     </div>

@@ -16,7 +16,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "prepare": "husky",
-    "typecheck:scripts": "tsc -p tsconfig.scripts.json"
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json",
+    "sync:shop": "npx tsx scripts/import-fourthwall-products.ts --apply --remockup"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint"

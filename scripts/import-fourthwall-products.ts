@@ -127,7 +127,8 @@ async function trimmed(buffer: Buffer, contentType: string): Promise<{ data: Buf
         const { data, width, height } = ctx.getImageData(0, 0, c.width, c.height);
         return { pixels: Array.from(data), width, height };
       }, dataUrl);
-      const box = contentBox(Uint8ClampedArray.from(cropped.pixels), cropped.width, cropped.height);
+      // 1280 keeps the crop sharp in a 640px column on a 2x screen
+      const box = contentBox(Uint8ClampedArray.from(cropped.pixels), cropped.width, cropped.height, { minWidth: 1280 });
       if (!box) return null;
       const out = await page.evaluate(
         async ({ src, box }) => {
@@ -170,9 +171,17 @@ function imageRef(assetId: string) {
   return { _type: "image", asset: { _type: "reference", _ref: assetId } };
 }
 
+/** The shop page shows the main image about 1280 device pixels wide, so anything smaller is soft. */
+const MIN_MAIN_IMAGE_WIDTH = 1200;
+
 async function uploadFirstImage(p: FwProduct, suffix: string): Promise<string | null> {
   const img = p.images?.[0];
   if (!img?.url) return null;
+  if (typeof img.width === "number" && img.width > 0 && img.width < MIN_MAIN_IMAGE_WIDTH) {
+    console.warn(
+      `warn   ${p.name}: the first image is only ${img.width}x${img.height ?? "?"} px. The page shows it about 1280 px wide, so it will look soft. Upload one at least 1600 px wide in Fourthwall.`
+    );
+  }
   return uploadImage(img.url, `${p.slug ?? slugify(p.name)}${suffix}.webp`, p.name);
 }
 

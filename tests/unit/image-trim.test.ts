@@ -24,10 +24,12 @@ describe("contentBox", () => {
     expect(box).toEqual({ x: 52, y: 40, width: 96, height: 120 });
   });
 
-  it("clamps the margin to the image edges", () => {
+  it("clamps the margin to the image edges, and skips a crop that would cover everything", () => {
     // the corner pixel is the background sample, so the product never starts at 0,0
-    const box = contentBox(canvas(100, 100, { x: 5, y: 5, width: 88, height: 88 }), 100, 100, { step: 1, marginPct: 0.5 });
-    expect(box).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+    const box = contentBox(canvas(100, 100, { x: 2, y: 2, width: 88, height: 88 }), 100, 100, { step: 1, marginPct: 0.05 });
+    expect(box).toEqual({ x: 0, y: 0, width: 96, height: 96 });
+    // a margin so wide it swallows the image is not worth a re-encode
+    expect(contentBox(canvas(100, 100, { x: 5, y: 5, width: 88, height: 88 }), 100, 100, { step: 1, marginPct: 0.5 })).toBeNull();
   });
 
   it("returns null for an empty image and for one already full of content", () => {
@@ -60,5 +62,19 @@ describe("photographs are left alone", () => {
       photo[i] = 20; photo[i + 1] = 90; photo[i + 2] = 40;
     }
     expect(contentBox(photo, 100, 100, { step: 1 })).toBeNull();
+  });
+});
+
+describe("minWidth", () => {
+  it("grows the crop back rather than returning something too small to display", () => {
+    const box = contentBox(canvas(2000, 2000, { x: 900, y: 900, width: 200, height: 200 }), 2000, 2000, { step: 1, marginPct: 0, minWidth: 1000 });
+    expect(box!.width).toBe(1000);
+    expect(box!.height).toBe(1000);
+    // still centred on the product
+    expect(box!.x + box!.width / 2).toBe(1000);
+  });
+
+  it("returns null when growing back would cover the whole image", () => {
+    expect(contentBox(canvas(500, 500, { x: 200, y: 200, width: 100, height: 100 }), 500, 500, { step: 1, minWidth: 5000 })).toBeNull();
   });
 });

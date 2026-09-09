@@ -21,6 +21,12 @@ export interface ContentBoxOptions {
   marginPct?: number;
   /** Sample every nth pixel. 2 is plenty for a 1536px render and four times faster. */
   step?: number;
+  /**
+   * Never crop below this width. Trimming throws pixels away, and a mockup that ends up
+   * narrower than the box it is displayed in looks soft. The box grows back around its centre
+   * until it reaches this, or the image runs out.
+   */
+  minWidth?: number;
 }
 
 /**
@@ -34,7 +40,7 @@ export function contentBox(
   data: Uint8ClampedArray | number[],
   width: number,
   height: number,
-  { tolerance = 12, marginPct = 0.08, step = 2 }: ContentBoxOptions = {},
+  { tolerance = 12, marginPct = 0.08, step = 2, minWidth = 0 }: ContentBoxOptions = {},
 ): Box | null {
   if (width <= 0 || height <= 0 || data.length < 4) return null;
   const [br, bg, bb] = [data[0], data[1], data[2]];
@@ -82,12 +88,23 @@ export function contentBox(
 
   const padX = Math.round(contentW * marginPct);
   const padY = Math.round(contentH * marginPct);
-  const x = Math.max(0, minX - padX);
-  const y = Math.max(0, minY - padY);
-  return {
-    x,
-    y,
-    width: Math.min(width - x, contentW + padX * 2),
-    height: Math.min(height - y, contentH + padY * 2),
-  };
+  let x = Math.max(0, minX - padX);
+  let y = Math.max(0, minY - padY);
+  let w = Math.min(width - x, contentW + padX * 2);
+  let h = Math.min(height - y, contentH + padY * 2);
+
+  // Grow back around the centre rather than serve a crop too small for the page.
+  const grow = Math.min(minWidth > 0 ? minWidth / w : 1, width / w, height / h);
+  if (grow > 1) {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const nw = Math.min(width, Math.round(w * grow));
+    const nh = Math.min(height, Math.round(h * grow));
+    x = Math.round(Math.min(Math.max(0, cx - nw / 2), width - nw));
+    y = Math.round(Math.min(Math.max(0, cy - nh / 2), height - nh));
+    w = nw;
+    h = nh;
+  }
+  if (w >= width && h >= height) return null;
+  return { x, y, width: w, height: h };
 }

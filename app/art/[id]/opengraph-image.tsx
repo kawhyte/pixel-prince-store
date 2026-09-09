@@ -26,7 +26,7 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
           <div style={{ fontSize: titleFontSize, fontWeight: 700, color: "#2a2a2a", lineHeight: 1.15 }}>
             {title}
           </div>
-          <div style={{ fontSize: 28, color: "#4a7bc7" }}>Free printable wall art</div>
+          <div style={{ fontSize: 28, color: "#c2521f" }}>Free printable wall art</div>
           <div style={{ fontSize: 24, color: "#4a4a4a" }}>thepixelprince.com</div>
         </div>
       </div>

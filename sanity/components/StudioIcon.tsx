@@ -26,7 +26,7 @@ export default function StudioIcon() {
   })
 
   return (
-    <svg viewBox="0 0 8 8" fill="#4a7bc7" shapeRendering="crispEdges" width="100%" height="100%">
+    <svg viewBox="0 0 8 8" fill="#c2521f" shapeRendering="crispEdges" width="100%" height="100%">
       {rects}
     </svg>
   )

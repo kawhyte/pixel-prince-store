@@ -5,7 +5,7 @@
 // every text element (dark-mode safe), max width 560px, single column.
 //
 // Brand tokens (from app/globals.css): background #f3f1e8, card #fdfcfa,
-// text #2a2a2a, muted #6b6b6b, accent #4a7bc7, button radius 8px.
+// text #2a2a2a, muted #6b6b6b, accent #c2521f, button radius 8px.
 
 export interface BrandedEmailOpts {
   /** Hidden preview text shown in the inbox list. */
@@ -33,7 +33,7 @@ const BG = "#f3f1e8";
 const CARD = "#fdfcfa";
 const TEXT = "#2a2a2a";
 const MUTED = "#6b6b6b";
-const ACCENT = "#4a7bc7";
+const ACCENT = "#c2521f";
 const FONT = "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
 
 export function renderBrandedEmail(opts: BrandedEmailOpts): string {

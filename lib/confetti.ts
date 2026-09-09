@@ -8,7 +8,7 @@ export function triggerConfetti() {
     spread: 360,
     ticks: 60,
     zIndex: 0,
-    colors: ["#4a7bc7", "#c3d5f5", "#f3f1e8", "#2a2a2a"],
+    colors: ["#c2521f", "#edc0a9", "#faf8f4", "#1a1a1a"],
   };
 
   function randomInRange(min: number, max: number) {

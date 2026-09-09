@@ -19,7 +19,7 @@ describe("renderBrandedEmail", () => {
   });
 
   it("uses the accent color token", () => {
-    expect(html).toContain("#4a7bc7");
+    expect(html).toContain("#c2521f");
   });
 
   it("uses table-based layout with inline styles only (no class attrs)", () => {

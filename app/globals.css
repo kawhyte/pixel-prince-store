@@ -15,15 +15,15 @@
   --color-charcoal: #1a1a1a;
   --color-soft-charcoal: #4a4a4a;
 
-  /* sage-* is THE accent (cornflower blue). Historical name, do not rename. 500 is the accent value; 50-200 are tint backgrounds of the same hue only. */
-  --color-sage-50: #f0f4fb;
+  /* sage-* is THE accent: terracotta since 2026-09-08 (was cornflower blue). Historical name, do not rename. 500 is the accent value; 50-200 are tint backgrounds of the same hue only. */
+  --color-sage-50: #fbf1ec;
   /* Wall: the warm surface a print hangs on (shop pages, PLAN-43) */
   --color-wall: #e9e3d6;
-  --color-sage-100: #e1eafa;
-  --color-sage-200: #c3d5f5;
-  --color-sage-300: #94b5ec;
-  --color-sage-400: #5b8fdb;
-  --color-sage-500: #4a7bc7;
+  --color-sage-100: #f6dfd3;
+  --color-sage-200: #edc0a9;
+  --color-sage-300: #e09570;
+  --color-sage-400: #d16a3a;
+  --color-sage-500: #c2521f;
 
   /* Shadcn Design System Integration */
   --color-background: var(--background);
@@ -73,8 +73,8 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
 
-  /* Primary: Cornflower blue accent (sage-500) */
-  --primary: #4a7bc7;
+  /* Primary: terracotta accent (sage-500) */
+  --primary: #c2521f;
   --primary-foreground: #ffffff;
 
   /* Secondary: Warm neutral */
@@ -86,7 +86,7 @@
   --muted-foreground: #6b6b6b;
 
   /* Accent: sage-100 (keeps shadcn hover states in the accent hue) */
-  --accent: #e1eafa;
+  --accent: #f6dfd3;
   --accent-foreground: #1a1a1a;
 
   --destructive: #c05555;
@@ -95,7 +95,7 @@
   /* Borders and inputs: warm neutral */
   --border: #ddd9cf;
   --input: #ddd9cf;
-  --ring: #4a7bc7;
+  --ring: #c2521f;
 }
 
 @layer base {

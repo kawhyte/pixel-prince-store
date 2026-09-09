@@ -23,19 +23,19 @@ export default function ArtNotFound() {
           <rect x="66" y="48" width="68" height="10" rx="4" stroke="#2a2a2a" strokeWidth="2.5" strokeLinejoin="round" />
           {/* Brush in jar */}
           <line x1="118" y1="48" x2="136" y2="20" stroke="#2a2a2a" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M134 18 Q138 14 140 18 Q138 24 134 22 Z" stroke="#4a7bc7" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M134 18 Q138 14 140 18 Q138 24 134 22 Z" stroke="#c2521f" strokeWidth="2" strokeLinejoin="round" />
 
           {/* Spilled paint pool: tilted jar */}
           <path
             d="M40 148 Q35 160 50 165 Q80 172 130 168 Q155 165 152 155 Q148 145 120 143 Q80 140 60 145 Z"
-            stroke="#4a7bc7"
+            stroke="#c2521f"
             strokeWidth="2"
             strokeLinejoin="round"
           />
           {/* Spill drips */}
-          <line x1="75" y1="168" x2="72" y2="178" stroke="#4a7bc7" strokeWidth="2" strokeLinecap="round" />
-          <line x1="100" y1="170" x2="100" y2="182" stroke="#4a7bc7" strokeWidth="2" strokeLinecap="round" />
-          <line x1="125" y1="167" x2="128" y2="177" stroke="#4a7bc7" strokeWidth="2" strokeLinecap="round" />
+          <line x1="75" y1="168" x2="72" y2="178" stroke="#c2521f" strokeWidth="2" strokeLinecap="round" />
+          <line x1="100" y1="170" x2="100" y2="182" stroke="#c2521f" strokeWidth="2" strokeLinecap="round" />
+          <line x1="125" y1="167" x2="128" y2="177" stroke="#c2521f" strokeWidth="2" strokeLinecap="round" />
 
           {/* Stray doodle marks suggesting emptiness */}
           <path d="M155 80 Q160 75 165 80 Q170 85 165 90" stroke="#2a2a2a" strokeWidth="1.5" strokeLinecap="round" />

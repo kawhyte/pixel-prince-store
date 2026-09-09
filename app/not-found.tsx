@@ -33,20 +33,20 @@ export default function NotFound() {
           {/* Sketchy "?" inside canvas */}
           <path
             d="M88 58 Q88 50 100 50 Q112 50 112 60 Q112 70 100 72 L100 80"
-            stroke="#4a7bc7"
+            stroke="#c2521f"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="100" cy="90" r="2.5" fill="#4a7bc7" />
+          <circle cx="100" cy="90" r="2.5" fill="#c2521f" />
 
           {/* Paint drip dots below canvas */}
-          <circle cx="72" cy="132" r="3.5" stroke="#4a7bc7" strokeWidth="2" />
+          <circle cx="72" cy="132" r="3.5" stroke="#c2521f" strokeWidth="2" />
           <circle cx="100" cy="136" r="2.5" stroke="#2a2a2a" strokeWidth="2" />
-          <circle cx="128" cy="130" r="3" stroke="#4a7bc7" strokeWidth="2" />
+          <circle cx="128" cy="130" r="3" stroke="#c2521f" strokeWidth="2" />
           {/* Drip tails */}
-          <line x1="72" y1="135" x2="72" y2="143" stroke="#4a7bc7" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="128" y1="133" x2="128" y2="140" stroke="#4a7bc7" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="72" y1="135" x2="72" y2="143" stroke="#c2521f" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="128" y1="133" x2="128" y2="140" stroke="#c2521f" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
 
         <h1 className="mb-2 text-5xl font-bold text-charcoal">404</h1>

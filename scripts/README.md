@@ -86,6 +86,8 @@ Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`
 
 ### `fourthwall-create-products.ts` (PLAN-47)
 
+Versions of the same artwork (PLAN-48) are separate files named `Title (Version).png`; they become `Title (Version)` and `Title (Version) | Framed`, and the import folds them into one artwork with a version picker.
+
 Turns a folder of print files into Fourthwall products: uploads each master to the media library and creates `Title` (Enhanced Matte Paper Poster) and `Title | Framed` (Framed High-Quality Matte Poster in Black, Red Oak and White, `--frames` to narrow) with the five ladder sizes and one margin per finish. Created hidden unless `--publish`; a hidden product is published later with `setProductAccess` in `lib/fourthwall-platform.ts` (PUT `/products/{id}/state`) or in the dashboard. The storefront's product listing is cached for 60 seconds, so run the import a minute after publishing. The import keeps the Black variant per size. Canvas cannot be created through the API; the script prints a dashboard reminder per title. Existing names are skipped.
 
     npx tsx scripts/fourthwall-create-products.ts --dir ./masters                  # dry run

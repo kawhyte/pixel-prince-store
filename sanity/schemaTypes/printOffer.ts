@@ -12,6 +12,7 @@ interface SizeRow {
 interface OfferValue {
   provider?: string
   finish?: string
+  version?: string
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -43,10 +44,17 @@ export const printOffer = defineType({
       name: 'finish',
       title: 'Finish',
       type: 'string',
-      description: 'Each finish is its own Fourthwall product. One offer per finish.',
+      description: 'Each finish is its own Fourthwall product. One offer per version and finish.',
       options: { list: FINISHES.map((f) => ({ title: f.label, value: f.id })), layout: 'radio' },
       initialValue: DEFAULT_FINISH,
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'version',
+      title: 'Version',
+      type: 'string',
+      description:
+        'Which version of the artwork this offer sells, e.g. Ivory or Midnight. Leave empty when the print comes one way only. The import fills it from the Fourthwall name "Title (Version)".',
     }),
     defineField({
       name: 'mockup',
@@ -169,8 +177,8 @@ export const printOffer = defineType({
     }),
   ],
   preview: {
-    select: { provider: 'provider', finish: 'finish', active: 'active', sizes: 'sizes', checkoutUrl: 'checkoutUrl', media: 'mockup' },
-    prepare({ provider, finish, active, sizes, checkoutUrl, media }) {
+    select: { provider: 'provider', finish: 'finish', version: 'version', active: 'active', sizes: 'sizes', checkoutUrl: 'checkoutUrl', media: 'mockup' },
+    prepare({ provider, finish, version, active, sizes, checkoutUrl, media }) {
       const rows = (sizes as SizeRow[] | undefined) ?? []
       const prices = rows
         .map((r) => r.priceCents)
@@ -181,7 +189,7 @@ export const printOffer = defineType({
           ? 'link only'
           : 'no sizes'
       return {
-        title: `${provider ?? 'offer'} · ${finish ?? 'unframed'}${active === false ? ' (inactive)' : ''}`,
+        title: `${version ? `${version} · ` : ''}${finish ?? 'unframed'}${active === false ? ' (inactive)' : ''} · ${provider ?? 'offer'}`,
         subtitle: `${from} · ${rows.length} size${rows.length === 1 ? '' : 's'}`,
         media,
       }

@@ -14,7 +14,7 @@ export interface FwImage {
 export interface FwVariant {
   id: string;
   unitPrice?: { value?: number; currency?: string };
-  attributes?: { size?: { name?: string }; color?: { name?: string } };
+  attributes?: { size?: { name?: string }; color?: { name?: string; swatch?: string } };
   name?: string;
   images?: FwImage[];
 }
@@ -137,10 +137,31 @@ export function splitFinish(name: string): { baseTitle: string; finish: ImportFi
   return { baseTitle: name.trim(), finish: "unframed" };
 }
 
-/** Deterministic Sanity id for an artwork: from the unframed product id when present, else the first finish's. */
+/**
+ * Naming convention for versions of the same artwork (PLAN-48): "Moon (Ivory)", "Moon (Midnight) | Framed".
+ * A trailing parenthesis is the version; everything before it is the artwork.
+ */
+export function splitVersion(baseTitle: string): { title: string; version: string | null } {
+  const m = baseTitle.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
+  if (!m) return { title: baseTitle.trim(), version: null };
+  return { title: m[1].trim(), version: m[2].trim() };
+}
+
+/** Artwork title and version from a Fourthwall product name, finish suffix removed. */
+export function splitProductName(name: string): { title: string; version: string | null; finish: ImportFinish } {
+  const { baseTitle, finish } = splitFinish(name);
+  return { ...splitVersion(baseTitle), finish };
+}
+
+/**
+ * Deterministic Sanity id for an artwork: the unframed product, first by name so several versions
+ * always pick the same one, else the first product given.
+ */
 export function sanityIdForArtwork(products: FwProduct[]): string {
-  const unframed = products.find((p) => splitFinish(p.name).finish === "unframed") ?? products[0];
-  return sanityIdForFourthwallProduct(unframed.id);
+  const unframed = [...products]
+    .filter((p) => splitFinish(p.name).finish === "unframed")
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return sanityIdForFourthwallProduct((unframed[0] ?? products[0]).id);
 }
 
 /** Deterministic Sanity id for a Fourthwall product, so re-runs update instead of duplicating. */

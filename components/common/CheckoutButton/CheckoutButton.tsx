@@ -8,6 +8,8 @@ import type { FreeArt } from "@/sanity/lib/client";
 import {
   getActiveOffer,
   getOffersByFinish,
+  getVersions,
+  resolveVersion,
   orderedSizes,
   resolveCheckout,
   resolveFinish,
@@ -21,6 +23,7 @@ import { trackAddToCart, trackCheckoutOpened } from "@/lib/analytics";
 import { buildCartCheckoutUrl } from "@/lib/fourthwall-cart";
 import { useCart } from "@/components/common/Cart/CartProvider";
 import FinishPicker from "@/components/common/FinishPicker/FinishPicker";
+import VersionPicker from "@/components/common/VersionPicker/VersionPicker";
 import { cn } from "@/lib/utils";
 
 interface CheckoutButtonProps {
@@ -39,6 +42,9 @@ interface CheckoutButtonProps {
   /** controlled finish (PLAN-46): the page owns it so the gallery can follow */
   finish?: FinishId | null;
   onFinishChange?: (finish: FinishId) => void;
+  /** controlled artwork version (PLAN-48), same reason */
+  version?: string | null;
+  onVersionChange?: (version: string) => void;
 }
 
 /**
@@ -56,12 +62,16 @@ export default function CheckoutButton({
   sizeGuideHref,
   finish,
   onFinishChange,
+  version,
+  onVersionChange,
 }: CheckoutButtonProps) {
   const [localFinish, setLocalFinish] = useState<FinishId | null>(null);
-  const activeFinish = resolveFinish(art, finish ?? localFinish);
-  const offer = getActiveOffer(art, activeFinish);
+  const [localVersion, setLocalVersion] = useState<string | null>(null);
+  const activeVersion = resolveVersion(art, version ?? localVersion);
+  const activeFinish = resolveFinish(art, finish ?? localFinish, activeVersion);
+  const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
-  const finishKey = activeFinish ?? "none";
+  const finishKey = `${activeVersion ?? ""}:${activeFinish ?? "none"}`;
   const [pickedByFinish, setPickedByFinish] = useState<Record<string, string>>({});
   const sizeId = pickedByFinish[finishKey] ?? popularSizeId(offer);
   const cartCtx = useCart();
@@ -73,12 +83,22 @@ export default function CheckoutButton({
     setLocalFinish(f);
     onFinishChange?.(f);
   };
+  const changeVersion = (v: string) => {
+    setLocalVersion(v);
+    onVersionChange?.(v);
+  };
 
-  const finishOptions = getOffersByFinish(art).map((x) => ({
+  const finishOptions = getOffersByFinish(art, activeVersion).map((x) => ({
     finish: x.finish,
     fromCents: fromPriceCents(x.offer),
     mockupUrl: x.offer.mockupUrl,
     fallbackImage: art.previewImage,
+  }));
+
+  // one tile per version, showing that version in the finish on screen
+  const versionOptions = getVersions(art).map((x) => ({
+    version: x.version,
+    imageUrl: (getActiveOffer(art, activeFinish, x.version) ?? x.offer).mockupUrl || art.previewImage,
   }));
 
   const target = resolveCheckout(offer, sizeId, campaign);
@@ -157,6 +177,7 @@ export default function CheckoutButton({
 
   return (
     <div className="space-y-4">
+      <VersionPicker options={versionOptions} value={activeVersion} onChange={changeVersion} />
       <FinishPicker options={finishOptions} value={activeFinish} onChange={changeFinish} />
 
       {showPrice && priceText && (
@@ -243,6 +264,7 @@ export default function CheckoutButton({
           <div className="flex flex-col leading-tight">
             {selectedMeta && (
               <span className="text-xs text-muted-foreground">
+                {activeVersion ? `${activeVersion} · ` : ""}
                 {activeFinish && finishOptions.length > 1 ? `${activeFinish} · ` : ""}
                 {inchesLabel(selectedMeta.id)}
               </span>

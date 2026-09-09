@@ -136,3 +136,31 @@ describe("finishes", () => {
     expect(resolveFinish({ offers: [etsy] })).toBeNull();
   });
 });
+
+describe("artwork versions", () => {
+  it("lists versions, resolves the first, and picks the offer for a version and finish", async () => {
+    const { getVersions, resolveVersion, resolveFinish, getActiveOffer, getOffersByFinish } = await import("@/lib/commerce");
+    const row = (cents: number) => [{ sizeId: "8x10", priceCents: cents, providerVariantId: "v" }];
+    const ivory = { provider: "fourthwall" as const, finish: "unframed" as const, version: "Ivory", sizes: row(2500) };
+    const ivoryFramed = { provider: "fourthwall" as const, finish: "framed" as const, version: "Ivory", sizes: row(5035) };
+    const midnight = { provider: "fourthwall" as const, finish: "unframed" as const, version: "Midnight", sizes: row(2500) };
+    const art = { offers: [ivory, ivoryFramed, midnight] };
+
+    expect(getVersions(art).map((x) => x.version)).toEqual(["Ivory", "Midnight"]);
+    expect(resolveVersion(art)).toBe("Ivory");
+    expect(resolveVersion(art, "Midnight")).toBe("Midnight");
+    expect(resolveVersion(art, "Nope")).toBe("Ivory");
+    expect(resolveVersion({ offers: [{ provider: "fourthwall", finish: "unframed", sizes: row(2500) }] })).toBeNull();
+
+    // a version only shows the finishes it is sold in
+    expect(getOffersByFinish(art, "Ivory").map((x) => x.finish)).toEqual(["unframed", "framed"]);
+    expect(getOffersByFinish(art, "Midnight").map((x) => x.finish)).toEqual(["unframed"]);
+    expect(resolveFinish(art, "framed", "Midnight")).toBe("unframed");
+
+    expect(getActiveOffer(art, "framed", "Ivory")).toBe(ivoryFramed);
+    expect(getActiveOffer(art, "unframed", "Midnight")).toBe(midnight);
+    expect(getActiveOffer(art)).toBe(ivory);
+    // asking for a finish this version does not sell falls back inside the version, never to another one
+    expect(getActiveOffer(art, "framed", "Midnight")).toBe(midnight);
+  });
+});

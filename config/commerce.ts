@@ -77,6 +77,9 @@ export const FINISHES = [
   { id: "canvas", label: "Canvas", blurb: "Gallery wrap, 1.25 inch deep" },
 ] as const;
 export type FinishId = (typeof FINISHES)[number]["id"];
+
+/** What the version picker is called on the page (PLAN-48). "Style" and "Colour" also read well. */
+export const VERSION_LABEL = "Version";
 export const DEFAULT_FINISH: FinishId = "unframed";
 export function getFinish(id: string | undefined) {
   return FINISHES.find((f) => f.id === id);

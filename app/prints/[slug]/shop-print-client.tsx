@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, resolveFinish } from "@/lib/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, type FinishId } from "@/config/commerce";
 import {
   SHOP_FEATURES,
@@ -45,8 +45,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function ShopPrintClient({ art, related }: ShopPrintClientProps) {
   // Finish first (PLAN-46): the page owns the finish so the gallery's first slide can follow it.
   const [finish, setFinish] = useState<FinishId | null>(null);
-  const activeFinish = resolveFinish(art, finish);
-  const offer = getActiveOffer(art, activeFinish);
+  const [version, setVersion] = useState<string | null>(null);
+  const activeVersion = resolveVersion(art, version);
+  const activeFinish = resolveFinish(art, finish, activeVersion);
+  const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
   const roomPhotos = (art.galleryImages ?? []).slice(0, 3);
   const slides = [
@@ -77,7 +79,7 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
       {/* Hero: print + buy stack */}
       <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-14 lg:pt-6">
         <div className="wall-band rounded-md p-4 sm:p-8 lg:sticky lg:top-24">
-          <ArtGallery key={activeFinish ?? "default"} images={slides} title={art.title} aspectClass="aspect-[4/5]" frame thumbs="bottom" />
+          <ArtGallery key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`} images={slides} title={art.title} aspectClass="aspect-[4/5]" frame thumbs="bottom" />
         </div>
 
         <div className="mt-8 flex flex-col gap-7 lg:mt-0">
@@ -119,6 +121,8 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             sizeGuideHref="#size-guide"
             finish={activeFinish}
             onFinishChange={setFinish}
+            version={activeVersion}
+            onVersionChange={setVersion}
           />
 
           {SHOP_PROMO.enabled && (

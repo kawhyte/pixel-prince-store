@@ -41,6 +41,8 @@ export interface PrintOffer {
   _key?: string
   provider: 'fourthwall' | 'etsy' | 'stripe'
   finish?: 'unframed' | 'framed' | 'canvas'
+  /** which version of the artwork this offer sells (Ivory, Midnight); each version is its own Fourthwall product */
+  version?: string
   /** resolved by the projection from the `mockup` image */
   mockupUrl?: string
   active?: boolean

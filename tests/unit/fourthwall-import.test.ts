@@ -99,3 +99,19 @@ describe("frame colors", () => {
     expect(sizes.map((s) => [s.sizeId, s.providerVariantId])).toEqual([["8x10", "b1"], ["11x14", "w2"]]);
   });
 });
+
+describe("artwork versions", () => {
+  it("splits a version out of the product name and keeps ids stable across versions", async () => {
+    const { splitVersion, splitProductName, sanityIdForArtwork } = await import("@/lib/fourthwall-import");
+    expect(splitVersion("Moon (Ivory)")).toEqual({ title: "Moon", version: "Ivory" });
+    expect(splitVersion("Moon")).toEqual({ title: "Moon", version: null });
+    expect(splitVersion("(Ivory)")).toEqual({ title: "(Ivory)", version: null });
+    expect(splitProductName("Moon (Midnight) | Framed")).toEqual({ title: "Moon", version: "Midnight", finish: "framed" });
+    expect(splitProductName("Moon | Canvas")).toEqual({ title: "Moon", version: null, finish: "canvas" });
+
+    const p = (id: string, name: string) => ({ id, name });
+    const products = [p("m", "Moon (Midnight)"), p("mf", "Moon (Midnight) | Framed"), p("i", "Moon (Ivory)")];
+    expect(sanityIdForArtwork(products)).toBe("fw-i");
+    expect(sanityIdForArtwork([...products].reverse())).toBe("fw-i");
+  });
+});

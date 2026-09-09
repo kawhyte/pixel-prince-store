@@ -28,9 +28,42 @@ export function offerFinish(offer: PrintOffer): FinishId {
   return offer.finish ?? DEFAULT_FINISH;
 }
 
-/** Finishes this artwork sells, in FINISHES order, with each finish's active on-site offer. */
-export function getOffersByFinish(art: WithOffers): { finish: FinishId; offer: PrintOffer }[] {
-  const list = activeOffers(art).filter((o) => ON_SITE_PROVIDERS.includes(o.provider));
+/** Every on-site offer, in document order (Studio drag order decides how versions are shown). */
+function onSiteOffers(art: WithOffers): PrintOffer[] {
+  return activeOffers(art).filter((o) => ON_SITE_PROVIDERS.includes(o.provider));
+}
+
+/** The artwork version an offer sells (Ivory, Midnight), or null when the print comes one way only. */
+export function offerVersion(offer: PrintOffer): string | null {
+  return offer.version?.trim() || null;
+}
+
+/**
+ * Versions of the artwork on sale, in offer order, with the first offer of each.
+ * Empty when the print has a single version, which is the common case.
+ */
+export function getVersions(art: WithOffers): { version: string; offer: PrintOffer }[] {
+  const out: { version: string; offer: PrintOffer }[] = [];
+  for (const offer of onSiteOffers(art)) {
+    const version = offerVersion(offer);
+    if (version && !out.some((x) => x.version === version)) out.push({ version, offer });
+  }
+  return out;
+}
+
+/** The version the page opens on: requested if on sale, else the first. Null when there are no versions. */
+export function resolveVersion(art: WithOffers, requested?: string | null): string | null {
+  const list = getVersions(art);
+  if (list.length === 0) return null;
+  return list.find((x) => x.version === requested)?.version ?? list[0].version;
+}
+
+/**
+ * Finishes this artwork sells, in FINISHES order, with each finish's active on-site offer.
+ * With a version, only that version's offers count, so a version sold unframed only shows one tile.
+ */
+export function getOffersByFinish(art: WithOffers, version?: string | null): { finish: FinishId; offer: PrintOffer }[] {
+  const list = onSiteOffers(art).filter((o) => !version || offerVersion(o) === version);
   return FINISHES.flatMap((f) => {
     const offer = list.find((o) => offerFinish(o) === f.id);
     return offer ? [{ finish: f.id, offer }] : [];
@@ -38,8 +71,12 @@ export function getOffersByFinish(art: WithOffers): { finish: FinishId; offer: P
 }
 
 /** The finish the page opens on: requested, else the artwork's default, else unframed, else the first sold. */
-export function resolveFinish(art: WithOffers & { defaultFinish?: FinishId }, requested?: FinishId | null): FinishId | null {
-  const sold = getOffersByFinish(art).map((x) => x.finish);
+export function resolveFinish(
+  art: WithOffers & { defaultFinish?: FinishId },
+  requested?: FinishId | null,
+  version?: string | null,
+): FinishId | null {
+  const sold = getOffersByFinish(art, version).map((x) => x.finish);
   if (sold.length === 0) return null;
   for (const candidate of [requested, art.defaultFinish, DEFAULT_FINISH]) {
     if (candidate && sold.includes(candidate)) return candidate;
@@ -51,11 +88,17 @@ export function resolveFinish(art: WithOffers & { defaultFinish?: FinishId }, re
  * Active offer for a finish, by PROVIDER_PRIORITY (fourthwall, stripe, etsy).
  * Without a finish: the resolved default finish's on-site offer, else the first active offer of any provider.
  */
-export function getActiveOffer(art: WithOffers & { defaultFinish?: FinishId }, finish?: FinishId | null): PrintOffer | null {
-  const byFinish = getOffersByFinish(art);
-  const wanted = finish ?? resolveFinish(art);
-  const match = byFinish.find((x) => x.finish === wanted);
+export function getActiveOffer(
+  art: WithOffers & { defaultFinish?: FinishId },
+  finish?: FinishId | null,
+  version?: string | null,
+): PrintOffer | null {
+  const wantedVersion = version ?? resolveVersion(art);
+  const byFinish = getOffersByFinish(art, wantedVersion);
+  const wantedFinish = finish ?? resolveFinish(art, null, wantedVersion);
+  const match = byFinish.find((x) => x.finish === wantedFinish);
   if (match) return match.offer;
+  if (byFinish.length > 0) return byFinish[0].offer;
   const list = activeOffers(art);
   for (const provider of PROVIDER_PRIORITY) {
     const found = list.find((o) => o.provider === provider);

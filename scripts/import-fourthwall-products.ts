@@ -28,7 +28,7 @@ import {
   pickGalleryImages,
   sanityIdForArtwork,
   slugify,
-  splitFinish,
+  splitProductName,
   stripHtml,
 } from "../lib/fourthwall-import";
 
@@ -68,6 +68,7 @@ interface ExistingOffer {
   _key: string;
   provider?: string;
   finish?: string;
+  version?: string;
   providerProductId?: string;
   hasMockup?: boolean;
 }
@@ -82,7 +83,7 @@ async function findExisting(artworkId: string, productIds: string[]): Promise<Ex
   return sanity.fetch<ExistingDoc[]>(
     `*[_type == "product" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0)]{
       _id, title, "galleryCount": count(galleryImages),
-      offers[]{ _key, provider, finish, providerProductId, "hasMockup": defined(mockup.asset) }
+      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
     }`,
     { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds }
   );
@@ -115,24 +116,37 @@ async function uploadGallery(p: FwProduct) {
   const items = [];
   for (const [i, img] of extras.entries()) {
     const assetId = await uploadImage(img.url, `${p.slug ?? slugify(p.name)}-mockup-${i + 2}.webp`, p.name);
-    items.push({ _type: "image", _key: `fw-mockup-${i + 2}`, ...imageRef(assetId), alt: `${p.name}, mockup ${i + 2}` });
+    items.push({ _key: `fw-mockup-${i + 2}`, ...imageRef(assetId), alt: `${p.name}, mockup ${i + 2}` });
   }
   return items;
 }
 
+/** One Fourthwall product is one offer: a version of the artwork (PLAN-48) in one finish. */
 interface FinishProduct {
   product: FwProduct;
   finish: ImportFinish;
+  /** null when the artwork has a single version */
+  version: string | null;
   sizes: ReturnType<typeof mapVariantsToSizes>["sizes"];
 }
 
+function offerKey(fp: FinishProduct): string {
+  return fp.version ? `fw-${slugify(fp.version)}-${fp.finish}` : `fw-${fp.finish}`;
+}
+
+function offerLabel(fp: FinishProduct): string {
+  return fp.version ? `${fp.version} ${fp.finish}` : fp.finish;
+}
+
 async function buildOffer(fp: FinishProduct) {
-  const mockupId = await uploadFirstImage(fp.product, `-${fp.finish}`);
+  const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
+  const mockupId = await uploadFirstImage(fp.product, suffix);
   return {
     _type: "printOffer",
-    _key: `fw-${fp.finish}`,
+    _key: offerKey(fp),
     provider: "fourthwall",
     finish: fp.finish,
+    ...(fp.version ? { version: fp.version } : {}),
     active: true,
     providerProductId: fp.product.id,
     sizes: fp.sizes,
@@ -147,18 +161,23 @@ async function main() {
     return;
   }
 
-  // Group by base title: "Title", "Title | Framed", "Title | Canvas" are one artwork.
+  // Group by title: "Title", "Title | Framed", "Title (Ivory)", "Title (Ivory) | Canvas" are one artwork.
   const groups = new Map<string, FwProduct[]>();
   for (const p of products) {
-    const { baseTitle } = splitFinish(p.name);
-    groups.set(baseTitle, [...(groups.get(baseTitle) ?? []), p]);
+    const { title } = splitProductName(p.name);
+    groups.set(title, [...(groups.get(title) ?? []), p]);
   }
 
   let failures = 0;
-  for (const [baseTitle, members] of groups) {
+  for (const [title, members] of groups) {
     const finishProducts: FinishProduct[] = [];
     for (const p of members) {
-      const { finish } = splitFinish(p.name);
+      const { finish, version } = splitProductName(p.name);
+      if (finishProducts.some((f) => f.finish === finish && f.version === version)) {
+        console.error(`skip   ${p.name}: a second "${version ? `${version} ` : ""}${finish}" product for "${title}", rename one`);
+        failures++;
+        continue;
+      }
       const { sizes, skipped } = mapVariantsToSizes(p.variants ?? []);
       for (const label of skipped) console.warn(`warn   ${p.name}: variant "${label}" is not in the size ladder, skipped`);
       if (sizes.length === 0) {
@@ -166,43 +185,49 @@ async function main() {
         failures++;
         continue;
       }
-      if (finishProducts.some((f) => f.finish === finish)) {
-        console.error(`skip   ${p.name}: a second "${finish}" product for "${baseTitle}", rename one`);
-        failures++;
-        continue;
-      }
-      finishProducts.push({ product: p, finish, sizes });
+      finishProducts.push({ product: p, finish, version, sizes });
     }
     if (finishProducts.length === 0) continue;
-    finishProducts.sort((a, b) => FINISH_ORDER.indexOf(a.finish) - FINISH_ORDER.indexOf(b.finish));
+    // versions alphabetically (the first one is the default on the page), finishes in FINISH_ORDER
+    finishProducts.sort(
+      (a, b) =>
+        (a.version ?? "").localeCompare(b.version ?? "") || FINISH_ORDER.indexOf(a.finish) - FINISH_ORDER.indexOf(b.finish),
+    );
 
     const artworkId = sanityIdForArtwork(finishProducts.map((f) => f.product));
     const existing = await findExisting(artworkId, finishProducts.map((f) => f.product.id));
-    const finishList = finishProducts.map((f) => `${f.finish} (${f.sizes.length} sizes)`).join(", ");
+    const finishList = finishProducts.map((f) => `${offerLabel(f)} (${f.sizes.length} sizes)`).join(", ");
 
     if (existing.length > 0) {
       for (const doc of existing) {
-        console.log(`${apply ? "sync  " : "would sync"} ${doc._id}  ${doc.title ?? baseTitle}: ${finishList}`);
+        console.log(`${apply ? "sync  " : "would sync"} ${doc._id}  ${doc.title ?? title}: ${finishList}`);
         if (!apply) continue;
+        const claimed = new Set<string>();
         for (const fp of finishProducts) {
-          const byId = doc.offers?.find((o) => o.providerProductId === fp.product.id);
-          const byFinish = doc.offers?.find((o) => o.provider === "fourthwall" && (o.finish ?? "unframed") === fp.finish);
-          const offer = byId ?? byFinish;
+          const fw = (doc.offers ?? []).filter((o) => o.provider === "fourthwall" && !claimed.has(o._key));
+          // the product id is the truth; fall back to a matching version and finish for offers typed by hand
+          const offer =
+            fw.find((o) => o.providerProductId === fp.product.id) ??
+            fw.find((o) => (o.finish ?? "unframed") === fp.finish && (o.version ?? null) === fp.version);
           if (offer) {
+            claimed.add(offer._key);
             const patch: Record<string, unknown> = {
               [`offers[_key=="${offer._key}"].sizes`]: fp.sizes,
               [`offers[_key=="${offer._key}"].providerProductId`]: fp.product.id,
               [`offers[_key=="${offer._key}"].finish`]: fp.finish,
             };
+            if (fp.version) patch[`offers[_key=="${offer._key}"].version`] = fp.version;
             if (!offer.hasMockup) {
-              const mockupId = await uploadFirstImage(fp.product, `-${fp.finish}`);
+              const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
+              const mockupId = await uploadFirstImage(fp.product, suffix);
               if (mockupId) patch[`offers[_key=="${offer._key}"].mockup`] = imageRef(mockupId);
             }
             await sanity.patch(doc._id).set(patch).commit();
           } else {
             const built = await buildOffer(fp);
+            claimed.add(built._key);
             await sanity.patch(doc._id).setIfMissing({ offers: [] }).append("offers", [built]).commit();
-            console.log(`offer  ${doc._id}: ${fp.finish} added`);
+            console.log(`offer  ${doc._id}: ${offerLabel(fp)} added`);
           }
         }
         const primary = finishProducts[0].product;
@@ -216,27 +241,27 @@ async function main() {
     }
 
     if (syncOnly) {
-      console.log(`skip   ${baseTitle}: not in Sanity yet (run without --sync to create a draft)`);
+      console.log(`skip   ${title}: not in Sanity yet (run without --sync to create a draft)`);
       continue;
     }
 
     const primary = finishProducts[0].product;
-    const category = inferCategory(baseTitle);
-    console.log(`${apply ? "create" : "would create"} draft ${baseTitle}: ${finishList}, category ${category ?? "none"}`);
+    const category = inferCategory(title);
+    console.log(`${apply ? "create" : "would create"} draft ${title}: ${finishList}, category ${category ?? "none"}`);
     if (!apply) continue;
 
     const assetId = await uploadFirstImage(primary, "");
     const gallery = await uploadGallery(primary);
     const offers = [];
     for (const fp of finishProducts) offers.push(await buildOffer(fp));
-    const description = stripHtml(primary.description).slice(0, 200) || `${baseTitle}. [KENNY: write this]`;
+    const description = stripHtml(primary.description).slice(0, 200) || `${title}. [KENNY: write this]`;
     await sanity.createIfNotExists({
       _id: `drafts.${artworkId}`,
       _type: "product",
       listing: "shop",
-      kind: inferKind(baseTitle),
-      title: baseTitle,
-      slug: { _type: "slug", current: slugify(baseTitle) },
+      kind: inferKind(title),
+      title: title,
+      slug: { _type: "slug", current: slugify(title) },
       artist: "The Pixel Prince",
       description,
       ...(assetId ? { previewImage: imageRef(assetId) } : {}),

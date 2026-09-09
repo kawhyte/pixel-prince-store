@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint"

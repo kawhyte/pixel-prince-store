@@ -42,7 +42,7 @@ async function testSanity() {
         console.log(`\n${index + 1}. ${product.title}`)
         console.log(`   - ID: ${product.id}`)
         console.log(`   - Artist: ${product.artist}`)
-        console.log(`   - Sizes: ${product.sizes.length}`)
+        console.log(`   - Listing: ${product.listing} · offers: ${product.offers.length}`)
         console.log(`   - Tags: ${product.tags.join(', ')}`)
         console.log(`   - Preview Image: ${product.previewImage ? '✅' : '❌'}`)
       })

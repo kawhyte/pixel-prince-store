@@ -161,23 +161,20 @@ export default async function Home() {
               href={`/collections/${tile.slug}`}
               className="group relative block w-[270px] shrink-0 snap-start overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:w-[300px]"
             >
-              <div className="relative aspect-[4/5] bg-muted">
+              <div className="relative aspect-[4/5] bg-muted p-5">
                 <Image
                   src={tile.image}
                   alt={tile.label}
                   fill
                   sizes="300px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  className="object-contain p-1 transition-transform duration-300 group-hover:scale-[1.03]"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.45)_16%,rgba(0,0,0,0)_38%)]" />
               </div>
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                <span className="inline-block bg-white px-2 py-1 text-xs font-bold uppercase tracking-wide text-charcoal">
-                  {tile.label}
-                </span>
-                <p className="mt-1.5 flex items-start gap-1 text-[13px] leading-snug text-white">
+              <div className="bg-card px-4 py-3">
+                <span className="text-xs font-bold uppercase tracking-wide text-charcoal">{tile.label}</span>
+                <p className="mt-1 flex items-start gap-1 text-[13px] leading-snug text-soft-charcoal">
                   {tile.tagline}
-                  <ChevronRight className="mt-0.5 size-3.5 shrink-0" />
+                  <ChevronRight className="mt-0.5 size-3.5 shrink-0 text-sage-500" />
                 </p>
               </div>
             </Link>

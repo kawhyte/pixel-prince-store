@@ -26,8 +26,9 @@ export interface ContentBoxOptions {
 /**
  * Bounding box of everything that is not the background colour, padded by `marginPct` and
  * clamped to the image. The background is taken from the top-left pixel, which is what every
- * Fourthwall render has. Returns null when the image is entirely background, or when the
- * content already fills more than 92% of both sides so trimming would gain nothing.
+ * Fourthwall render has. Returns null when the picture is a photograph rather than a generated
+ * mockup (anything touching an edge), when the image is entirely background, or when the content
+ * already fills more than 92% of both sides so trimming would gain nothing.
  */
 export function contentBox(
   data: Uint8ClampedArray | number[],
@@ -37,6 +38,27 @@ export function contentBox(
 ): Box | null {
   if (width <= 0 || height <= 0 || data.length < 4) return null;
   const [br, bg, bb] = [data[0], data[1], data[2]];
+  const isBg = (i: number) =>
+    Math.abs(data[i] - br) <= tolerance && Math.abs(data[i + 1] - bg) <= tolerance && Math.abs(data[i + 2] - bb) <= tolerance;
+
+  // Only a generated mockup gets trimmed. Those float the product in the middle with a flat
+  // background on all four edges; a photograph has the wall, a surface or a prop running off
+  // the frame, so any edge that is not background means "leave this picture alone".
+  let edgeChecked = 0;
+  let edgeForeign = 0;
+  for (let x = 0; x < width; x += step) {
+    for (const y of [0, height - 1]) {
+      edgeChecked++;
+      if (!isBg((y * width + x) * 4)) edgeForeign++;
+    }
+  }
+  for (let y = 0; y < height; y += step) {
+    for (const x of [0, width - 1]) {
+      edgeChecked++;
+      if (!isBg((y * width + x) * 4)) edgeForeign++;
+    }
+  }
+  if (edgeChecked === 0 || edgeForeign / edgeChecked > 0.02) return null;
 
   let minX = width;
   let maxX = -1;
@@ -45,9 +67,7 @@ export function contentBox(
   for (let y = 0; y < height; y += step) {
     for (let x = 0; x < width; x += step) {
       const i = (y * width + x) * 4;
-      const isBackground =
-        Math.abs(data[i] - br) <= tolerance && Math.abs(data[i + 1] - bg) <= tolerance && Math.abs(data[i + 2] - bb) <= tolerance;
-      if (isBackground) continue;
+      if (isBg(i)) continue;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;

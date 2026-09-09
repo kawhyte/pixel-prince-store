@@ -6,7 +6,8 @@
  *   npx tsx scripts/import-fourthwall-products.ts --apply          create drafts + sync existing
  *   npx tsx scripts/import-fourthwall-products.ts --sync --apply   sync existing only, no new drafts
  *   add --include-test to also process products named "Test ..."
- *   add --remockup to re-upload mockups that are already set (after changing how they are trimmed)
+ *   add --remockup to re-upload the mockup and room photos of every offer, which is how new
+ *     photos added in Fourthwall reach the site
  *   add --no-trim to keep Fourthwall's wide dead margin around each mockup
  *
  * Naming convention: "Title", "Title | Framed", "Title | Canvas" are one artwork with three
@@ -77,6 +78,7 @@ interface ExistingOffer {
   provider?: string;
   finish?: string;
   version?: string;
+  hasGallery?: boolean;
   providerProductId?: string;
   hasMockup?: boolean;
 }
@@ -91,7 +93,7 @@ async function findExisting(artworkId: string, productIds: string[]): Promise<Ex
   return sanity.fetch<ExistingDoc[]>(
     `*[_type == "product" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0)]{
       _id, title, "galleryCount": count(galleryImages),
-      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
+      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset), "hasGallery": count(gallery) > 0 }
     }`,
     { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds }
   );
@@ -202,6 +204,18 @@ function offerLabel(fp: FinishProduct): string {
   return fp.version ? `${fp.version} ${fp.finish}` : fp.finish;
 }
 
+/** Room photos for one product: the renders after the first, which is already the mockup. */
+async function uploadOfferGallery(fp: FinishProduct) {
+  const extras = pickGalleryImages(fp.product);
+  const items = [];
+  for (const [i, img] of extras.entries()) {
+    const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
+    const assetId = await uploadImage(img.url, `${fp.product.slug ?? slugify(fp.product.name)}${suffix}-photo-${i + 1}.webp`, fp.product.name);
+    items.push({ _key: `fw-photo-${i + 1}`, ...imageRef(assetId), alt: `${fp.product.name}, photo ${i + 1}` });
+  }
+  return items;
+}
+
 async function buildOffer(fp: FinishProduct) {
   const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
   const mockupId = await uploadFirstImage(fp.product, suffix);
@@ -215,6 +229,7 @@ async function buildOffer(fp: FinishProduct) {
     providerProductId: fp.product.id,
     sizes: fp.sizes,
     ...(mockupId ? { mockup: imageRef(mockupId) } : {}),
+    gallery: await uploadOfferGallery(fp),
   };
 }
 
@@ -285,6 +300,10 @@ async function main() {
               const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
               const mockupId = await uploadFirstImage(fp.product, suffix);
               if (mockupId) patch[`offers[_key=="${offer._key}"].mockup`] = imageRef(mockupId);
+            }
+            if (!offer.hasGallery || remockup) {
+              const photos = await uploadOfferGallery(fp);
+              if (photos.length > 0) patch[`offers[_key=="${offer._key}"].gallery`] = photos;
             }
             await sanity.patch(doc._id).set(patch).commit();
           } else {

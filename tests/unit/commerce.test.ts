@@ -209,3 +209,21 @@ describe("offer imagery", () => {
     expect(versionImage({ ...framed, artUrl: undefined })).toBe("framed.png");
   });
 });
+
+describe("which version opens first", () => {
+  it("uses the artwork's default version, else the first offer", async () => {
+    const { resolveVersion, getActiveOffer } = await import("@/lib/commerce");
+    const row = [{ sizeId: "8x10", priceCents: 2500, providerVariantId: "v" }];
+    const bright = { provider: "fourthwall" as const, finish: "unframed" as const, version: "Bright", sizes: row };
+    const earth = { provider: "fourthwall" as const, finish: "unframed" as const, version: "Earth", sizes: row };
+    const art = { offers: [bright, earth] };
+
+    expect(resolveVersion(art)).toBe("Bright"); // offer order decides
+    expect(resolveVersion({ ...art, defaultVersion: "Earth" })).toBe("Earth");
+    expect(getActiveOffer({ ...art, defaultVersion: "Earth" })).toBe(earth);
+    // a default that is not on sale is ignored rather than blanking the page
+    expect(resolveVersion({ ...art, defaultVersion: "Sage" })).toBe("Bright");
+    // an explicit choice still wins over the default
+    expect(resolveVersion({ ...art, defaultVersion: "Earth" }, "Bright")).toBe("Bright");
+  });
+});

@@ -47,3 +47,18 @@ describe("contentBox", () => {
     expect(box).toEqual({ x: 40, y: 40, width: 20, height: 20 });
   });
 });
+
+describe("photographs are left alone", () => {
+  it("does not trim when the picture runs off an edge, the way a room photo does", () => {
+    // a print floating on a flat background: a generated mockup, safe to trim
+    expect(contentBox(canvas(100, 100, { x: 30, y: 30, width: 40, height: 40 }), 100, 100, { step: 1 })).not.toBeNull();
+
+    // the same print with a plant running off the bottom edge: a photograph, leave it
+    const photo = canvas(100, 100, { x: 30, y: 30, width: 40, height: 40 });
+    for (let y = 70; y < 100; y++) for (let x = 5; x < 25; x++) {
+      const i = (y * 100 + x) * 4;
+      photo[i] = 20; photo[i + 1] = 90; photo[i + 2] = 40;
+    }
+    expect(contentBox(photo, 100, 100, { step: 1 })).toBeNull();
+  });
+});

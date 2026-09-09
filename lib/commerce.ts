@@ -51,11 +51,18 @@ export function getVersions(art: WithOffers): { version: string; offer: PrintOff
   return out;
 }
 
-/** The version the page opens on: requested if on sale, else the first. Null when there are no versions. */
-export function resolveVersion(art: WithOffers, requested?: string | null): string | null {
+/**
+ * The version the page opens on: the one asked for, else the artwork's default version,
+ * else the first offer's. Null when the print has a single version.
+ */
+export function resolveVersion(art: WithOffers & { defaultVersion?: string }, requested?: string | null): string | null {
   const list = getVersions(art);
   if (list.length === 0) return null;
-  return list.find((x) => x.version === requested)?.version ?? list[0].version;
+  for (const candidate of [requested, art.defaultVersion]) {
+    const hit = list.find((x) => x.version === candidate);
+    if (hit) return hit.version;
+  }
+  return list[0].version;
 }
 
 /**
@@ -89,7 +96,7 @@ export function resolveFinish(
  * Without a finish: the resolved default finish's on-site offer, else the first active offer of any provider.
  */
 export function getActiveOffer(
-  art: WithOffers & { defaultFinish?: FinishId },
+  art: WithOffers & { defaultFinish?: FinishId; defaultVersion?: string },
   finish?: FinishId | null,
   version?: string | null,
 ): PrintOffer | null {

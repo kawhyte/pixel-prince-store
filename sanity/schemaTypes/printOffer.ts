@@ -72,6 +72,15 @@ export const printOffer = defineType({
       options: { hotspot: true },
     }),
     defineField({
+      name: 'gallery',
+      title: 'Room photos',
+      type: 'array',
+      description:
+        'Extra photos for this exact product, filled from Fourthwall by the import. Add them in Fourthwall under Photography and design and re-run the import with --remockup.',
+      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', type: 'string', title: 'Alt text' }] }],
+      options: { layout: 'grid' },
+    }),
+    defineField({
       name: 'active',
       title: 'Active',
       type: 'boolean',

@@ -50,10 +50,13 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   const activeFinish = resolveFinish(art, finish, activeVersion);
   const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
-  const roomPhotos = (art.galleryImages ?? []).slice(0, 3);
+  // Photos added to this exact product in Fourthwall come first, then anything on the artwork.
+  const offerPhotos = offer?.gallery ?? [];
+  const roomPhotos = [...offerPhotos, ...(art.galleryImages ?? [])].slice(0, 3);
   const slides = [
     { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
-    ...(art.galleryImages ?? []),
+    ...offerPhotos,
+    ...(offerPhotos.length > 0 ? [] : (art.galleryImages ?? [])),
     ...SHOP_GALLERY_EXTRAS,
   ];
   const category = art.category?.trim();

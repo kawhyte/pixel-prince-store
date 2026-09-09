@@ -47,6 +47,8 @@ export interface PrintOffer {
   mockupUrl?: string
   /** resolved by the projection from the `art` image: the artwork with no mockup around it */
   artUrl?: string
+  /** room photos for this exact product, resolved by the projection */
+  gallery?: { url: string; alt: string }[]
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -86,6 +88,7 @@ export interface SanityProduct {
   artFile?: ArtFile
   listing?: ArtworkListing
   kind?: ArtworkKind
+  defaultVersion?: string
   defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers?: PrintOffer[]
   tags?: string[]
@@ -110,6 +113,7 @@ export interface FreeArt {
   artFile?: ArtFile
   listing: ArtworkListing
   kind: ArtworkKind
+  defaultVersion?: string
   defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers: PrintOffer[]
   tags: string[]
@@ -145,8 +149,9 @@ const PRODUCT_PROJECTION = `
   artFile,
   listing,
   kind,
+  defaultVersion,
   defaultFinish,
-  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url },
+  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url, "gallery": gallery[]{ "url": asset->url, "alt": coalesce(alt, "") } },
   tags,
   category,
   downloads,
@@ -200,6 +205,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     artFile: product.artFile,
     listing: product.listing ?? 'free',
     kind: product.kind ?? 'single',
+    defaultVersion: product.defaultVersion,
     defaultFinish: product.defaultFinish,
     offers: product.offers ?? [],
     tags: product.tags || [],

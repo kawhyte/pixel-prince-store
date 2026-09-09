@@ -275,6 +275,15 @@ export const product = defineType({
         }),
     }),
     defineField({
+      name: 'defaultVersion',
+      title: 'Default version',
+      type: 'string',
+      description:
+        'Which version of the artwork the shop page opens on, typed exactly as it appears on the offer, e.g. Earth. Leave empty and the first version in the offers list wins.',
+      group: 'shop',
+      hidden: ({ document }) => !isShop(document),
+    }),
+    defineField({
       name: 'defaultFinish',
       title: 'Default finish',
       type: 'string',

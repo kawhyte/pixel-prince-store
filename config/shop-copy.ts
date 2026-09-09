@@ -59,3 +59,11 @@ export const SHOP_GALLERY_EXTRAS: { url: string; alt: string }[] = [
   { url: "/shop/size-guide.png", alt: "Size guide: the five print sizes shown to scale on a wall above a sofa" },
 ];
 
+/** Four-up trust strip under the buy area on shop pages. Icons are picked in the component by index. */
+export const SHOP_TRUST_STRIP = [
+  { label: "Free US shipping", sub: "on every order" },
+  { label: "Arrives in 5 to 11 days", sub: "printed to order" },
+  { label: "Damage guarantee", sub: "reprinted free" },
+  { label: "Secure checkout", sub: "card, Apple Pay, PayPal" },
+] as const;
+

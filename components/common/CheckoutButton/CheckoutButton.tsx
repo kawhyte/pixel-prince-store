@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ArrowUpRight, ShoppingBag } from "lucide-react";
 
 import type { FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, resolveCheckout, formatPrice, fromPriceCents } from "@/lib/commerce";
-import { getShopSize } from "@/config/commerce";
+import { getActiveOffer, orderedSizes, resolveCheckout, formatPrice, fromPriceCents, popularSizeId } from "@/lib/commerce";
+import { getShopSize, inchesLabel } from "@/config/commerce";
 import { SHOP_TRUST_LINE } from "@/config/shop-copy";
 import { trackCheckoutOpened } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -42,8 +42,8 @@ export default function CheckoutButton({
 }: CheckoutButtonProps) {
   const offer = getActiveOffer(art);
   const sizes = offer ? orderedSizes(offer) : [];
-  const defaultSize = sizes.find((s) => s.popular)?.sizeId ?? sizes[0]?.sizeId ?? null;
-  const [sizeId, setSizeId] = useState<string | null>(defaultSize);
+  const popular = popularSizeId(offer);
+  const [sizeId, setSizeId] = useState<string | null>(popular);
 
   if (!offer) return null;
 
@@ -85,7 +85,7 @@ export default function CheckoutButton({
         <div className="flex items-baseline gap-3">
           <span className="text-[28px] font-semibold text-charcoal">{priceText}</span>
           {selectedMeta && (
-            <span className="text-sm text-muted-foreground">{selectedMeta.label} · free US shipping</span>
+            <span className="text-sm text-muted-foreground">{inchesLabel(selectedMeta.id)} · free US shipping</span>
           )}
         </div>
       )}
@@ -109,9 +109,8 @@ export default function CheckoutButton({
             )}
           >
             {sizes.map((s) => {
-              const meta = getShopSize(s.sizeId);
               const active = s.sizeId === sizeId;
-              const shortLabel = (meta?.label ?? s.sizeId).replace("″", "");
+              const isPopular = s.sizeId === popular;
               return (
                 <label
                   key={s.sizeId}
@@ -133,9 +132,9 @@ export default function CheckoutButton({
                   />
                   {sizeLayout === "columns" ? (
                     <>
-                      <span className="font-semibold text-charcoal">{shortLabel}</span>
+                      <span className="font-semibold text-charcoal">{inchesLabel(s.sizeId)}</span>
                       <span className="text-xs text-muted-foreground">{formatPrice(s.priceCents)}</span>
-                      {s.popular && (
+                      {isPopular && (
                         <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-[4px] bg-sage-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                           Popular
                         </span>
@@ -143,9 +142,9 @@ export default function CheckoutButton({
                     </>
                   ) : (
                     <>
-                      <span className="font-medium text-charcoal">{meta?.label ?? s.sizeId}</span>
+                      <span className="font-medium text-charcoal">{inchesLabel(s.sizeId)}</span>
                       <span className="flex items-center gap-1.5">
-                        {s.popular && (
+                        {isPopular && (
                           <span className="rounded-md bg-sage-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sage-500">
                             Popular
                           </span>
@@ -169,7 +168,7 @@ export default function CheckoutButton({
       {stickyBar && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-cream/95 px-4 pb-5 pt-3 backdrop-blur-sm lg:hidden">
           <div className="flex flex-col leading-tight">
-            {selectedMeta && <span className="text-xs text-muted-foreground">{selectedMeta.label}</span>}
+            {selectedMeta && <span className="text-xs text-muted-foreground">{inchesLabel(selectedMeta.id)}</span>}
             <span className="text-lg font-semibold text-charcoal">{priceText}</span>
           </div>
           <div className="flex-1">{buyControl(true)}</div>

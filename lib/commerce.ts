@@ -2,6 +2,7 @@ import type { FreeArt, PrintOffer, ShopSizeOffer } from "@/sanity/lib/client";
 import {
   CHECKOUT_UTM,
   CURRENCY,
+  DEFAULT_POPULAR_SIZE,
   FOURTHWALL_CHECKOUT_DOMAIN,
   ON_SITE_PROVIDERS,
   PROVIDER_PRIORITY,
@@ -40,6 +41,20 @@ export function getOnSiteOffer(art: WithOffers): PrintOffer | null {
 export function orderedSizes(offer: PrintOffer): ShopSizeOffer[] {
   const rows = offer.sizes ?? [];
   return SHOP_SIZE_LADDER.flatMap((s) => rows.filter((r) => r.sizeId === s.id));
+}
+
+/**
+ * The size to tag Popular and preselect: the one flagged in Studio, else DEFAULT_POPULAR_SIZE
+ * when the offer has it, else the first ladder size. Null when the offer has no sizes.
+ */
+export function popularSizeId(offer: PrintOffer | null): string | null {
+  if (!offer) return null;
+  const rows = orderedSizes(offer);
+  if (rows.length === 0) return null;
+  const flagged = rows.find((s) => s.popular);
+  if (flagged) return flagged.sizeId;
+  if (rows.some((s) => s.sizeId === DEFAULT_POPULAR_SIZE)) return DEFAULT_POPULAR_SIZE;
+  return rows[0].sizeId;
 }
 
 export function fromPriceCents(offer: PrintOffer | null): number | null {

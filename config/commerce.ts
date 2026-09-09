@@ -40,6 +40,15 @@ export const DEFAULT_PRICE_CENTS: Record<string, number> = {
   "24x36": 4999,
 };
 
+/** Size marked Popular (and preselected) when a print has none flagged in Studio. Kenny's pick: 18x24. */
+export const DEFAULT_POPULAR_SIZE = "18x24";
+
+/** '18x24' -> '18″ × 24″': inches spelled out for the size picker. */
+export function inchesLabel(id: string): string {
+  const m = id.match(/^(\d+)x(\d+)$/);
+  return m ? `${m[1]}″ × ${m[2]}″` : id;
+}
+
 export function getShopSize(id: string): ShopSize | undefined {
   return SHOP_SIZE_LADDER.find((s) => s.id === id);
 }

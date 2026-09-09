@@ -11,7 +11,9 @@ import {
   priceRangeCents,
   cardCommerce,
   isNewPrint,
+  popularSizeId,
 } from "@/lib/commerce";
+import { inchesLabel } from "@/config/commerce";
 import type { PrintOffer } from "@/sanity/lib/client";
 
 const fw: PrintOffer = {
@@ -96,6 +98,23 @@ describe("isNewPrint", () => {
     expect(isNewPrint("2026-07-01T00:00:00Z", 30, now)).toBe(false);
     expect(isNewPrint(undefined, 30, now)).toBe(false);
     expect(isNewPrint("nope", 30, now)).toBe(false);
+  });
+});
+
+describe("popularSizeId + inchesLabel", () => {
+  it("prefers the Studio flag, then 18x24, then the first size", () => {
+    expect(popularSizeId(fw)).toBe("8x10"); // fw fixture flags 8x10
+    const noFlag: PrintOffer = { provider: "fourthwall", sizes: [
+      { sizeId: "8x10", priceCents: 2399 }, { sizeId: "18x24", priceCents: 3999 }, { sizeId: "24x36", priceCents: 4999 },
+    ] };
+    expect(popularSizeId(noFlag)).toBe("18x24");
+    const small: PrintOffer = { provider: "fourthwall", sizes: [{ sizeId: "11x14", priceCents: 2999 }, { sizeId: "8x10", priceCents: 2399 }] };
+    expect(popularSizeId(small)).toBe("8x10"); // ladder order, no 18x24 available
+    expect(popularSizeId(etsy)).toBeNull();
+  });
+  it("spells inches out", () => {
+    expect(inchesLabel("18x24")).toBe("18″ × 24″");
+    expect(inchesLabel("odd")).toBe("odd");
   });
 });
 

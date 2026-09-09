@@ -7,14 +7,14 @@
 
 export const SHOP_FEATURES = [
   { title: "Museum-quality matte paper", body: "189 gsm enhanced matte, glare-free, archival inks." },
-  { title: "Printed to order, shipped flat or in a tube", body: "Made in the USA, ships in 2 to 5 business days." },
+  { title: "Printed to order, shipped flat or in a tube", body: "Made in the USA, arrives in 5 to 11 days." },
   { title: "Damage guarantee", body: "Arrives bent or damaged? Send a photo, we reprint it free." },
 ] as const;
 
 export const SHOP_SHIPPING_FAQ = [
   {
     q: "How long does delivery take?",
-    a: "Printing takes 2 to 5 business days, then 3 to 6 business days in transit inside the US. You get tracking by email.",
+    a: "Orders arrive within 5 to 11 days of being placed, printing included, anywhere in the US. You get tracking by email.",
   },
   { q: "Do you ship outside the US?", a: "Not yet. US addresses only for now." },
   {
@@ -37,4 +37,4 @@ export const SHOP_SIZE_GUIDE: Record<string, string> = {
   "24x36": "Statement piece for a large wall",
 };
 
-export const SHOP_TRUST_LINE = "Secure checkout · Free US shipping · Ships in 3 to 6 days";
+export const SHOP_TRUST_LINE = "Secure checkout · Free US shipping · Arrives in 5 to 11 days";

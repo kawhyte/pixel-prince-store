@@ -173,3 +173,12 @@ Needs `SANITY_API_WRITE_TOKEN` (or `SANITY_API_TOKEN`) in `.env.local`. Patches 
 
 One-off: sets `listing: "free"` on every artwork that predates the free/shop switch. Dry run by default; `--apply` writes. Same token rules as above.
 
+### `fourthwall-ids.ts` (PLAN-36)
+
+Lists every public Fourthwall product with its product id and one variant id per size, ready to paste into Studio (Artwork > tab 4 Shop > Print offers). Read-only.
+
+    npx tsx scripts/fourthwall-ids.ts          # table
+    npx tsx scripts/fourthwall-ids.ts --json   # raw API output
+
+Needs `FOURTHWALL_STOREFRONT_TOKEN` in `.env.local` (Fourthwall admin > Settings > For Developers > Storefront API). Reads `/v1/collections/all/products`; the bare `/v1/products` endpoint is 404.
+

@@ -38,12 +38,27 @@ export default async function Home() {
   const heroItems = shopPrints.length > 0 ? shopPrints : freePrints;
   const freeGrid = freePrints.slice(0, 4);
 
-  const tiles = TILE_SLUGS.map(({ slug, label }) => {
+  // A tile shows a print from its own collection or nothing: borrowing an unrelated print
+  // put the same image on all three tiles while the shop held one print.
+  const usedTileImages = new Set<string>();
+  const tiles = TILE_SLUGS.flatMap(({ slug, label }) => {
     const collection = COLLECTIONS.find((c) => c.slug === slug)!;
-    const match =
-      matchProductsToCollection(shopPrints, collection)[0] ?? matchProductsToCollection(freePrints, collection)[0];
-    return { slug, label, image: match?.previewImage ?? heroItems[0]?.previewImage ?? null };
+    const candidates = [...matchProductsToCollection(shopPrints, collection), ...matchProductsToCollection(freePrints, collection)];
+    const match = candidates.find((c) => c.previewImage && !usedTileImages.has(c.previewImage));
+    if (!match?.previewImage) return [];
+    usedTileImages.add(match.previewImage);
+    return [{ slug, label, image: match.previewImage }];
   });
+
+  // Rows are built for four cards. With fewer, widen them instead of leaving holes.
+  const rowClass = (count: number) =>
+    count >= 4
+      ? "mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4"
+      : count === 3
+        ? "mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+        : count === 2
+          ? "mt-8 grid max-w-3xl gap-6 sm:grid-cols-2 md:gap-8"
+          : "mt-8 grid max-w-sm gap-6";
 
   return (
     <main className="min-h-screen">
@@ -85,13 +100,14 @@ export default async function Home() {
             Shop all prints <ArrowRight className="size-4" />
           </Link>
         </div>
+        <p className="mt-2 max-w-2xl text-soft-charcoal">{bestSellers.length > 1 ? "The ones that leave the studio most often." : "The first of the printed range, with more landing every week."}</p>
         {bestSellers.length === 0 ? (
           <div className="mt-8 rounded-md border border-border bg-card p-10 text-center">
             <p className="text-lg text-charcoal">The first printed prints are arriving soon.</p>
             <p className="mt-2 text-sm text-soft-charcoal">Until then, every print in the free library costs nothing.</p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <div className={rowClass(bestSellers.length)}>
             {bestSellers.map((art) => {
               const card = cardCommerce(art);
               return (
@@ -137,21 +153,19 @@ export default async function Home() {
       </section>
 
       {/* 5. Collections */}
+      {tiles.length > 1 && (
       <section className="container mx-auto px-4 py-14 lg:py-20">
         <Eyebrow>Explore</Eyebrow>
         <h2 className="mt-2 text-[28px] font-semibold tracking-tight text-charcoal">Find your wall</h2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+        <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in, or the thing you love.</p>
+        <div className={`mt-8 grid gap-6 ${tiles.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           {tiles.map((tile) => (
             <Link
               key={tile.slug}
               href={`/collections/${tile.slug}`}
               className="group relative block aspect-[4/3] overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover"
             >
-              {tile.image ? (
-                <Image src={tile.image} alt={tile.label} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 bg-secondary" />
-              )}
+              <Image src={tile.image} alt={tile.label} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
               <div className="absolute inset-x-0 bottom-0 bg-white/95 px-4 py-3">
                 <p className="truncate text-sm font-medium text-charcoal">{tile.label}</p>
                 <span className="mt-0.5 flex items-center text-sm font-semibold text-sage-500">
@@ -163,6 +177,7 @@ export default async function Home() {
           ))}
         </div>
       </section>
+      )}
 
       {/* 6. Reviews */}
       <section className="border-y border-border bg-card py-14 lg:py-20">

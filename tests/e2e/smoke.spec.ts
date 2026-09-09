@@ -17,7 +17,14 @@ test("home page renders nav and free-downloads link", async ({ page }) => {
   await expect(page.locator('main a[href="/prints"]').first()).toBeVisible(); // hero CTA "Shop all prints"
   await expect(page.locator('input[type="email"]').first()).toBeVisible();
   await expect(page.getByText("7,000+ prints shipped").first()).toBeVisible(); // trust strip (footer repeats it)
-  await expect(page.locator('main a[href^="/collections/"]')).toHaveCount(3); // the three tiles
+  // Collection tiles: only collections with art of their own are shown, and no image repeats,
+  // so the count moves with the catalogue rather than being fixed at three.
+  const tiles = page.locator('main a[href^="/collections/"]');
+  const tileCount = await tiles.count();
+  expect(tileCount).toBeGreaterThanOrEqual(2);
+  expect(tileCount).toBeLessThanOrEqual(3);
+  const tileImages = await tiles.locator("img").evaluateAll((els) => els.map((e) => (e as HTMLImageElement).currentSrc));
+  expect(new Set(tileImages).size).toBe(tileImages.length);
   await expect(page.getByRole("heading", { name: /What buyers say/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /A free print every month/i })).toBeVisible();
 });

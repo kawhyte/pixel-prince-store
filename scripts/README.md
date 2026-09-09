@@ -84,3 +84,13 @@ Creates one Sanity **draft** shop print per public Fourthwall product (title, sl
 
 Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`. Pure mapping helpers live in `lib/fourthwall-import.ts` (unit-tested). Exits with code 2 when a product has no ladder sizes under `--apply`.
 
+### `fourthwall-create-products.ts` (PLAN-47)
+
+Turns a folder of print files into Fourthwall products: uploads each master to the media library and creates `Title` (Enhanced Matte Paper Poster) and `Title | Framed` (Framed High-Quality Matte Poster, black frame) with the five ladder sizes and one margin per finish. Created hidden unless `--publish`. Canvas cannot be created through the API; the script prints a dashboard reminder per title. Existing names are skipped.
+
+    npx tsx scripts/fourthwall-create-products.ts --dir ./masters                  # dry run
+    npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply          # create, hidden
+    npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply --margin-poster 18 --margin-framed 30 --frame Black --only "Sweden Map"
+
+Needs `FOURTHWALL_API_USER` and `FOURTHWALL_API_PASSWORD` in `.env.local` (Fourthwall admin > Settings > For Developers > Create API User). Full-access credentials: keep them out of Vercel.
+

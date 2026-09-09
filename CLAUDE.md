@@ -151,6 +151,13 @@ FOURTHWALL_WEBHOOK_SECRET=<from the Fourthwall webhook settings>
 NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN=ptkn_...
 ```
 
+**Scripts only, never in Vercel (full shop access):**
+```bash
+FOURTHWALL_STOREFRONT_TOKEN=ptkn_...   # read products for the import
+FOURTHWALL_API_USER=...                # Platform API user (Settings > For Developers > Create API User), PLAN-47 product creation
+FOURTHWALL_API_PASSWORD=...
+```
+
 **Development Only:**
 ```bash
 # Bypass the email gate/token requirement for testing (?artId=<slug> works directly)
@@ -248,6 +255,7 @@ This provides:
 - `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
 - Display prices are refreshed from Fourthwall by `scripts/import-fourthwall-products.ts --sync --apply` (PLAN-40); never edit `priceCents` by hand when a Fourthwall offer exists. New shop prints are imported as drafts by the same script.
 - Buy buttons go through `CheckoutButton` and `resolveCheckout()`; never build a checkout URL in a component.
+- Product creation (PLAN-47): `scripts/fourthwall-create-products.ts` makes poster + framed products from a masters folder through the Platform API (`lib/fourthwall-platform.ts`); canvas is dashboard-only (backend rendering unsupported). Hidden until published.
 - Finishes (PLAN-46): one `printOffer` per provider **and finish** (`unframed` | `framed` | `canvas`); each is its own Fourthwall product named `Title | Framed` / `Title | Canvas`; the import groups by base title. `getActiveOffer(art, finish)` / `resolveFinish(art)` / `getOffersByFinish(art)` in `lib/commerce.ts`; cards use `fromPriceAcrossFinishes`. The page owns the finish state so the gallery follows it.
 - Cart (PLAN-45): `components/common/Cart/*` + `lib/fourthwall-cart.ts`. Fourthwall owns the cart; only its id is stored (`localStorage` `pp_cart_id`). With `NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN` + checkout domain set, `CheckoutButton` shows Add to cart + a Buy now link; otherwise it falls back to the direct checkout link and the bag is hidden. Fourthwall link: `https://<domain>/cart/checkout?products=<variantUUID>:1&currency=USD&utm_*`
 - Free downloads are unchanged and never routed through a provider

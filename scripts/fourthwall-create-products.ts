@@ -1,0 +1,140 @@
+/**
+ * Create Fourthwall products from a folder of print files (PLAN-47).
+ *
+ *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters                 dry run
+ *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply         upload + create (hidden)
+ *   options: --margin-poster 18  --margin-framed 30  --frame Black|"Red Oak"|White  --publish  --only "Sweden Map"
+ *
+ * Per file (title = file name without extension): one media upload, then the unframed poster
+ * ("Title") and the framed poster ("Title | Framed"). Canvas cannot be created through the API;
+ * the script prints a reminder per title. Existing names are skipped, so re-runs are safe.
+ *
+ * Needs FOURTHWALL_API_USER and FOURTHWALL_API_PASSWORD in .env.local (Settings > For Developers,
+ * Create API User). Full-access credentials: never NEXT_PUBLIC_, never in Vercel.
+ */
+import { config } from "dotenv";
+import { readdirSync, readFileSync } from "fs";
+import { resolve, join } from "path";
+import {
+  createDesignProduct,
+  createPlatformClient,
+  dimsWarning,
+  listAllProducts,
+  productName,
+  readImageDims,
+  titleFromFilename,
+  uploadMedia,
+  FRAME_COLORS,
+  PlatformError,
+} from "../lib/fourthwall-platform";
+
+config({ path: resolve(__dirname, "../.env.local") });
+
+const args = process.argv.slice(2);
+const flag = (name: string) => args.includes(name);
+const opt = (name: string, fallback?: string) => {
+  const i = args.indexOf(name);
+  return i >= 0 && args[i + 1] !== undefined ? args[i + 1] : fallback;
+};
+
+const dir = opt("--dir");
+if (!dir) throw new Error("--dir <folder of masters> is required");
+const apply = flag("--apply");
+const publish = flag("--publish");
+const only = opt("--only");
+const marginPoster = Number(opt("--margin-poster", "18"));
+const marginFramed = Number(opt("--margin-framed", "30"));
+const frameColor = (opt("--frame", "Black") as (typeof FRAME_COLORS)[number]) ?? "Black";
+if (!FRAME_COLORS.includes(frameColor)) throw new Error(`--frame must be one of ${FRAME_COLORS.join(", ")}`);
+
+const user = process.env.FOURTHWALL_API_USER;
+const password = process.env.FOURTHWALL_API_PASSWORD;
+if (!user || !password) throw new Error("FOURTHWALL_API_USER / FOURTHWALL_API_PASSWORD missing in .env.local");
+
+const client = createPlatformClient(user, password);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function main() {
+  const files = readdirSync(resolve(dir!))
+    .filter((f) => /\.(png|jpe?g)$/i.test(f))
+    .sort();
+  if (files.length === 0) {
+    console.log(`No .png or .jpg masters in ${dir}`);
+    return;
+  }
+  const existing = new Set((await listAllProducts(client)).filter((p) => p.access?.type !== "ARCHIVED").map((p) => p.name));
+
+  const summary = { created: 0, skipped: 0, failed: 0 };
+  for (const file of files) {
+    const title = titleFromFilename(file);
+    if (only && title !== only) continue;
+    const bytes = new Uint8Array(readFileSync(join(resolve(dir!), file)));
+    const dims = readImageDims(bytes);
+    if (!dims) {
+      console.error(`skip   ${file}: not a PNG or JPEG`);
+      summary.failed++;
+      continue;
+    }
+    const warn = dimsWarning(dims);
+    if (warn) console.warn(`warn   ${title}: ${warn}`);
+
+    const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f)));
+    for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f)))) {
+      console.log(`skip   ${productName(title, f)} (exists)`);
+      summary.skipped++;
+    }
+    if (todo.length === 0) {
+      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+      continue;
+    }
+
+    console.log(
+      `${apply ? "create" : "would create"} ${title} (${dims.width}×${dims.height}): ${todo.map((f) => productName(title, f)).join(", ")}` +
+        ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColor})${publish ? " | PUBLISH" : " | hidden"}`
+    );
+    if (!apply) {
+      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+      continue;
+    }
+
+    try {
+      const imageId = await uploadMedia(client, bytes, file, dims);
+      for (const finish of todo) {
+        try {
+          const created = await createDesignProduct(client, {
+            finish,
+            title,
+            imageId,
+            marginUsd: finish === "poster" ? marginPoster : marginFramed,
+            frameColor,
+            publish,
+          });
+          console.log(`ok     ${productName(title, finish)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
+          summary.created++;
+          existing.add(productName(title, finish));
+        } catch (e) {
+          const msg = e instanceof PlatformError ? `${e.status} ${e.body}` : String(e);
+          console.error(`fail   ${productName(title, finish)}: ${msg}`);
+          summary.failed++;
+        }
+        await sleep(500);
+      }
+    } catch (e) {
+      const msg = e instanceof PlatformError ? `${e.status} ${e.body}` : String(e);
+      console.error(`fail   ${title}: upload ${msg}`);
+      summary.failed++;
+    }
+    console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+  }
+
+  console.log(`\n${summary.created} created, ${summary.skipped} skipped, ${summary.failed} failed${apply ? "" : " (dry run; add --apply to write)"}.`);
+  if (apply && summary.created > 0) {
+    console.log(`Next: review + publish them in Fourthwall (Products), create the canvas versions, then run\n  npx tsx scripts/import-fourthwall-products.ts --apply`);
+  }
+  if (summary.failed > 0) process.exit(2);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

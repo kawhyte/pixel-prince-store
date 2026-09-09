@@ -88,6 +88,28 @@ Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`
 
 Versions of the same artwork (PLAN-48) are separate files named `Title (Version).png`; they become `Title (Version)` and `Title (Version) | Framed`, and the import folds them into one artwork with a version picker.
 
+**Folder layout.** `--dir` is walked recursively, so file the art however you like. Folders starting with `.` or `_` are skipped, which makes `_done/` a place to park art that is already live:
+
+```
+masters/
+  maps/
+    Brooklyn Neighborhood Map (Earth).png
+    Brooklyn Neighborhood Map (Bright).png
+  video-games/
+    Hyrule Map.png
+  _done/            # already on the shop, ignored by the script
+```
+
+The folder names are for you only. The shop title comes from the file name and the category is set in Studio.
+
+**Every master must be 4:5.** One image serves all five sizes and Fourthwall scales it to fill, cropping the overflow. The ladder runs from 4:5 (8x10) down to 2:3 (24x36), so a 4:5 master is only ever cropped on the sides, never top and bottom, and at most 8.3% per side. Art that is not 4:5 gets its title or edges cut on the small sizes. Pad a 2:3 file with its own background colour instead of rescaling it:
+
+```
+sips -s format png --padToHeightWidth 10800 8640 --padColor F5F0E8 in.png --out "Title (Version).png"
+```
+
+That gives 8640x10800, which is still 300 dpi at 24x36 after the crop. Use the artwork's real background colour, sampled from a corner, or the seam shows.
+
 Turns a folder of print files into Fourthwall products: uploads each master to the media library and creates `Title` (Enhanced Matte Paper Poster) and `Title | Framed` (Framed High-Quality Matte Poster in Black, Red Oak and White, `--frames` to narrow) with the five ladder sizes and one margin per finish. Created hidden unless `--publish`; a hidden product is published later with `setProductAccess` in `lib/fourthwall-platform.ts` (PUT `/products/{id}/state`) or in the dashboard. The storefront's product listing is cached for 60 seconds, so run the import a minute after publishing. The import keeps the Black variant per size. Canvas cannot be created through the API; the script prints a dashboard reminder per title. Existing names are skipped.
 
     npx tsx scripts/fourthwall-create-products.ts --dir ./masters                  # dry run

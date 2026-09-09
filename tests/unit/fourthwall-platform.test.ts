@@ -89,3 +89,26 @@ describe("fourthwall platform helpers", () => {
     await expect(client.post("/products", {})).rejects.toMatchObject({ status: 400 });
   });
 });
+
+describe("masters folder", () => {
+  it("walks subfolders, skips dot and underscore folders, and keeps art files only", async () => {
+    const { listMasterFiles } = await import("@/lib/fourthwall-platform");
+    const dir = (name: string) => ({ name, isDirectory: () => true });
+    const file = (name: string) => ({ name, isDirectory: () => false });
+    const tree: Record<string, { name: string; isDirectory(): boolean }[]> = {
+      "/m": [dir("maps"), dir("_done"), dir(".git"), file("Loose Print.png"), file("notes.txt")],
+      "/m/maps": [file("Brooklyn (Earth).png"), file("Brooklyn (Bright).jpg"), dir("wip")],
+      "/m/maps/wip": [file("Queens.png")],
+      "/m/_done": [file("Sold Out.png")],
+      "/m/.git": [file("nope.png")],
+    };
+    const got = listMasterFiles("/m", (d) => tree[d] ?? []);
+    expect(got.map((m) => m.path)).toEqual([
+      "Loose Print.png",
+      "maps/Brooklyn (Bright).jpg",
+      "maps/Brooklyn (Earth).png",
+      "maps/wip/Queens.png",
+    ]);
+    expect(got.find((m) => m.file === "Queens.png")?.group).toBe("maps/wip");
+  });
+});

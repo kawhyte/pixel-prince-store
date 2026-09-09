@@ -80,6 +80,45 @@ export function dimsWarning(d: ImageDims): string | null {
   return null;
 }
 
+export interface MasterDirEntry {
+  name: string;
+  isDirectory(): boolean;
+}
+
+export interface MasterFile {
+  /** path relative to the masters root, e.g. "maps/Brooklyn (Earth).png" */
+  path: string;
+  /** file name only, the artwork title plus version */
+  file: string;
+  /** subfolder it came from, "" at the root. Organisation only: the shop reads none of it. */
+  group: string;
+}
+
+/**
+ * Print files under a masters folder, walked recursively so art can be filed by type
+ * ("maps/", "video-games/"). Folders starting with "." or "_" are skipped, so "_done/"
+ * is a place to move art that is already live. Sorted by path for stable runs.
+ */
+export function listMasterFiles(
+  dir: string,
+  read: (d: string) => MasterDirEntry[],
+  group = "",
+  depth = 0,
+): MasterFile[] {
+  if (depth > 4) return [];
+  const out: MasterFile[] = [];
+  for (const entry of read(dir)) {
+    if (entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
+    const path = group ? `${group}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      out.push(...listMasterFiles(`${dir}/${entry.name}`, read, path, depth + 1));
+    } else if (/\.(png|jpe?g)$/i.test(entry.name)) {
+      out.push({ path, file: entry.name, group });
+    }
+  }
+  return out.sort((a, b) => a.path.localeCompare(b.path));
+}
+
 export interface PlatformClient {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;

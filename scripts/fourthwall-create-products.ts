@@ -18,6 +18,7 @@ import { resolve, join } from "path";
 import {
   createDesignProduct,
   createPlatformClient,
+  listMasterFiles,
   dimsWarning,
   listAllProducts,
   productName,
@@ -55,23 +56,23 @@ const client = createPlatformClient(user, password);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  const files = readdirSync(resolve(dir!))
-    .filter((f) => /\.(png|jpe?g)$/i.test(f))
-    .sort();
-  if (files.length === 0) {
-    console.log(`No .png or .jpg masters in ${dir}`);
+  const root = resolve(dir!);
+  const masters = listMasterFiles(root, (d) => readdirSync(d, { withFileTypes: true }));
+  if (masters.length === 0) {
+    console.log(`No .png or .jpg masters in ${dir} (subfolders are searched; "." and "_" folders are skipped)`);
     return;
   }
   const existing = new Set((await listAllProducts(client)).filter((p) => p.access?.type !== "ARCHIVED").map((p) => p.name));
 
   const summary = { created: 0, skipped: 0, failed: 0 };
-  for (const file of files) {
+  for (const master of masters) {
+    const file = master.file;
     const title = titleFromFilename(file);
     if (only && title !== only) continue;
-    const bytes = new Uint8Array(readFileSync(join(resolve(dir!), file)));
+    const bytes = new Uint8Array(readFileSync(join(root, master.path)));
     const dims = readImageDims(bytes);
     if (!dims) {
-      console.error(`skip   ${file}: not a PNG or JPEG`);
+      console.error(`skip   ${master.path}: not a PNG or JPEG`);
       summary.failed++;
       continue;
     }

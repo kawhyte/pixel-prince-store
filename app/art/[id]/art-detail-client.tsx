@@ -2,28 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, FileDown, CheckCircle2, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Download, FileDown, CheckCircle2, ArrowRight } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
 import { getCardAspectClass } from "@/lib/image-utils";
 import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import EmailGateDialog from "@/components/common/EmailGateDialog/EmailGateDialog";
-import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import { LICENSE_SUMMARY } from "@/config/license";
-import { etsyUrl } from "@/config/links";
-import { resolveEtsyLinks } from "@/config/etsy-categories";
+import { getActiveOffer, fromPriceCents, formatPrice } from "@/lib/commerce";
 import { PRINT_SIZES, deriveRatio } from "@/config/print-sizes";
 
 interface ArtDetailClientProps {
   art: FreeArt;
   relatedArt: FreeArt[];
+  /** Shop prints in the same category, for the cross-sell card (always last, PLAN-25). */
+  shopPrints?: FreeArt[];
 }
 
-export default function ArtDetailClient({ art, relatedArt }: ArtDetailClientProps) {
+export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: ArtDetailClientProps) {
   const [gateOpen, setGateOpen] = useState(false);
-  const etsyLinks = resolveEtsyLinks(art);
 
   const ratio = art.artFile?.width && art.artFile?.height
     ? deriveRatio(art.artFile.width, art.artFile.height)
@@ -150,18 +150,41 @@ export default function ArtDetailClient({ art, relatedArt }: ArtDetailClientProp
               </p>
             </div>
 
-            {/* Etsy cross-sell - single quiet card, last */}
-            <div className="space-y-3 rounded-md border border-border bg-card p-5">
-              <p className="text-sm text-charcoal">
-                Prefer framed or canvas art, ready to hang? Browse the Etsy shop.
-              </p>
-              <EtsyLink
-                href={etsyUrl(etsyLinks.printed, `art-${art.id}`)}
+            {/* Shop cross-sell - single quiet card, always last (PLAN-25) */}
+            <div className="space-y-4 rounded-md border border-border bg-card p-5">
+              <h3 className="font-semibold text-charcoal">Want it printed and shipped?</h3>
+              {shopPrints.length > 0 ? (
+                <ul className="divide-y divide-border">
+                  {shopPrints.slice(0, 3).map((item) => {
+                    const from = fromPriceCents(getActiveOffer(item));
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          href={`/prints/${item.id}`}
+                          className="flex items-center gap-3 py-3 transition-colors hover:text-sage-500"
+                        >
+                          <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+                            <Image src={item.previewImage} alt={item.title} fill className="object-cover" sizes="56px" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-charcoal">{item.title}</span>
+                          {from !== null && (
+                            <span className="shrink-0 text-sm text-soft-charcoal">From {formatPrice(from)}</span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-sm text-soft-charcoal">Printed prints are arriving soon.</p>
+              )}
+              <Link
+                href="/prints"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-charcoal px-5 text-sm font-semibold text-charcoal transition-all hover:bg-charcoal hover:text-cream"
               >
-                Browse Etsy shop
-                <ArrowUpRight className="size-5" />
-              </EtsyLink>
+                Browse the prints
+                <ArrowRight className="size-5" />
+              </Link>
             </div>
 
           </div>

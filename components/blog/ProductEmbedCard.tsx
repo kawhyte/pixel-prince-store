@@ -1,9 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { etsyUrl } from "@/config/links";
-import { resolveEtsyLinks } from "@/config/etsy-categories";
 import type { EmbeddedProduct } from "@/sanity/lib/blog";
-import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
+import { cardCommerce } from "@/lib/commerce";
 
 interface ProductEmbedCardProps {
   product: EmbeddedProduct | null;
@@ -13,7 +11,8 @@ interface ProductEmbedCardProps {
 export default function ProductEmbedCard({ product, note }: ProductEmbedCardProps) {
   if (!product) return null;
 
-  const etsyLinks = resolveEtsyLinks(product);
+  const card = cardCommerce({ id: product.slug, listing: product.listing ?? "free", offers: product.offers ?? [] });
+  const isShop = product.listing === "shop";
 
   return (
     <div className="my-8 flex gap-4 rounded-md border border-border bg-card p-4">
@@ -33,18 +32,20 @@ export default function ProductEmbedCard({ product, note }: ProductEmbedCardProp
         {note && <p className="text-sm text-soft-charcoal">{note}</p>}
         <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-          <Link
-            href={`/art/${product.slug}`}
-            className="text-sm font-medium text-sage-600 hover:text-sage-700"
-          >
-            Free download
-          </Link>
-          <EtsyLink
-            href={etsyUrl(etsyLinks.printed, "blog-embed")}
-            className="text-sm font-medium text-sage-600 hover:text-sage-700"
-          >
-            {etsyLinks.styleLabel ? `Shop ${etsyLinks.styleLabel} prints →` : "Shop prints →"}
-          </EtsyLink>
+          {isShop ? (
+            <Link href={card.href} className="text-sm font-medium text-sage-600 hover:text-sage-700">
+              {card.value ? `Buy the print, ${card.value.toLowerCase()}` : "See the print"}
+            </Link>
+          ) : (
+            <>
+              <Link href={card.href} className="text-sm font-medium text-sage-600 hover:text-sage-700">
+                Free download
+              </Link>
+              <Link href="/prints" className="text-sm font-medium text-sage-600 hover:text-sage-700">
+                Browse the prints
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

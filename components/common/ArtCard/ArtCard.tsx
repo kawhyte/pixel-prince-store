@@ -11,7 +11,7 @@ import type { ImageOrientation } from "@/lib/image-utils";
  * Full-bleed artwork at a fixed aspect (no colored mats), a one-line truncated
  * title and quiet category below, one <Link> wrapping the card body.
  * Optional `footer` renders a sibling interactive slot OUTSIDE the link
- * (collections' Etsy CTA) so we never nest anchors.
+ * (e.g. a secondary link) so we never nest anchors.
  */
 
 /** Minimal art shape every caller can satisfy. */

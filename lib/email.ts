@@ -34,7 +34,7 @@ export const emailProvider: EmailProvider = {
       bodyHtml: `
         <p style="margin:0 0 12px 0;"><strong>${safeTitle}</strong> is waiting for you.</p>
         <p style="margin:0 0 12px 0;font-size:13px;color:#6b6b6b;">This link works for 72 hours. Personal use only, see the license note included with your file.</p>
-        <p style="margin:0;font-size:13px;color:#6b6b6b;"><a href="https://thepixelprince.etsy.com?utm_source=pixelprince&utm_medium=email&utm_campaign=download" style="color:#4a7bc7;">Printed versions on Etsy</a></p>`,
+        <p style="margin:0;font-size:13px;color:#6b6b6b;"><a href="https://www.thepixelprince.com/prints?utm_source=pixelprince&utm_medium=email&utm_campaign=download" style="color:#4a7bc7;">Printed prints, shipped free in the US</a></p>`,
       cta: { label: "Download your print", url: downloadUrl },
     });
     await resendClient().emails.send({
@@ -53,8 +53,7 @@ export const emailProvider: EmailProvider = {
         <p style="margin:0 0 12px 0;">I design retro gaming and map wall art. Every piece drawn by an actual human.</p>
         <p style="margin:0 0 12px 0;">Here's the deal: <strong>one email a month</strong> with a brand-new free print, plus whatever's new in the shop. That's it. No spam.</p>
         <p style="margin:0;">
-          <a href="https://thepixelprince.etsy.com?utm_source=pixelprince&utm_medium=email&utm_campaign=welcome" style="color:#4a7bc7;">Browse printed prints</a> ·
-          <a href="https://pixelprinceprintable.etsy.com?utm_source=pixelprince&utm_medium=email&utm_campaign=welcome" style="color:#4a7bc7;">Printable bundles</a>
+          <a href="https://www.thepixelprince.com/prints?utm_source=pixelprince&utm_medium=email&utm_campaign=welcome" style="color:#4a7bc7;">Browse the prints</a>
         </p>`,
     });
     await resendClient().emails.send({

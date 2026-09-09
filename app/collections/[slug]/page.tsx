@@ -1,16 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Frame } from "lucide-react";
-
-import { getAllProducts } from "@/sanity/lib/client";
+import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
+import { cardCommerce } from "@/lib/commerce";
 import { generateMetadata as seoMeta } from "@/lib/seo";
-import { etsyUrl } from "@/config/links";
-import { resolveEtsyLinks } from "@/config/etsy-categories";
 import { COLLECTIONS, getCollection, matchProductsToCollection } from "@/config/collections";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
-import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 
 export const revalidate = 3600;
@@ -40,8 +36,12 @@ export default async function CollectionPage({ params }: PageProps) {
   const collection = getCollection(slug);
   if (!collection) notFound();
 
-  const products = await getAllProducts();
-  const matchedProducts = matchProductsToCollection(products, collection);
+  const [products, shopPrints] = await Promise.all([getAllProducts(), getShopPrints()]);
+  // Shop prints first, then the free library.
+  const matchedProducts = [
+    ...matchProductsToCollection(shopPrints, collection),
+    ...matchProductsToCollection(products, collection),
+  ];
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -105,25 +105,16 @@ export default async function CollectionPage({ params }: PageProps) {
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10 xl:grid-cols-4">
               {matchedProducts.map((art) => {
-                const etsyLinks = resolveEtsyLinks(art);
+                const card = cardCommerce(art);
                 return (
                   <ArtCard
                     key={art.id}
                     art={art}
-                    href={`/art/${art.id}`}
+                    href={card.href}
                     subtitle={art.category}
+                    meta={card.meta}
+                    value={card.value}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    footer={
-                      <EtsyLink
-                        href={etsyUrl(etsyLinks.printed, collection.etsyCampaign)}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-sage-600 hover:text-sage-700"
-                      >
-                        <Frame className="h-4 w-4" />
-                        {etsyLinks.styleLabel
-                          ? `Shop ${etsyLinks.styleLabel} prints →`
-                          : "Shop prints →"}
-                      </EtsyLink>
-                    }
                   />
                 );
               })}

@@ -9,6 +9,7 @@ import {
   buildFourthwallCheckoutUrl,
   resolveCheckout,
   priceRangeCents,
+  cardCommerce,
 } from "@/lib/commerce";
 import type { PrintOffer } from "@/sanity/lib/client";
 
@@ -74,6 +75,16 @@ describe("checkout adapter", () => {
   it("computes the price range", () => {
     expect(priceRangeCents(fw)).toEqual({ min: 2399, max: 3699 });
     expect(priceRangeCents(etsy)).toBeNull();
+  });
+});
+
+describe("cardCommerce", () => {
+  it("routes free prints to /art with the FREE row", () => {
+    expect(cardCommerce({ id: "moon", listing: "free", offers: [] })).toEqual({ href: "/art/moon", meta: "Digital print", value: "FREE" });
+  });
+  it("routes shop prints to /prints with a from-price", () => {
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] })).toEqual({ href: "/prints/sweden", meta: "Art print", value: "From $23.99" });
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [] }).value).toBe("");
   });
 });
 

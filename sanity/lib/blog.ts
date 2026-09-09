@@ -1,5 +1,5 @@
 import type { SanityImageSource } from '@sanity/image-url/lib/types/types'
-import { client } from './client'
+import { client, type PrintOffer, type ArtworkListing } from './client'
 import { urlFor } from './image'
 
 export interface EmbeddedProduct {
@@ -8,8 +8,8 @@ export interface EmbeddedProduct {
   previewImage: string
   description: string
   category?: string
-  etsyListingUrl?: string
-  etsyPrintableUrl?: string
+  listing?: ArtworkListing
+  offers?: PrintOffer[]
 }
 
 export interface ImageAttribution {
@@ -110,8 +110,8 @@ interface RawProductEmbedBlock {
     previewImage?: SanityImageSource
     description: string
     category?: string
-    etsyListingUrl?: string
-    etsyPrintableUrl?: string
+    listing?: ArtworkListing
+    offers?: PrintOffer[]
   } | null
 }
 
@@ -174,8 +174,8 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
           previewImage,
           description,
           category,
-          etsyListingUrl,
-          etsyPrintableUrl
+          listing,
+          offers
         }
       }
     },
@@ -203,8 +203,8 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
                 : '',
               description: product.description,
               category: product.category,
-              etsyListingUrl: product.etsyListingUrl,
-              etsyPrintableUrl: product.etsyPrintableUrl,
+              listing: product.listing,
+              offers: product.offers,
             }
           : null,
       } satisfies ProductEmbedBlock

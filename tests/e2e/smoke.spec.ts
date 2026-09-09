@@ -12,10 +12,9 @@ test("home page renders nav and free-downloads link", async ({ page }) => {
     page.getByRole("heading", { name: /Art for your walls/i })
   ).toBeVisible();
   await expect(page.locator('input[type="email"]').first()).toBeVisible();
-  await expect(page.getByText("Loved by 7,000+ buyers")).toBeVisible();
-  await expect(page.locator('main a[href="/prints"]')).toHaveCount(1); // the single Etsy band CTA
+  await expect(page.getByText("7,000+ prints shipped").first()).toBeVisible(); // trust strip (footer repeats it)
+  await expect(page.locator('main a[href="/prints"]')).toHaveCount(1); // the single shop band CTA
   await expect(page.locator('main a[href^="/collections/"]')).toHaveCount(3); // the three tiles
-  await expect(page.locator("text=/\\$\\d+\\.\\d{2}/")).toHaveCount(0);
 });
 
 test("free downloads gallery renders and navigates to art detail", async ({ page }) => {
@@ -29,26 +28,30 @@ test("free downloads gallery renders and navigates to art detail", async ({ page
   await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible();
 });
 
-test("art detail: free CTA appears above the Etsy card", async ({ page }) => {
+test("art detail: free CTA appears above the shop cross-sell", async ({ page }) => {
   await page.goto("/free-downloads");
   await page.locator('a[href^="/art/"]').first().click();
   await expect(page).toHaveURL(/\/art\//);
   const cta = page.getByRole("button", { name: /Email me this print/i });
-  const etsy = page.locator('main a[href*="etsy"]').first();
+  const shop = page.locator('main a[href="/prints"]').first();
   await expect(cta).toBeVisible();
-  await expect(etsy).toBeVisible();
+  await expect(shop).toBeVisible();
+  await expect(page.locator('main a[href*="etsy"]')).toHaveCount(0);
   const ctaBox = await cta.boundingBox();
-  const etsyBox = await etsy.boundingBox();
-  expect(ctaBox!.y).toBeLessThan(etsyBox!.y);
+  const shopBox = await shop.boundingBox();
+  expect(ctaBox!.y).toBeLessThan(shopBox!.y);
 });
 
-test("prints page renders two etsy paths with utm", async ({ page }) => {
+test("prints page renders the shop grid or the arriving-soon state", async ({ page }) => {
   await page.goto("/prints");
-  await expect(page.getByRole("heading", { name: /Want it on real paper/i })).toBeVisible();
-  const etsyLinks = page.locator('main a[href*="etsy.com"], main a[href*="etsy"]').filter({ hasText: /print shop|printables/i });
-  await expect(etsyLinks).toHaveCount(2);
-  for (const href of await etsyLinks.evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href))) {
-    expect(href).toContain("utm_campaign=prints-page");
+  await expect(page.locator("main").getByRole("heading", { level: 1, name: "Prints" })).toBeVisible();
+  await expect(page.locator('main a[href*="etsy"]')).toHaveCount(0);
+  const cards = page.locator('main a[href^="/prints/"]');
+  if ((await cards.count()) === 0) {
+    await expect(page.getByText(/arriving soon/i)).toBeVisible();
+    await expect(page.locator('main input[type="email"]')).toBeVisible();
+  } else {
+    await expect(page.locator("text=/From \\$\\d+\\.\\d{2}/").first()).toBeVisible();
   }
 });
 

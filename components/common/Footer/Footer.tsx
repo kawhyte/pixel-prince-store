@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ETSY_MAIN_SHOP, ETSY_PRINTABLES_SHOP, etsyUrl } from "@/config/links";
+import { ETSY_MAIN_SHOP, etsyUrl } from "@/config/links";
 import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
 import Wordmark from "@/components/common/Wordmark/Wordmark";
 
@@ -16,8 +16,8 @@ export default function Footer() {
           <div className="space-y-4 lg:col-span-2">
             <Wordmark className="text-xl text-cream sm:text-2xl" />
             <p className="max-w-xs text-sm leading-relaxed text-cream/60">
-              Retro gaming and map art, designed by humans. Free prints here, framed
-              prints on Etsy.
+              Retro gaming and map art, designed by humans. Free prints to download,
+              printed prints shipped free in the US.
             </p>
             <div className="flex gap-4 pt-1">
               <Link
@@ -53,19 +53,14 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className={linkClass}>
-                  Blog
+                <Link href="/prints" className={linkClass}>
+                  Prints
                 </Link>
               </li>
               <li>
-                <EtsyLink href={etsyUrl(ETSY_MAIN_SHOP, "footer")} className={linkClass}>
-                  Print Shop
-                </EtsyLink>
-              </li>
-              <li>
-                <EtsyLink href={etsyUrl(ETSY_PRINTABLES_SHOP, "footer")} className={linkClass}>
-                  Printables
-                </EtsyLink>
+                <Link href="/blog" className={linkClass}>
+                  Blog
+                </Link>
               </li>
             </ul>
           </div>
@@ -132,13 +127,7 @@ export default function Footer() {
 
         {/* Trust line */}
         <p className="mt-12 border-t border-cream/10 pt-8 text-sm text-cream/70">
-          Printed in the USA · Free US shipping ·{" "}
-          <EtsyLink
-            href={etsyUrl(ETSY_MAIN_SHOP, "footer")}
-            className="underline decoration-cream/30 underline-offset-2 transition-colors hover:text-cream"
-          >
-            7,000+ orders shipped on Etsy
-          </EtsyLink>
+          Printed in the USA · Free US shipping · 7,000+ prints shipped since 2009
         </p>
 
         {/* Bottom Bar */}

@@ -4,7 +4,8 @@ import { ChevronRight, PenTool, CalendarDays, Download, Star } from "lucide-reac
 
 import Hero from "@/components/ui/Hero/Hero";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
-import { getAllProducts, getFeaturedProduct } from "@/sanity/lib/client";
+import { getAllProducts, getFeaturedProduct, getShopPrints } from "@/sanity/lib/client";
+import { cardCommerce } from "@/lib/commerce";
 import { COLLECTIONS, matchProductsToCollection } from "@/config/collections";
 import { TRUST_CLAIMS } from "@/config/trust";
 
@@ -18,8 +19,9 @@ const TILE_SLUGS = [
 const TRUST_ICONS = [PenTool, CalendarDays, Download, Star];
 
 export default async function Home() {
-  const products = await getAllProducts();
+  const [products, shopPrints] = await Promise.all([getAllProducts(), getShopPrints()]);
   const featured = (await getFeaturedProduct()) ?? products[0] ?? null;
+  const bandPrints = shopPrints.slice(0, 4);
   const heroItems = [
     featured,
     ...products.filter((p) => p.id !== featured?.id),
@@ -181,19 +183,47 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 6. Etsy band */}
+      {/* 6. Shop band */}
       <section className="py-14 lg:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <p className="mx-auto max-w-2xl text-lg text-charcoal">
-            Every design here also comes printed, framed or on canvas, shipped
-            from our Etsy shop.
-          </p>
-          <Link
-            href="/prints"
-            className="mt-6 inline-flex h-12 items-center rounded-md bg-sage-500 px-8 font-semibold text-white transition-colors hover:bg-sage-400"
-          >
-            See print options
-          </Link>
+        <div className="container mx-auto px-4">
+          <div className="mb-12 text-center">
+            <h2 className="text-[28px] font-semibold text-charcoal">
+              Printed and shipped to you
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-soft-charcoal">
+              {bandPrints.length > 0
+                ? "Printed to order on matte paper, free US shipping."
+                : "The first printed prints are arriving soon."}
+            </p>
+          </div>
+
+          {bandPrints.length > 0 && (
+            <div className="grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4">
+              {bandPrints.map((art) => {
+                const card = cardCommerce(art);
+                return (
+                  <ArtCard
+                    key={art.id}
+                    art={art}
+                    href={card.href}
+                    subtitle={art.category}
+                    meta={card.meta}
+                    value={card.value}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          <div className={`text-center ${bandPrints.length > 0 ? "mt-16" : ""}`}>
+            <Link
+              href="/prints"
+              className="inline-flex h-12 items-center rounded-md bg-sage-500 px-8 font-semibold text-white transition-colors hover:bg-sage-400"
+            >
+              See all prints
+            </Link>
+          </div>
         </div>
       </section>
     </main>

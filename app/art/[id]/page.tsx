@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getAllProducts, getProductBySlug, getRelatedProducts } from "@/sanity/lib/client";
+import { getAllProducts, getProductBySlug, getRelatedProducts, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import ArtDetailClient from "./art-detail-client";
 
@@ -46,7 +46,10 @@ export default async function ArtDetailPage({ params }: PageProps) {
   }
 
   // Fetch related products (same category, excluding current)
-  const relatedArt = await getRelatedProducts(art.category || '', id);
+  const [relatedArt, shopPrints] = await Promise.all([
+    getRelatedProducts(art.category || '', id),
+    getRelatedShopPrints(art.category || '', id),
+  ]);
 
   // Generate JSON-LD structured data for SEO (Product Schema)
   const jsonLd = {
@@ -74,7 +77,7 @@ export default async function ArtDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ArtDetailClient art={art} relatedArt={relatedArt} />
+      <ArtDetailClient art={art} relatedArt={relatedArt} shopPrints={shopPrints} />
     </>
   );
 }

@@ -274,22 +274,6 @@ export const product = defineType({
         }),
     }),
     defineField({
-      name: 'etsyListingUrl',
-      title: 'Legacy: Etsy listing URL',
-      type: 'url',
-      description: 'Fallback only while this artwork has no Fourthwall offer. Prefer an Etsy print offer above. Removed in PLAN-37.',
-      group: 'shop',
-      hidden: ({ document }) => isShop(document),
-    }),
-    defineField({
-      name: 'etsyPrintableUrl',
-      title: 'Legacy: Etsy printable URL',
-      type: 'url',
-      description: 'No longer used for new artworks. Removed in PLAN-37.',
-      group: 'shop',
-      hidden: ({ document }) => isShop(document),
-    }),
-    defineField({
       name: 'downloads',
       title: 'Total Downloads',
       type: 'number',

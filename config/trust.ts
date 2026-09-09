@@ -7,5 +7,5 @@ export const TRUST_CLAIMS = [
   { label: "Designed by humans", sub: "by Kenny and Rene" },
   { label: "New print every month", sub: "always something fresh" },
   { label: "Instant free download", sub: "print at home today" },
-  { label: "Loved by 7,000+ buyers", sub: "on Etsy" },
+  { label: "7,000+ prints shipped", sub: "since 2009" },
 ] as const;

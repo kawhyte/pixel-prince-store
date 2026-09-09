@@ -109,3 +109,17 @@ export function resolveCheckout(
   }
   return null; // stripe: Phase 2
 }
+
+export interface CardCommerce {
+  href: string;
+  meta: string;
+  value: string;
+}
+
+/** Where an ArtCard links and what its price row says. Free prints keep the FREE row. */
+export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): CardCommerce {
+  if (!isShopPrint(art)) return { href: `/art/${art.id}`, meta: "Digital print", value: "FREE" };
+  const from = fromPriceCents(getActiveOffer(art));
+  return { href: `/prints/${art.id}`, meta: "Art print", value: from !== null ? `From ${formatPrice(from)}` : "" };
+}
+

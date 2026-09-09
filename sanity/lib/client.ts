@@ -80,8 +80,6 @@ export interface SanityProduct {
   listing?: ArtworkListing
   kind?: ArtworkKind
   offers?: PrintOffer[]
-  etsyListingUrl?: string
-  etsyPrintableUrl?: string
   tags?: string[]
   category?: string
   downloads?: number
@@ -103,8 +101,6 @@ export interface FreeArt {
   listing: ArtworkListing
   kind: ArtworkKind
   offers: PrintOffer[]
-  etsyListingUrl?: string
-  etsyPrintableUrl?: string
   tags: string[]
   category?: string
   downloads?: number
@@ -138,8 +134,6 @@ const PRODUCT_PROJECTION = `
   listing,
   kind,
   offers,
-  etsyListingUrl,
-  etsyPrintableUrl,
   tags,
   category,
   downloads,
@@ -192,8 +186,6 @@ function toFreeArt(product: SanityProduct): FreeArt {
     listing: product.listing ?? 'free',
     kind: product.kind ?? 'single',
     offers: product.offers ?? [],
-    etsyListingUrl: product.etsyListingUrl,
-    etsyPrintableUrl: product.etsyPrintableUrl,
     tags: product.tags || [],
     category: product.category,
     downloads: product.downloads || 0,

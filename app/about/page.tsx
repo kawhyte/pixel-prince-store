@@ -1,9 +1,8 @@
 import Image from "next/image";
 
 import { generateMetadata as buildMetadata, generateAboutPageSchema } from "@/lib/seo";
-import { ETSY_MAIN_SHOP, etsyUrl } from "@/config/links";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
-import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
+import Link from "next/link";
 
 export const metadata = buildMetadata({
   title: "About Kenny & Rene | The Pixel Prince",
@@ -98,24 +97,24 @@ export default function AboutPage() {
               Say hi, or take a print home
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-soft-charcoal">
-              New free print every month. The printed, framed versions live on
-              our Etsy.
+              New free print every month. The printed versions ship free in
+              the US.
             </p>
           </div>
 
           <div className="mx-auto max-w-xl rounded-2xl bg-cream p-8 text-center shadow-card">
             <h3 className="text-xl font-semibold text-charcoal">
-              The Pixel Prince on Etsy
+              Printed prints, shipped to you
             </h3>
             <p className="mt-2 text-sm text-soft-charcoal">
-              Printed prints, maps &amp; personalized pieces
+              Retro gaming and map prints, printed to order, free US shipping
             </p>
-            <EtsyLink
-              href={etsyUrl(ETSY_MAIN_SHOP, "about")}
+            <Link
+              href="/prints"
               className="mt-6 inline-block rounded-2xl bg-sage-500 px-6 py-3 font-semibold text-white transition-all hover:bg-sage-400 hover:shadow-card-hover"
             >
-              Visit the print shop
-            </EtsyLink>
+              Browse the prints
+            </Link>
 
             <div className="mt-8 border-t border-border pt-8">
               <p className="mb-4 text-sm text-soft-charcoal">

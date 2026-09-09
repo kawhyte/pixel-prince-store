@@ -11,7 +11,7 @@
   --font-sans: var(--font-sans);
 
   /* Core Brand Colors - Earthtone Modern */
-  --color-cream: #f7f4ee;
+  --color-cream: #faf8f4;
   --color-charcoal: #1a1a1a;
   --color-soft-charcoal: #4a4a4a;
 
@@ -63,7 +63,7 @@
   --radius: 0.5rem;
 
   /* Background: Warm paper */
-  --background: #f7f4ee;
+  --background: #faf8f4;
   --foreground: #1a1a1a;
 
   /* Cards: white surfaces */

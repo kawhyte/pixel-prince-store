@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getActiveOffer, getOnSiteOffer, orderedSizes, fromPriceCents, formatPrice } from "@/lib/commerce";
+import { getActiveOffer, getOnSiteOffer, orderedSizes, fromPriceCents, formatPrice, isShopPrint } from "@/lib/commerce";
 import type { PrintOffer } from "@/sanity/lib/client";
 
 const fw: PrintOffer = {
@@ -25,6 +25,10 @@ describe("commerce helpers", () => {
   });
   it("orders sizes by the ladder", () => {
     expect(orderedSizes(fw).map((s) => s.sizeId)).toEqual(["8x10", "16x20"]);
+  });
+  it("treats only listing=shop as a shop print", () => {
+    expect(isShopPrint({ listing: "free" })).toBe(false);
+    expect(isShopPrint({ listing: "shop" })).toBe(true);
   });
   it("computes from-price and formats it", () => {
     expect(fromPriceCents(fw)).toBe(2399);

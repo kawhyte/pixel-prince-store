@@ -102,6 +102,7 @@ npm run generate-zips    # [DEPRECATED] Generate ZIP bundles (not used with Clou
   category: string (Video Games, Quotes, Maps, Funny, Minimalist, Botanical)
   tags: string[]
   featured: boolean             // homepage hero; validated to allow only one
+  listing: 'free' | 'shop'      // free = downloadable, never sold; shop = sold, never downloadable (PLAN-35b)
   kind: 'single' | 'set'        // sets of two are their own artwork
   offers?: PrintOffer[]         // physical print offers (config/commerce.ts, lib/commerce.ts); one per provider
   etsyListingUrl?: string       // legacy fallback, removed in PLAN-37
@@ -237,6 +238,7 @@ This provides:
 - `offers[]` on an artwork holds display prices in cents per size; the provider is the source of truth for the charge
 - `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
 - Free downloads are unchanged and never routed through a provider
+- `listing` splits the catalog: `getAllProducts`/`getProductBySlug`/`getFeaturedProduct`/`getRelatedProducts` return free prints only (so `/api/claim-art` can never serve a shop print); `getShopPrints`/`getShopPrintBySlug` return shop prints only
 
 ### Deprecated Features
 - `generate-zips.js` script — ZIPs are now built on-demand server-side by `lib/build-download-zip.ts`

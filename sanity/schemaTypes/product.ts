@@ -4,6 +4,8 @@ import { GeminiGenerator } from '../components/GeminiGenerator'
 import { HighResAssetInput } from '../components/HighResAssetInput'
 import { deriveRatio } from '@/config/print-sizes'
 
+const isShop = (doc: unknown) => (doc as { listing?: string } | undefined)?.listing === 'shop'
+
 export const product = defineType({
   name: 'product',
   title: 'Artwork',
@@ -35,6 +37,22 @@ export const product = defineType({
         source: 'title',
         maxLength: 96,
       },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'listing',
+      title: 'Listing',
+      type: 'string',
+      description: 'Free print: visitors download it, never sold. Shop print: sold as a physical print, never downloadable. A print is one or the other.',
+      group: 'artwork',
+      options: {
+        list: [
+          { title: 'Free print (download)', value: 'free' },
+          { title: 'Shop print (for sale)', value: 'shop' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'free',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -160,9 +178,11 @@ export const product = defineType({
       type: 'object',
       description: 'Upload ONE high-res PNG cropped to 4:5 portrait, sized for 16×20 (~4800×6000 px). This single file covers every print size — the download ZIP (file + printing guide + license) builds itself.',
       group: 'file',
+      hidden: ({ document }) => isShop(document),
       components: { input: HighResAssetInput },
       validation: (Rule) =>
-        Rule.required().custom((value: { width?: number; height?: number } | undefined) => {
+        Rule.custom((value: { width?: number; height?: number } | undefined, context) => {
+          if (isShop(context.document)) return true;
           if (!value) return 'Upload the print file — visitors have nothing to download without it.';
           if (value.width && value.height) {
             const r = value.width / value.height;
@@ -220,6 +240,7 @@ export const product = defineType({
       initialValue: false,
       description: 'Show this piece in the homepage hero as the free print of the month. Only one artwork should have this on.',
       group: 'shop',
+      hidden: ({ document }) => isShop(document),
       validation: (Rule) =>
         Rule.custom(async (featured, context) => {
           if (!featured) return true
@@ -241,10 +262,12 @@ export const product = defineType({
       type: 'array',
       description: 'Where this artwork can be bought as a physical print. One offer per provider. Fourthwall = on-site checkout.',
       group: 'shop',
+      hidden: ({ document }) => !isShop(document),
       of: [defineArrayMember({ type: 'printOffer' })],
       validation: (Rule) =>
-        Rule.custom((value) => {
+        Rule.custom((value, context) => {
           const list = (value as { provider?: string }[] | undefined) ?? []
+          if (isShop(context.document) && list.length === 0) return 'A shop print needs at least one offer.'
           const providers = list.map((o) => o.provider)
           if (new Set(providers).size !== providers.length) return 'Only one offer per provider.'
           return true
@@ -256,6 +279,7 @@ export const product = defineType({
       type: 'url',
       description: 'Fallback only while this artwork has no Fourthwall offer. Prefer an Etsy print offer above. Removed in PLAN-37.',
       group: 'shop',
+      hidden: ({ document }) => isShop(document),
     }),
     defineField({
       name: 'etsyPrintableUrl',
@@ -263,6 +287,7 @@ export const product = defineType({
       type: 'url',
       description: 'No longer used for new artworks. Removed in PLAN-37.',
       group: 'shop',
+      hidden: ({ document }) => isShop(document),
     }),
     defineField({
       name: 'downloads',
@@ -270,6 +295,7 @@ export const product = defineType({
       type: 'number',
       description: 'How many times this piece has been downloaded. Updates automatically.',
       group: 'stats',
+      hidden: ({ document }) => isShop(document),
       initialValue: 0,
       readOnly: true,
       validation: (Rule) => Rule.min(0).integer(),
@@ -285,8 +311,9 @@ export const product = defineType({
       downloads: 'downloads',
       featured: 'featured',
       offers: 'offers',
+      listing: 'listing',
     },
-    prepare({ title, media, width, height, hasFile, downloads, featured, offers }) {
+    prepare({ title, media, width, height, hasFile, downloads, featured, offers, listing }) {
       let fileInfo = '⚠ file missing';
       if (hasFile && width && height) {
         const ratio = deriveRatio(width, height);
@@ -297,10 +324,13 @@ export const product = defineType({
       const list = (offers as { provider?: string; active?: boolean; sizes?: { priceCents?: number }[] }[] | undefined) ?? [];
       const onSite = list.find((o) => o.provider === 'fourthwall' && o.active !== false);
       const prices = (onSite?.sizes ?? []).map((s) => s.priceCents).filter((p): p is number => typeof p === 'number');
-      const shopInfo = prices.length ? ` · from $${(Math.min(...prices) / 100).toFixed(2)}` : '';
+      const shopInfo = prices.length ? `from $${(Math.min(...prices) / 100).toFixed(2)}` : 'no offer yet';
+      if (listing === 'shop') {
+        return { title, subtitle: `shop · ${shopInfo}`, media }
+      }
       return {
         title: featured ? `⭐ ${title}` : title,
-        subtitle: `${fileInfo} · ${downloads ?? 0} downloads${shopInfo}`,
+        subtitle: `free · ${fileInfo} · ${downloads ?? 0} downloads`,
         media,
       }
     },

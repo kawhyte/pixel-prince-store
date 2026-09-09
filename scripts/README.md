@@ -168,3 +168,8 @@ Wraps each artwork's legacy `etsyListingUrl` in a `printOffer` with `provider: "
     npx tsx scripts/migrate-etsy-to-offers.ts --apply  # write
 
 Needs `SANITY_API_WRITE_TOKEN` (or `SANITY_API_TOKEN`) in `.env.local`. Patches drafts and published documents. Safe to re-run: artworks that already have an etsy offer are skipped.
+
+### `backfill-listing-free.ts` (PLAN-35b)
+
+One-off: sets `listing: "free"` on every artwork that predates the free/shop switch. Dry run by default; `--apply` writes. Same token rules as above.
+

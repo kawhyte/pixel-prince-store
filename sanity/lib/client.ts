@@ -47,6 +47,7 @@ export interface PrintOffer {
 }
 
 export type ArtworkKind = 'single' | 'set'
+export type ArtworkListing = 'free' | 'shop'
 
 export type SanityImageWithDimensions = SanityImageSource & {
   asset?: {
@@ -76,6 +77,7 @@ export interface SanityProduct {
   detailImage?: SanityImageWithDimensions
   galleryImages?: RawGalleryImage[]
   artFile?: ArtFile
+  listing?: ArtworkListing
   kind?: ArtworkKind
   offers?: PrintOffer[]
   etsyListingUrl?: string
@@ -98,6 +100,7 @@ export interface FreeArt {
   detailImage?: string
   galleryImages?: GalleryImage[]
   artFile?: ArtFile
+  listing: ArtworkListing
   kind: ArtworkKind
   offers: PrintOffer[]
   etsyListingUrl?: string
@@ -132,6 +135,7 @@ const PRODUCT_PROJECTION = `
   detailImage,
   galleryImages,
   artFile,
+  listing,
   kind,
   offers,
   etsyListingUrl,
@@ -141,6 +145,10 @@ const PRODUCT_PROJECTION = `
   downloads,
   featured
 `
+
+/** Free prints only: `listing` undefined (pre-PLAN-35b documents) counts as free. */
+const FREE_FILTER = '_type == "product" && listing != "shop"'
+const SHOP_FILTER = '_type == "product" && listing == "shop"'
 
 function toFreeArt(product: SanityProduct): FreeArt {
   let previewImageOrientation: ImageOrientation | undefined;
@@ -181,6 +189,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
       product.title,
     ),
     artFile: product.artFile,
+    listing: product.listing ?? 'free',
     kind: product.kind ?? 'single',
     offers: product.offers ?? [],
     etsyListingUrl: product.etsyListingUrl,
@@ -197,11 +206,24 @@ function toFreeArt(product: SanityProduct): FreeArt {
  * Returns data in the format expected by the frontend
  */
 export async function getAllProducts(): Promise<FreeArt[]> {
-  const query = `*[_type == "product"] | order(_createdAt desc) { ${PRODUCT_PROJECTION} }`
+  const query = `*[${FREE_FILTER}] | order(_createdAt desc) { ${PRODUCT_PROJECTION} }`
 
   const products = await client.fetch<SanityProduct[]>(query)
 
   return products.map(toFreeArt)
+}
+
+/** Shop prints only (PLAN-35b). Rendered by /prints/[slug] from PLAN-36. */
+export async function getShopPrints(): Promise<FreeArt[]> {
+  const query = `*[${SHOP_FILTER}] | order(_createdAt desc) { ${PRODUCT_PROJECTION} }`
+  const products = await client.fetch<SanityProduct[]>(query)
+  return products.map(toFreeArt)
+}
+
+export async function getShopPrintBySlug(slug: string): Promise<FreeArt | null> {
+  const query = `*[${SHOP_FILTER} && slug.current == $slug][0] { ${PRODUCT_PROJECTION} }`
+  const product = await client.fetch<SanityProduct | null>(query, { slug })
+  return product ? toFreeArt(product) : null
 }
 
 /**
@@ -212,7 +234,7 @@ export async function getRelatedProducts(category: string, currentSlug: string):
   // If no category provided, return empty array
   if (!category) return [];
 
-  const query = `*[_type == "product" && category == $category && slug.current != $currentSlug] | order(_createdAt desc) [0...3] {
+  const query = `*[${FREE_FILTER} && category == $category && slug.current != $currentSlug] | order(_createdAt desc) [0...3] {
     _id,
     _createdAt,
     title,
@@ -274,6 +296,7 @@ export async function getRelatedProducts(category: string, currentSlug: string):
       previewImageOrientation,
       detailImage: undefined,
       artFile: undefined,
+      listing: 'free',
       kind: 'single',
       offers: [],
       tags: [],
@@ -287,7 +310,7 @@ export async function getRelatedProducts(category: string, currentSlug: string):
  * Fetch a single product by slug
  */
 export async function getProductBySlug(slug: string): Promise<FreeArt | null> {
-  const query = `*[_type == "product" && slug.current == $slug][0] { ${PRODUCT_PROJECTION} }`
+  const query = `*[${FREE_FILTER} && slug.current == $slug][0] { ${PRODUCT_PROJECTION} }`
 
   const product = await client.fetch<SanityProduct | null>(query, { slug })
 
@@ -300,7 +323,7 @@ export async function getProductBySlug(slug: string): Promise<FreeArt | null> {
  * Fetch the featured "print of the month" product
  */
 export async function getFeaturedProduct(): Promise<FreeArt | null> {
-  const query = `*[_type == "product" && featured == true] | order(_updatedAt desc) [0] { ${PRODUCT_PROJECTION} }`
+  const query = `*[${FREE_FILTER} && featured == true] | order(_updatedAt desc) [0] { ${PRODUCT_PROJECTION} }`
 
   const product = await client.fetch<SanityProduct | null>(query)
 

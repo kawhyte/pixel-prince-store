@@ -15,12 +15,21 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
         ),
       S.listItem()
-        .title('In the shop')
+        .title('Free prints')
+        .icon(Gift)
+        .child(
+          S.documentList()
+            .title('Free prints (download)')
+            .filter('_type == "product" && listing != "shop"')
+            .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+        ),
+      S.listItem()
+        .title('Shop prints')
         .icon(ShoppingBag)
         .child(
           S.documentList()
-            .title('Artworks with an on-site offer')
-            .filter('_type == "product" && count(offers[provider == "fourthwall" && active != false]) > 0')
+            .title('Shop prints (for sale)')
+            .filter('_type == "product" && listing == "shop"')
             .defaultOrdering([{ field: 'title', direction: 'asc' }])
         ),
       S.listItem()

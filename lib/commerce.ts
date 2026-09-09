@@ -3,6 +3,11 @@ import { CURRENCY, ON_SITE_PROVIDERS, PROVIDER_PRIORITY, SHOP_SIZE_LADDER } from
 
 type WithOffers = Pick<FreeArt, "offers">;
 
+/** Shop prints are sold and never downloadable; anything else is a free print. */
+export function isShopPrint(art: Pick<FreeArt, "listing">): boolean {
+  return art.listing === "shop";
+}
+
 function activeOffers(art: WithOffers): PrintOffer[] {
   return (art.offers ?? []).filter((o) => o.active !== false);
 }

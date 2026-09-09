@@ -20,6 +20,7 @@ import {
   inferKind,
   isImportable,
   mapVariantsToSizes,
+  pickGalleryImages,
   sanityIdForFourthwallProduct,
   slugify,
   stripHtml,
@@ -60,27 +61,48 @@ interface ExistingDoc {
   _id: string;
   title?: string;
   offers?: { _key: string; provider?: string; providerProductId?: string }[];
+  galleryCount?: number;
 }
 
 async function findExisting(p: FwProduct): Promise<ExistingDoc[]> {
   const id = sanityIdForFourthwallProduct(p.id);
   return sanity.fetch<ExistingDoc[]>(
-    `*[_type == "product" && (_id in [$id, $draft] || $pid in offers[provider == "fourthwall"].providerProductId)]{ _id, title, offers }`,
+    `*[_type == "product" && (_id in [$id, $draft] || $pid in offers[provider == "fourthwall"].providerProductId)]{ _id, title, offers, "galleryCount": count(galleryImages) }`,
     { id, draft: `drafts.${id}`, pid: p.id }
   );
+}
+
+async function uploadImage(url: string, filename: string, label: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`image ${res.status} for ${label}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const asset = await sanity.assets.upload("image", buffer, {
+    filename,
+    contentType: res.headers.get("content-type") ?? "image/webp",
+  });
+  return asset._id;
 }
 
 async function uploadPreview(p: FwProduct): Promise<string | null> {
   const img = p.images?.[0];
   if (!img?.url) return null;
-  const res = await fetch(img.url);
-  if (!res.ok) throw new Error(`image ${res.status} for ${p.name}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  const asset = await sanity.assets.upload("image", buffer, {
-    filename: `${p.slug ?? slugify(p.name)}.webp`,
-    contentType: res.headers.get("content-type") ?? "image/webp",
-  });
-  return asset._id;
+  return uploadImage(img.url, `${p.slug ?? slugify(p.name)}.webp`, p.name);
+}
+
+/** Up to three more Fourthwall mockups as gallery photos (thumbnails on the shop page). */
+async function uploadGallery(p: FwProduct) {
+  const extras = pickGalleryImages(p);
+  const items = [];
+  for (const [i, img] of extras.entries()) {
+    const assetId = await uploadImage(img.url, `${p.slug ?? slugify(p.name)}-mockup-${i + 2}.webp`, p.name);
+    items.push({
+      _type: "image",
+      _key: `fw-mockup-${i + 2}`,
+      asset: { _type: "reference", _ref: assetId },
+      alt: `${p.name}, mockup ${i + 2}`,
+    });
+  }
+  return items;
 }
 
 async function main() {
@@ -114,6 +136,11 @@ async function main() {
               [`offers[_key=="${offer._key}"].providerProductId`]: p.id,
             })
             .commit();
+          if (!doc.galleryCount && pickGalleryImages(p).length > 0) {
+            const gallery = await uploadGallery(p);
+            await sanity.patch(doc._id).set({ galleryImages: gallery }).commit();
+            console.log(`gallery ${doc._id}: ${gallery.length} mockup(s) added`);
+          }
         } else {
           await sanity
             .patch(doc._id)
@@ -139,6 +166,7 @@ async function main() {
     if (!apply) continue;
 
     const assetId = await uploadPreview(p);
+    const gallery = await uploadGallery(p);
     const description = stripHtml(p.description).slice(0, 200) || `${p.name}. [KENNY: write this]`;
     const draftId = `drafts.${sanityIdForFourthwallProduct(p.id)}`;
     await sanity.createIfNotExists({
@@ -151,6 +179,7 @@ async function main() {
       artist: "The Pixel Prince",
       description,
       ...(assetId ? { previewImage: { _type: "image", asset: { _type: "reference", _ref: assetId } } } : {}),
+      ...(gallery.length ? { galleryImages: gallery } : {}),
       ...(category ? { category } : {}),
       tags: [],
       offers: [{ _type: "printOffer", _key: "fw", provider: "fourthwall", active: true, providerProductId: p.id, sizes }],

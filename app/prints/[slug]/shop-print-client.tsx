@@ -6,7 +6,7 @@ import { ArrowLeft, Gift, Star } from "lucide-react";
 import { type FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice } from "@/lib/commerce";
 import { getShopSize } from "@/config/commerce";
-import { SHOP_PROMO, SHOP_SHIPPING_FAQ, SHOP_SIZE_GUIDE } from "@/config/shop-copy";
+import { SHOP_GALLERY_EXTRAS, SHOP_PROMO, SHOP_SHIPPING_FAQ, SHOP_SIZE_GUIDE } from "@/config/shop-copy";
 import { REVIEW_SUMMARY } from "@/config/reviews";
 import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
@@ -34,7 +34,11 @@ const SPECS = [
 export default function ShopPrintClient({ art, related }: ShopPrintClientProps) {
   const offer = getActiveOffer(art);
   const sizes = offer ? orderedSizes(offer) : [];
-  const slides = [{ url: art.detailImage || art.previewImage, alt: art.title }, ...(art.galleryImages ?? [])];
+  const slides = [
+    { url: art.detailImage || art.previewImage, alt: art.title },
+    ...(art.galleryImages ?? []),
+    ...SHOP_GALLERY_EXTRAS,
+  ];
   const category = art.category?.trim();
 
   return (

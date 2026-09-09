@@ -51,3 +51,11 @@ export const SHOP_PROMO = {
   note: "Applied at checkout",
 } as const;
 
+/**
+ * Shared gallery images appended after every shop print's own photos (PLAN-43 follow-up).
+ * Files live in /public/shop. Add a packaging or reviews graphic here when you have one.
+ */
+export const SHOP_GALLERY_EXTRAS: { url: string; alt: string }[] = [
+  { url: "/shop/size-guide.png", alt: "Size guide: the five print sizes shown to scale on a wall above a sofa" },
+];
+

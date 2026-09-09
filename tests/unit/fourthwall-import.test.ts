@@ -8,6 +8,7 @@ import {
   isImportable,
   slugify,
   sanityIdForFourthwallProduct,
+  pickGalleryImages,
   type FwVariant,
   type FwProduct,
 } from "@/lib/fourthwall-import";
@@ -59,6 +60,18 @@ describe("fourthwall import helpers", () => {
     expect(isImportable({ ...base, name: "Test print" })).toBe(false);
     expect(isImportable({ ...base, name: "Test print" }, true)).toBe(true);
     expect(isImportable({ ...base, access: { type: "HIDDEN" } })).toBe(false);
+  });
+
+  it("picks up to three extra mockups from the first variant, skipping the preview", () => {
+    const imgs = (ids: string[]) => ids.map((id) => ({ id, url: `https://x/${id}.webp` }));
+    const p: FwProduct = {
+      id: "p", name: "P",
+      images: imgs(["a", "b", "c", "d", "e", "f"]),
+      variants: [{ id: "v1", images: imgs(["a", "b", "c", "d"]) }, { id: "v2", images: imgs(["e", "f"]) }],
+    };
+    expect(pickGalleryImages(p).map((i) => i.id)).toEqual(["b", "c", "d"]);
+    expect(pickGalleryImages({ id: "q", name: "Q", images: imgs(["a", "b"]) }).map((i) => i.id)).toEqual(["b"]);
+    expect(pickGalleryImages({ id: "r", name: "R" })).toEqual([]);
   });
 
   it("builds stable ids and slugs", () => {

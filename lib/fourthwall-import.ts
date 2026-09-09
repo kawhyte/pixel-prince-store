@@ -4,11 +4,19 @@
  */
 import { SHOP_SIZE_LADDER } from "@/config/commerce";
 
+export interface FwImage {
+  id?: string;
+  url: string;
+  width?: number;
+  height?: number;
+}
+
 export interface FwVariant {
   id: string;
   unitPrice?: { value?: number; currency?: string };
   attributes?: { size?: { name?: string } };
   name?: string;
+  images?: FwImage[];
 }
 
 export interface FwProduct {
@@ -16,7 +24,7 @@ export interface FwProduct {
   name: string;
   slug?: string;
   description?: string;
-  images?: { url: string; width?: number; height?: number }[];
+  images?: FwImage[];
   variants?: FwVariant[];
   state?: { type?: string };
   access?: { type?: string };
@@ -81,6 +89,24 @@ export function inferCategory(title: string): string | undefined {
 
 export function inferKind(title: string): "single" | "set" {
   return /\bset of\b/i.test(title) ? "set" : "single";
+}
+
+/**
+ * Extra mockups for the gallery: Fourthwall renders the same scenes for every size, so take the
+ * first variant's images (one set of scenes), skip the first (already the preview), keep `max`.
+ */
+export function pickGalleryImages(p: FwProduct, max = 3): FwImage[] {
+  const source = p.variants?.[0]?.images?.length ? p.variants[0].images : (p.images ?? []);
+  const seen = new Set<string>();
+  const out: FwImage[] = [];
+  for (const img of source.slice(1)) {
+    const key = img.id ?? img.url;
+    if (!img.url || seen.has(key)) continue;
+    seen.add(key);
+    out.push(img);
+    if (out.length >= max) break;
+  }
+  return out;
 }
 
 /** Deterministic Sanity id for a Fourthwall product, so re-runs update instead of duplicating. */

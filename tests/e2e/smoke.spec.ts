@@ -6,16 +6,20 @@ test("home page renders nav and free-downloads link", async ({ page }) => {
     page.getByRole("navigation").getByRole("link", { name: "The Pixel Prince", exact: true })
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Free Prints" }).first()
+    page.getByRole("navigation").getByRole("link", { name: "All prints" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Free prints" }).first()
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: /Art for your walls/i })
   ).toBeVisible();
+  await expect(page.locator('main a[href="/prints"]').first()).toBeVisible(); // hero CTA "Shop all prints"
   await expect(page.locator('input[type="email"]').first()).toBeVisible();
   await expect(page.getByText("7,000+ prints shipped").first()).toBeVisible(); // trust strip (footer repeats it)
-  await expect(page.locator('main a[href="/prints"]')).toHaveCount(1); // the single shop band CTA
   await expect(page.locator('main a[href^="/collections/"]')).toHaveCount(3); // the three tiles
   await expect(page.getByRole("heading", { name: /What buyers say/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /A free print every month/i })).toBeVisible();
 });
 
 test("free downloads gallery renders and navigates to art detail", async ({ page }) => {

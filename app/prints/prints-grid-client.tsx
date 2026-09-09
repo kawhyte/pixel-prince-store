@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 import type { FreeArt } from "@/sanity/lib/client";
 import { cardCommerce, isNewPrint } from "@/lib/commerce";
@@ -12,6 +12,8 @@ interface PrintsGridClientProps {
 }
 
 const ALL = "All prints";
+const subscribeNoop = () => () => {};
+const SETS = "Sets";
 
 /** Category chips + card grid for /prints (PLAN-43). Filters the already-fetched list, no refetch. */
 export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
@@ -21,14 +23,24 @@ export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
       const c = p.category?.trim();
       if (c) seen.add(c);
     }
-    return [ALL, ...Array.from(seen)];
+    const list = [ALL, ...Array.from(seen)];
+    if (prints.some((p) => p.kind === "set")) list.push(SETS);
+    return list;
   }, [prints]);
-  const [active, setActive] = useState(ALL);
-  const shown = active === ALL ? prints : prints.filter((p) => p.category?.trim() === active);
+  // URL filter (?category= / ?kind=set) read as an external store: the server renders the full
+  // grid (SEO), the client picks up the filter after hydration without a setState-in-effect.
+  const search = useSyncExternalStore(subscribeNoop, () => window.location.search, () => "");
+  const params = new URLSearchParams(search);
+  const fromUrl = params.get("kind") === "set" ? SETS : params.get("category");
+  const [picked, setPicked] = useState<string | null>(null);
+  const active = picked ?? (fromUrl && categories.includes(fromUrl) ? fromUrl : ALL);
+  const setActive = setPicked;
+  const shown =
+    active === ALL ? prints : active === SETS ? prints.filter((p) => p.kind === "set") : prints.filter((p) => p.category?.trim() === active);
 
   return (
     <div className="mt-10">
-      {categories.length > 2 && (
+      {categories.length > 1 && (
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
           {categories.map((c) => (
             <button

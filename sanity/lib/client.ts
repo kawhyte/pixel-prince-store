@@ -83,6 +83,7 @@ export interface SanityProduct {
   tags?: string[]
   category?: string
   downloads?: number
+  sales?: number
   featured?: boolean
 }
 
@@ -105,6 +106,7 @@ export interface FreeArt {
   tags: string[]
   category?: string
   downloads?: number
+  sales?: number
   featured?: boolean
 }
 
@@ -138,6 +140,7 @@ const PRODUCT_PROJECTION = `
   tags,
   category,
   downloads,
+  sales,
   featured
 `
 
@@ -191,6 +194,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     tags: product.tags || [],
     category: product.category,
     downloads: product.downloads || 0,
+    sales: product.sales || 0,
     featured: product.featured,
   };
 }

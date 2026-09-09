@@ -14,8 +14,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "The Pixel Prince | Free retro gaming and map wall art",
-  description: "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
+  title: "The Pixel Prince | Retro gaming and map art prints",
+  description: "Retro gaming and map art prints, drawn by humans, printed to order and shipped free in the US. Plus a free printable every month.",
  icons: {
     icon: [
       { url: '/favicon.ico' },

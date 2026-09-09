@@ -34,7 +34,7 @@ export default function ShopHero({ items }: ShopHeroProps) {
                   <Link
                     key={item.id}
                     href={card.href}
-                    className={`group block self-start bg-white p-2 wall-shadow transition-transform duration-200 hover:-translate-y-0.5 sm:p-3 ${
+                    className={`group block self-start wall-shadow transition-transform duration-200 hover:-translate-y-0.5 ${
                       !single && i % 2 === 1 ? "mt-6 sm:mt-10" : ""
                     }`}
                   >

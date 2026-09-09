@@ -51,8 +51,6 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
   const roomPhotos = (art.galleryImages ?? []).slice(0, 3);
-  // an unframed print leads with the artwork itself, full bleed, so the art is the image (PLAN-49)
-  const heroIsArt = activeFinish === "unframed" && !!offer?.artUrl;
   const slides = [
     { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
     ...(art.galleryImages ?? []),
@@ -86,7 +84,6 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             images={slides}
             title={art.title}
             aspectClass="aspect-[4/5]"
-            frame={!heroIsArt}
             thumbs="bottom"
           />
         </div>

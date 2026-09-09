@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, resolveFinish, resolveVersion } from "@/lib/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, type FinishId } from "@/config/commerce";
 import {
   SHOP_FEATURES,
@@ -51,8 +51,10 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
   const roomPhotos = (art.galleryImages ?? []).slice(0, 3);
+  // an unframed print leads with the artwork itself, full bleed, so the art is the image (PLAN-49)
+  const heroIsArt = activeFinish === "unframed" && !!offer?.artUrl;
   const slides = [
-    { url: offer?.mockupUrl || art.detailImage || art.previewImage, alt: art.title },
+    { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
     ...(art.galleryImages ?? []),
     ...SHOP_GALLERY_EXTRAS,
   ];
@@ -77,9 +79,16 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
       </div>
 
       {/* Hero: print + buy stack */}
-      <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-14 lg:pt-6">
-        <div className="wall-band rounded-md p-4 sm:p-8 lg:sticky lg:top-24">
-          <ArtGallery key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`} images={slides} title={art.title} aspectClass="aspect-[4/5]" frame thumbs="bottom" />
+      <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.28fr_1fr] lg:items-start lg:gap-10 lg:pt-6">
+        <div className="wall-band rounded-md p-3 sm:p-5 lg:sticky lg:top-24">
+          <ArtGallery
+            key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`}
+            images={slides}
+            title={art.title}
+            aspectClass="aspect-[4/5]"
+            frame={!heroIsArt}
+            thumbs="bottom"
+          />
         </div>
 
         <div className="mt-8 flex flex-col gap-7 lg:mt-0">

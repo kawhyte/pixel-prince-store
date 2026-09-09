@@ -45,6 +45,8 @@ export interface PrintOffer {
   version?: string
   /** resolved by the projection from the `mockup` image */
   mockupUrl?: string
+  /** resolved by the projection from the `art` image: the artwork with no mockup around it */
+  artUrl?: string
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -144,7 +146,7 @@ const PRODUCT_PROJECTION = `
   listing,
   kind,
   defaultFinish,
-  offers[]{ ..., "mockupUrl": mockup.asset->url },
+  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url },
   tags,
   category,
   downloads,

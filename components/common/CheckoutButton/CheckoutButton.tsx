@@ -9,7 +9,9 @@ import {
   getActiveOffer,
   getOffersByFinish,
   getVersions,
+  offerImage,
   resolveVersion,
+  versionImage,
   orderedSizes,
   resolveCheckout,
   resolveFinish,
@@ -91,14 +93,14 @@ export default function CheckoutButton({
   const finishOptions = getOffersByFinish(art, activeVersion).map((x) => ({
     finish: x.finish,
     fromCents: fromPriceCents(x.offer),
-    mockupUrl: x.offer.mockupUrl,
+    mockupUrl: offerImage(x.offer),
     fallbackImage: art.previewImage,
   }));
 
-  // one tile per version, showing that version in the finish on screen
+  // one tile per version, always the flat artwork: the art is what changes between them
   const versionOptions = getVersions(art).map((x) => ({
     version: x.version,
-    imageUrl: (getActiveOffer(art, activeFinish, x.version) ?? x.offer).mockupUrl || art.previewImage,
+    imageUrl: versionImage(getActiveOffer(art, activeFinish, x.version) ?? x.offer) || art.previewImage,
   }));
 
   const target = resolveCheckout(offer, sizeId, campaign);

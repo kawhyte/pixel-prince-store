@@ -190,3 +190,22 @@ describe("a finish with a shorter size ladder", () => {
     expect(fromPriceCents(getActiveOffer(art, "canvas"))).toBe(5500);
   });
 });
+
+describe("offer imagery", () => {
+  it("shows the artwork for an unframed print and the mockup for a frame or canvas", async () => {
+    const { offerImage, versionImage } = await import("@/lib/commerce");
+    const base = { provider: "fourthwall" as const, sizes: [{ sizeId: "8x10", priceCents: 2500 }] };
+    const unframed = { ...base, finish: "unframed" as const, artUrl: "art.png", mockupUrl: "mock.png" };
+    const framed = { ...base, finish: "framed" as const, artUrl: "art.png", mockupUrl: "framed.png" };
+
+    expect(offerImage(unframed)).toBe("art.png");
+    expect(offerImage(framed)).toBe("framed.png");
+    // either side falls back when its own image is missing
+    expect(offerImage({ ...unframed, artUrl: undefined })).toBe("mock.png");
+    expect(offerImage({ ...framed, mockupUrl: undefined })).toBe("art.png");
+    expect(offerImage(null)).toBeUndefined();
+    // version tiles compare artwork, so they prefer the flat art whatever the finish
+    expect(versionImage(framed)).toBe("art.png");
+    expect(versionImage({ ...framed, artUrl: undefined })).toBe("framed.png");
+  });
+});

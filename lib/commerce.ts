@@ -107,6 +107,21 @@ export function getActiveOffer(
   return null;
 }
 
+/**
+ * The image that represents an offer. An unframed print shows the artwork itself, full bleed;
+ * a frame or a canvas changes the object, so those show the mockup. Falls back either way.
+ */
+export function offerImage(offer: PrintOffer | null | undefined): string | undefined {
+  if (!offer) return undefined;
+  return offerFinish(offer) === "unframed" ? offer.artUrl || offer.mockupUrl : offer.mockupUrl || offer.artUrl;
+}
+
+/** Version tiles compare artwork, so they show the flat art whatever finish is on screen. */
+export function versionImage(offer: PrintOffer | null | undefined): string | undefined {
+  if (!offer) return undefined;
+  return offer.artUrl || offer.mockupUrl;
+}
+
 /** Lowest price across every finish on sale, for cards and the hero. */
 export function fromPriceAcrossFinishes(art: WithOffers): number | null {
   const prices = getOffersByFinish(art)

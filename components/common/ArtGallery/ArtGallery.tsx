@@ -29,8 +29,8 @@ export default function ArtGallery({
   frame = false,
 }: ArtGalleryProps) {
   const frameClass = frame
-    ? "bg-white p-4 sm:p-6 wall-shadow"
-    : "rounded-md bg-muted shadow-xl";
+    ? "bg-white p-3 sm:p-4 wall-shadow"
+    : "rounded-md bg-muted wall-shadow";
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 

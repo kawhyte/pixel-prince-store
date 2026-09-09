@@ -57,6 +57,14 @@ export const printOffer = defineType({
         'Which version of the artwork this offer sells, e.g. Ivory or Midnight. Leave empty when the print comes one way only. The import fills it from the Fourthwall name "Title (Version)".',
     }),
     defineField({
+      name: 'art',
+      title: 'Flat artwork',
+      type: 'image',
+      description:
+        'The artwork itself, no mockup. Shown full bleed as the main image for an unframed print and on the version tiles. Filled by scripts/upload-flat-art.ts from the masters folder.',
+      options: { hotspot: true },
+    }),
+    defineField({
       name: 'mockup',
       title: 'Finish mockup',
       type: 'image',

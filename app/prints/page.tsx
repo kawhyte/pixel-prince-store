@@ -2,8 +2,7 @@ import Link from "next/link";
 
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { getShopPrints } from "@/sanity/lib/client";
-import { cardCommerce } from "@/lib/commerce";
-import ArtCard from "@/components/common/ArtCard/ArtCard";
+import PrintsGridClient from "./prints-grid-client";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 
 export const revalidate = 60;
@@ -55,22 +54,7 @@ export default async function PrintsPage() {
             <EmailSignupForm source="prints" className="mx-auto mt-6 max-w-md text-left" />
           </div>
         ) : (
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10 xl:grid-cols-4">
-            {prints.map((art) => {
-              const card = cardCommerce(art);
-              return (
-                <ArtCard
-                  key={art.id}
-                  art={art}
-                  href={card.href}
-                  subtitle={art.category}
-                  meta={card.meta}
-                  value={card.value}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                />
-              );
-            })}
-          </div>
+          <PrintsGridClient prints={prints} />
         )}
 
         <p className="mt-12 text-center text-sm text-soft-charcoal">

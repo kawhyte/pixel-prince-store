@@ -89,6 +89,7 @@ export interface SanityProduct {
 export interface FreeArt {
   _id: string
   id: string
+  createdAt: string
   title: string
   artist: string
   description: string
@@ -168,6 +169,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
   return {
     _id: product._id,
     id: product.slug.current,
+    createdAt: product._createdAt,
     title: product.title,
     artist: product.artist,
     description: product.description,
@@ -288,6 +290,7 @@ export async function getRelatedProducts(category: string, currentSlug: string):
     return {
       _id: product._id,
       id: product.slug.current,
+      createdAt: product._createdAt,
       title: product.title,
       artist: product.artist,
       description: product.description,

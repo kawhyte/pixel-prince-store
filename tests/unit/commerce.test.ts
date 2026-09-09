@@ -10,6 +10,7 @@ import {
   resolveCheckout,
   priceRangeCents,
   cardCommerce,
+  isNewPrint,
 } from "@/lib/commerce";
 import type { PrintOffer } from "@/sanity/lib/client";
 
@@ -85,6 +86,16 @@ describe("cardCommerce", () => {
   it("routes shop prints to /prints with a from-price", () => {
     expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] })).toEqual({ href: "/prints/sweden", meta: "Art print", value: "From $23.99" });
     expect(cardCommerce({ id: "sweden", listing: "shop", offers: [] }).value).toBe("");
+  });
+});
+
+describe("isNewPrint", () => {
+  const now = Date.parse("2026-09-08T12:00:00Z");
+  it("is new within 30 days and not after", () => {
+    expect(isNewPrint("2026-09-01T00:00:00Z", 30, now)).toBe(true);
+    expect(isNewPrint("2026-07-01T00:00:00Z", 30, now)).toBe(false);
+    expect(isNewPrint(undefined, 30, now)).toBe(false);
+    expect(isNewPrint("nope", 30, now)).toBe(false);
   });
 });
 

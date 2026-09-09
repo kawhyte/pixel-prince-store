@@ -9,6 +9,9 @@ interface TestimonialsProps {
   /** skip this many reviews first, so different pages show different quotes */
   offset?: number;
   heading?: string;
+  /** cards (default) or pull quotes with a sage rule on the left (shop pages) */
+  variant?: "cards" | "quotes";
+  showSummary?: boolean;
 }
 
 /**
@@ -20,9 +23,35 @@ export default function Testimonials({
   limit = 3,
   offset = 0,
   heading = "What buyers say",
+  variant = "cards",
+  showSummary = true,
 }: TestimonialsProps) {
   const shown = reviews.slice(offset, offset + limit);
   if (shown.length === 0) return null;
+
+  if (variant === "quotes") {
+    return (
+      <section aria-labelledby="testimonials-heading" className="space-y-4">
+        <div className="flex items-baseline justify-between">
+          <h2 id="testimonials-heading" className="text-xl font-semibold text-charcoal">{heading}</h2>
+          {showSummary && (
+            <span className="text-xs text-muted-foreground">
+              {REVIEW_SUMMARY.rating} · {REVIEW_SUMMARY.count} {REVIEW_SUMMARY.source}
+            </span>
+          )}
+        </div>
+        {shown.map((r) => (
+          <blockquote
+            key={`${r.name}-${r.quote.slice(0, 24)}`}
+            className="rounded-r-md border-l-[3px] border-sage-500 bg-card px-6 py-5 text-base leading-relaxed text-soft-charcoal"
+          >
+            &ldquo;{r.quote}&rdquo;
+            <span className="mt-2 block text-sm font-semibold text-charcoal">{r.name}</span>
+          </blockquote>
+        ))}
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="testimonials-heading">
@@ -30,9 +59,11 @@ export default function Testimonials({
         <h2 id="testimonials-heading" className="text-[28px] font-semibold text-charcoal">
           {heading}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {REVIEW_SUMMARY.rating} stars from {REVIEW_SUMMARY.count} {REVIEW_SUMMARY.source}
-        </p>
+        {showSummary && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {REVIEW_SUMMARY.rating} stars from {REVIEW_SUMMARY.count} {REVIEW_SUMMARY.source}
+          </p>
+        )}
       </div>
       <div className="grid gap-6 sm:grid-cols-3">
         {shown.map((r) => (

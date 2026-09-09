@@ -39,3 +39,15 @@ export const SHOP_SIZE_GUIDE: Record<string, string> = {
 };
 
 export const SHOP_TRUST_LINE = "Secure checkout · Free US shipping · Arrives in 5 to 11 days";
+
+/**
+ * Promo strip on shop pages (Direction A). Off until the matching Fourthwall promotion exists,
+ * otherwise the page would promise a discount checkout does not apply. [KENNY: enable when set up]
+ */
+export const SHOP_PROMO = {
+  enabled: false,
+  headline: "Build your wall.",
+  body: "Buy 2 prints, get the 3rd half off.",
+  note: "Applied at checkout",
+} as const;
+

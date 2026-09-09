@@ -123,3 +123,11 @@ export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): C
   return { href: `/prints/${art.id}`, meta: "Art print", value: from !== null ? `From ${formatPrice(from)}` : "" };
 }
 
+/** True when the artwork was created within the last `days` days (New ribbon on the grid). */
+export function isNewPrint(createdAt: string | undefined, days = 30, now: number = Date.now()): boolean {
+  if (!createdAt) return false;
+  const t = new Date(createdAt).getTime();
+  if (!Number.isFinite(t)) return false;
+  return now - t <= days * 24 * 60 * 60 * 1000;
+}
+

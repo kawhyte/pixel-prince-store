@@ -15,13 +15,22 @@ interface ArtGalleryProps {
   title?: string;
   /** Aspect ratio class for the frame: the CLS guard. */
   aspectClass?: string;
+  /** Desktop thumbnail placement: a row under the frame (default) or a vertical rail beside it (shop pages). */
+  thumbs?: "bottom" | "left" | "center";
+  /** White mat + wall shadow around the frame (shop pages hang the print on a wall). */
+  frame?: boolean;
 }
 
 export default function ArtGallery({
   images,
   title = "",
   aspectClass = "aspect-3/4",
+  thumbs = "bottom",
+  frame = false,
 }: ArtGalleryProps) {
+  const frameClass = frame
+    ? "bg-white p-4 sm:p-6 wall-shadow"
+    : "rounded-md bg-muted shadow-xl";
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
@@ -50,8 +59,9 @@ export default function ArtGallery({
   if (images.length === 1) {
     const only = images[0];
     return (
+      <div className={frame ? frameClass : undefined}>
       <div
-        className={`relative ${aspectClass} overflow-hidden rounded-md bg-muted shadow-xl`}
+        className={`relative ${aspectClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
       >
         <Image
           src={only.url}
@@ -62,6 +72,7 @@ export default function ArtGallery({
           priority
         />
       </div>
+      </div>
     );
   }
 
@@ -69,10 +80,13 @@ export default function ArtGallery({
   const go = (dir: -1 | 1) =>
     scrollToSlide(Math.min(Math.max(active + dir, 0), total - 1));
 
+  const leftRail = thumbs === "left";
+
   return (
-    <div className="space-y-3">
+    <div className={leftRail ? "space-y-3 md:flex md:flex-row-reverse md:gap-4 md:space-y-0" : "space-y-3"}>
+      <div className={frame ? `${frameClass} ${leftRail ? "md:min-w-0 md:flex-1" : ""}` : leftRail ? "md:min-w-0 md:flex-1" : undefined}>
       <div
-        className={`group relative ${aspectClass} overflow-hidden rounded-md bg-muted shadow-xl`}
+        className={`group relative ${aspectClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
       >
         <div
           ref={trackRef}
@@ -122,6 +136,7 @@ export default function ArtGallery({
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
+      </div>
 
       {/* Dots: mobile (44px tall hit area, small visual dot) */}
       <div className="-my-3 flex justify-center gap-1 md:hidden">
@@ -144,7 +159,7 @@ export default function ArtGallery({
       </div>
 
       {/* Thumbnails: desktop */}
-      <div className="hidden gap-3 md:flex">
+      <div className={`hidden gap-3 md:flex ${leftRail ? "md:w-[76px] md:shrink-0 md:flex-col" : thumbs === "center" ? "justify-center" : ""}`}>
         {images.map((img, i) => (
           <button
             type="button"
@@ -152,8 +167,12 @@ export default function ArtGallery({
             aria-label={`Go to photo ${i + 1}`}
             aria-current={i === active}
             onClick={() => scrollToSlide(i)}
-            className={`relative aspect-square w-16 shrink-0 overflow-hidden rounded-md border-2 transition ${
-              i === active ? "border-sage-500" : "border-transparent opacity-70 hover:opacity-100"
+            className={`relative shrink-0 overflow-hidden rounded-md border-2 transition ${
+              leftRail ? "aspect-[4/5] w-full" : "aspect-square w-16"
+            } ${
+              i === active
+                ? leftRail ? "border-charcoal" : "border-sage-500"
+                : leftRail ? "border-border opacity-80 hover:opacity-100" : "border-transparent opacity-70 hover:opacity-100"
             }`}
           >
             <Image

@@ -17,6 +17,8 @@
 
   /* sage-* is THE accent (cornflower blue). Historical name, do not rename. 500 is the accent value; 50-200 are tint backgrounds of the same hue only. */
   --color-sage-50: #f0f4fb;
+  /* Wall: the warm surface a print hangs on (shop pages, PLAN-43) */
+  --color-wall: #e9e3d6;
   --color-sage-100: #e1eafa;
   --color-sage-200: #c3d5f5;
   --color-sage-300: #94b5ec;
@@ -142,3 +144,13 @@
 .animate-bounce-slow {
   animation: bounce-slow 3s ease-in-out infinite;
 }
+
+/* Shop page wall band (PLAN-43, Direction B): warm wall with a soft light falloff. */
+.wall-band {
+  background-color: var(--color-wall);
+  background-image: radial-gradient(ellipse at 35% 30%, rgb(255 255 255 / 0.35), rgb(0 0 0 / 0) 60%);
+}
+.wall-shadow {
+  box-shadow: 0 30px 60px rgb(26 26 26 / 0.18), 0 2px 6px rgb(26 26 26 / 0.08);
+}
+

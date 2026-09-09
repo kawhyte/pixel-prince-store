@@ -1,5 +1,5 @@
 import type {StructureResolver} from 'sanity/structure'
-import { Gift, FileText, Users, Images, ShoppingBag } from 'lucide-react'
+import { Gift, FileText, Users, Images, ShoppingBag, Receipt } from 'lucide-react'
 
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
 export const structure: StructureResolver = (S) =>
@@ -58,4 +58,12 @@ export const structure: StructureResolver = (S) =>
         .title('Subscribers')
         .icon(Users)
         .child(S.documentTypeList('subscriber').title('Subscribers')),
+      S.listItem()
+        .title('Shop orders')
+        .icon(Receipt)
+        .child(
+          S.documentTypeList('fwOrder')
+            .title('Shop orders')
+            .defaultOrdering([{ field: 'receivedAt', direction: 'desc' }])
+        ),
     ])

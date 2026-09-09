@@ -284,6 +284,17 @@ export const product = defineType({
       readOnly: true,
       validation: (Rule) => Rule.min(0).integer(),
     }),
+    defineField({
+      name: 'sales',
+      title: 'Prints sold',
+      type: 'number',
+      description: 'Orders that included this print. Updated by the Fourthwall order webhook (PLAN-38).',
+      group: 'stats',
+      hidden: ({ document }) => !isShop(document),
+      initialValue: 0,
+      readOnly: true,
+      validation: (Rule) => Rule.min(0).integer(),
+    }),
   ],
   preview: {
     select: {

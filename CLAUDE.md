@@ -144,6 +144,9 @@ NEXT_PUBLIC_SITE_URL=https://www.thepixelprince.com
 
 # Fourthwall hosted checkout host (no protocol). Empty = Buy buttons show "Coming soon"
 NEXT_PUBLIC_FOURTHWALL_CHECKOUT_DOMAIN=checkout.thepixelprince.com
+
+# Fourthwall order webhook (PLAN-38): Settings > For Developers > Webhooks, subscribe ORDER_PLACED to /api/webhooks/fourthwall
+FOURTHWALL_WEBHOOK_SECRET=<from the Fourthwall webhook settings>
 ```
 
 **Development Only:**
@@ -175,7 +178,7 @@ npm run dev
 
 1. Check browser console for errors
 2. Check Network tab → `/api/request-download` and `/api/claim-art` requests
-3. Check server logs for `[REQUEST-DL]` / `[CLAIM-ART]` prefixes
+3. Check server logs for `[REQUEST-DL]` / `[CLAIM-ART]` prefixes (`[FW-WEBHOOK]` for shop orders)
 4. Verify the artwork has `artFile.cloudinaryUrl` set in Sanity
 5. Check the subscriber's weekly count in the `subscriber-<hash>` document in Sanity
 
@@ -256,6 +259,7 @@ This provides:
 - `/api/claim-art` → Download handler (GET, `?token=...`): verifies token, streams the auto-built ZIP
 - `/api/gemini/generate` → AI description generator (POST, requires `x-admin-secret` header)
 - `/api/cloudinary/delete` → Delete Cloudinary assets (DELETE, requires `x-admin-secret` header)
+- `/api/webhooks/fourthwall` → Fourthwall ORDER_PLACED handler (POST, base64 HMAC-SHA256 in `X-Fourthwall-Hmac-SHA256`): records an `fwOrder` doc once, increments `sales` on matched artworks, adds the buyer to Resend. Logs `[FW-WEBHOOK]`. Test deliveries (`testMode`) write nothing.
 
 ### ZIP Streaming
 `lib/build-download-zip.ts` pipes the fetched master PNG straight into `archiver`, which pipes into the response — nothing is buffered fully in memory. `maxDuration = 60` on the claim-art route covers slow first-byte from Cloudinary.

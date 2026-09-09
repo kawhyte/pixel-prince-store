@@ -1,6 +1,7 @@
 export interface CollectionDef {
   slug: string;
   title: string; // H1 + meta title base
+  tagline: string; // one line under the label on the homepage tile
   metaDescription: string; // ≤155 chars
   intro: string[]; // paragraphs, 300–500 words total, keyword-targeted
   matchTags: string[]; // product matches if any tag or category (lowercased) includes one of these
@@ -12,6 +13,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "game-room-wall-art",
     title: "Game Room Wall Art",
+    tagline: "Art that belongs over the setup",
     metaDescription:
       "Free printable game room wall art plus printed retro gaming posters. Download, print, and level up your setup.",
     intro: [
@@ -39,6 +41,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "retro-gaming-prints",
     title: "Retro Gaming Prints",
+    tagline: "8-bit palettes and arcade silhouettes",
     metaDescription:
       "Free retro gaming prints inspired by 8-bit and 16-bit console classics. Downloadable art plus printed posters shipped free in the US.",
     intro: [
@@ -66,6 +69,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "map-prints",
     title: "Map Prints",
+    tagline: "The places you know by heart",
     metaDescription:
       "Free printable map art: city maps, world maps, and travel-style posters to download and print at home.",
     intro: [
@@ -93,6 +97,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "printable-wall-art",
     title: "Printable Wall Art",
+    tagline: "Free files, printed at home",
     metaDescription:
       "Free printable wall art you can download and print at home today: no shipping, no waiting, just a file and a printer.",
     intro: [
@@ -120,6 +125,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "basketball-wall-art",
     title: "Basketball Wall Art",
+    tagline: "Courts, arenas and the greats",
     metaDescription:
       "Basketball wall art for grown-up spaces: city prints, court diagrams, and fan cave pieces. Free downloads plus printed art shipped free in the US.",
     intro: [

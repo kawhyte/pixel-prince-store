@@ -6,6 +6,8 @@
  *   npx tsx scripts/import-fourthwall-products.ts --apply          create drafts + sync existing
  *   npx tsx scripts/import-fourthwall-products.ts --sync --apply   sync existing only, no new drafts
  *   add --include-test to also process products named "Test ..."
+ *   add --remockup to re-upload mockups that are already set (after changing how they are trimmed)
+ *   add --no-trim to keep Fourthwall's wide dead margin around each mockup
  *
  * Naming convention: "Title", "Title | Framed", "Title | Canvas" are one artwork with three
  * finishes (lib/fourthwall-import.ts splitFinish). Each finish becomes one printOffer with
@@ -18,6 +20,8 @@
 import { createClient } from "@sanity/client";
 import { config } from "dotenv";
 import { resolve } from "path";
+import { chromium, type Browser } from "playwright";
+import { contentBox } from "../lib/image-trim";
 import {
   type FwProduct,
   type ImportFinish,
@@ -42,6 +46,8 @@ if (!sanityToken) throw new Error("SANITY_API_WRITE_TOKEN (or SANITY_API_TOKEN) 
 const apply = process.argv.includes("--apply");
 const syncOnly = process.argv.includes("--sync");
 const includeTest = process.argv.includes("--include-test");
+const remockup = process.argv.includes("--remockup");
+const trim = !process.argv.includes("--no-trim");
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
@@ -91,13 +97,69 @@ async function findExisting(artworkId: string, productIds: string[]): Promise<Ex
   );
 }
 
+/**
+ * Fourthwall renders every mockup on a flat background with a wide dead margin: a framed
+ * poster fills 62% of the width and 55% of the height, so the print reads small in any
+ * container. Chromium decodes the render, `contentBox` finds the product, and the crop is
+ * uploaded instead. Without a browser the original is uploaded, so the import still works.
+ */
+let browser: Browser | null = null;
+let browserFailed = false;
+
+async function trimmed(buffer: Buffer, contentType: string): Promise<{ data: Buffer; type: string } | null> {
+  if (!trim || browserFailed) return null;
+  try {
+    if (!browser) browser = await chromium.launch();
+    const page = await browser.newPage();
+    try {
+      const dataUrl = `data:${contentType};base64,${buffer.toString("base64")}`;
+      const cropped = await page.evaluate(async (src) => {
+        const img = new Image();
+        img.src = src;
+        await img.decode();
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        const { data, width, height } = ctx.getImageData(0, 0, c.width, c.height);
+        return { pixels: Array.from(data), width, height };
+      }, dataUrl);
+      const box = contentBox(Uint8ClampedArray.from(cropped.pixels), cropped.width, cropped.height);
+      if (!box) return null;
+      const out = await page.evaluate(
+        async ({ src, box }) => {
+          const img = new Image();
+          img.src = src;
+          await img.decode();
+          const c = document.createElement("canvas");
+          c.width = box.width;
+          c.height = box.height;
+          c.getContext("2d")!.drawImage(img, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
+          return c.toDataURL("image/png");
+        },
+        { src: dataUrl, box }
+      );
+      return { data: Buffer.from(out.split(",")[1], "base64"), type: "image/png" };
+    } finally {
+      await page.close();
+    }
+  } catch (e) {
+    console.warn(`warn   mockups will keep their margins: ${String(e).slice(0, 80)}`);
+    browserFailed = true;
+    return null;
+  }
+}
+
 async function uploadImage(url: string, filename: string, label: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`image ${res.status} for ${label}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  const asset = await sanity.assets.upload("image", buffer, {
-    filename,
-    contentType: res.headers.get("content-type") ?? "image/webp",
+  const original = Buffer.from(await res.arrayBuffer());
+  const contentType = res.headers.get("content-type") ?? "image/webp";
+  const crop = await trimmed(original, contentType);
+  const asset = await sanity.assets.upload("image", crop?.data ?? original, {
+    filename: crop ? filename.replace(/\.[^.]+$/, ".png") : filename,
+    contentType: crop?.type ?? contentType,
   });
   return asset._id;
 }
@@ -219,7 +281,7 @@ async function main() {
               [`offers[_key=="${offer._key}"].finish`]: fp.finish,
             };
             if (fp.version) patch[`offers[_key=="${offer._key}"].version`] = fp.version;
-            if (!offer.hasMockup) {
+            if (!offer.hasMockup || remockup) {
               const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
               const mockupId = await uploadFirstImage(fp.product, suffix);
               if (mockupId) patch[`offers[_key=="${offer._key}"].mockup`] = imageRef(mockupId);
@@ -274,6 +336,7 @@ async function main() {
     });
   }
 
+  if (browser) await browser.close();
   console.log(`\n${groups.size} artwork(s) from ${products.length} product(s) processed${apply ? "" : " (dry run; add --apply to write)"}.`);
   if (failures > 0 && apply) {
     console.error(`${failures} product(s) were skipped.`);

@@ -12,12 +12,6 @@ import { cardCommerce, isNewPrint } from "@/lib/commerce";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
 import { SHOP_PROMO } from "@/config/shop-copy";
 
-const TILE_SLUGS = [
-  { slug: "game-room-wall-art", label: "Game Room Wall Art" },
-  { slug: "map-prints", label: "Map Prints" },
-  { slug: "printable-wall-art", label: "Printable Bundles" },
-];
-
 // Index-aligned with HOME_TRUST and HOME_CALLOUTS (config/home-copy.ts).
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Star];
 const CALLOUT_ICONS = [PenTool, Layers, Heart];
@@ -41,13 +35,12 @@ export default async function Home() {
   // A tile shows a print from its own collection or nothing: borrowing an unrelated print
   // put the same image on all three tiles while the shop held one print.
   const usedTileImages = new Set<string>();
-  const tiles = TILE_SLUGS.flatMap(({ slug, label }) => {
-    const collection = COLLECTIONS.find((c) => c.slug === slug)!;
+  const tiles = COLLECTIONS.flatMap((collection) => {
     const candidates = [...matchProductsToCollection(shopPrints, collection), ...matchProductsToCollection(freePrints, collection)];
     const match = candidates.find((c) => c.previewImage && !usedTileImages.has(c.previewImage));
     if (!match?.previewImage) return [];
     usedTileImages.add(match.previewImage);
-    return [{ slug, label, image: match.previewImage }];
+    return [{ slug: collection.slug, label: collection.title, tagline: collection.tagline, image: match.previewImage }];
   });
 
   // Rows are built for four cards. With fewer, widen them instead of leaving holes.
@@ -154,24 +147,37 @@ export default async function Home() {
 
       {/* 5. Collections */}
       {tiles.length > 1 && (
-      <section className="container mx-auto px-4 py-14 lg:py-20">
-        <Eyebrow>Explore</Eyebrow>
-        <h2 className="mt-2 text-[28px] font-semibold tracking-tight text-charcoal">Find your wall</h2>
-        <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in, or the thing you love.</p>
-        <div className={`mt-8 grid gap-6 ${tiles.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      <section className="py-14 lg:py-20">
+        <div className="container mx-auto px-4">
+          <Eyebrow>Explore</Eyebrow>
+          <h2 className="mt-2 text-[28px] font-semibold tracking-tight text-charcoal">Find your wall</h2>
+          <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in, or the thing you love.</p>
+        </div>
+        <div className="mt-8 flex snap-x gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:container lg:mx-auto [&::-webkit-scrollbar]:hidden">
           {tiles.map((tile) => (
             <Link
               key={tile.slug}
               href={`/collections/${tile.slug}`}
-              className="group relative block aspect-[4/3] overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover"
+              className="group relative block w-[220px] shrink-0 snap-start overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover"
             >
-              <Image src={tile.image} alt={tile.label} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
-              <div className="absolute inset-x-0 bottom-0 bg-white/95 px-4 py-3">
-                <p className="truncate text-sm font-medium text-charcoal">{tile.label}</p>
-                <span className="mt-0.5 flex items-center text-sm font-semibold text-sage-500">
-                  Discover
-                  <ChevronRight className="size-4" />
+              <div className="relative aspect-[4/5] bg-muted">
+                <Image
+                  src={tile.image}
+                  alt={tile.label}
+                  fill
+                  sizes="220px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-3">
+                <span className="inline-block bg-white px-2 py-1 text-xs font-bold uppercase tracking-wide text-charcoal">
+                  {tile.label}
                 </span>
+                <p className="mt-1.5 flex items-start gap-1 text-[13px] leading-snug text-white">
+                  {tile.tagline}
+                  <ChevronRight className="mt-0.5 size-3.5 shrink-0" />
+                </p>
               </div>
             </Link>
           ))}

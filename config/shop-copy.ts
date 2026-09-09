@@ -7,7 +7,7 @@
 import { DAMAGE_CLAIM_DAYS } from "@/config/support";
 
 export const SHOP_FEATURES = [
-  { title: "Museum-quality matte paper", body: "189 gsm enhanced matte, glare-free, archival inks." },
+  { title: "Premium-quality matte paper", body: "189 gsm museum-grade matte, glare-free, archival inks." },
   { title: "Printed to order, shipped flat or in a tube", body: "Made in the USA, arrives in 5 to 11 days." },
   { title: "Damage guarantee", body: "Arrives bent or damaged? Send a photo, we reprint it free." },
 ] as const;

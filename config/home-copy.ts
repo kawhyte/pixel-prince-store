@@ -4,7 +4,7 @@
 
 export const HOME_HERO = {
   headline: "Art for your walls. Printed and shipped free.",
-  sub: "Retro gaming and map prints, drawn by two humans, printed to order on museum-quality matte paper.",
+  sub: "Premium-quality retro gaming and map prints, drawn by two humans and printed to order on museum-grade matte paper.",
   cta: "Shop all prints",
   secondary: "Or get a free print every month",
 } as const;
@@ -23,8 +23,8 @@ export const HOME_CALLOUTS = [
     body: "Every piece is drawn by Kenny and Rene, not pulled from a generator. Retro palettes, real places, small details you keep finding.",
   },
   {
-    title: "Museum-quality matte",
-    body: "189 gsm enhanced matte paper, glare-free, archival inks. Made to order in the USA and shipped flat or in a tube.",
+    title: "Premium quality, every print",
+    body: "189 gsm museum-grade matte paper, glare-free, archival inks. Made to order in the USA and shipped flat or in a tube.",
   },
   {
     title: "Trusted by 1,900+ buyers",
@@ -49,7 +49,7 @@ export const HOME_FREE = {
 
 /** Short SEO block near the bottom, three columns. */
 export const HOME_SEO = {
-  headline: "Retro gaming and map wall art, printed to order",
+  headline: "Premium-quality retro gaming and map wall art, printed to order",
   columns: [
     {
       title: "Game room wall art",
@@ -60,8 +60,8 @@ export const HOME_SEO = {
       body: "City neighborhoods, state outlines and world maps in muted colors that sit quietly on a wall. Hometowns, trips, the place you met.",
     },
     {
-      title: "Printed the right way",
-      body: "Five sizes from 8×10 to 24×36, all matching standard frames. Enhanced matte paper, made to order in the USA, free US shipping, and a free reprint if it arrives damaged.",
+      title: "Premium quality, printed the right way",
+      body: "Five sizes from 8×10 to 24×36, all matching standard frames. Museum-grade matte paper, made to order in the USA, free US shipping, and a free reprint if it arrives damaged.",
     },
   ],
 } as const;

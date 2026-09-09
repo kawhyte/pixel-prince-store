@@ -169,8 +169,8 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
       {roomPhotos.length >= 2 && (
         <section className="container mx-auto px-4 py-14 lg:py-20">
           <SectionLabel>In the room</SectionLabel>
-          <h2 className="mt-2 text-[28px] font-bold tracking-tight text-charcoal">Not just a file. A print on your wall.</h2>
-          <p className="mt-2 max-w-2xl text-soft-charcoal">Printed to order on 189 gsm matte paper, unframed so you pick the frame that fits your room.</p>
+          <h2 className="mt-2 text-[28px] font-bold tracking-tight text-charcoal">Premium quality you can see on the wall.</h2>
+          <p className="mt-2 max-w-2xl text-soft-charcoal">Printed to order on 189 gsm museum-grade matte paper, unframed so you pick the frame that fits your room.</p>
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {roomPhotos.map((img) => (
               <figure key={img.url}>

@@ -36,8 +36,8 @@ export default async function PrintsPage() {
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-3xl font-semibold text-charcoal sm:text-4xl">Prints</h1>
           <p className="mt-4 text-lg text-soft-charcoal">
-            Printed to order on 189 gsm matte paper and shipped free inside the US. Five sizes,
-            from 8x10 to 24x36.
+            Premium-quality prints, made to order on 189 gsm museum-grade matte paper and shipped
+            free inside the US. Five sizes, from 8x10 to 24x36.
           </p>
         </div>
 

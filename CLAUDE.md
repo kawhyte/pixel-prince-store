@@ -102,8 +102,10 @@ npm run generate-zips    # [DEPRECATED] Generate ZIP bundles (not used with Clou
   category: string (Video Games, Quotes, Maps, Funny, Minimalist, Botanical)
   tags: string[]
   featured: boolean             // homepage hero; validated to allow only one
-  etsyListingUrl?: string
-  etsyPrintableUrl?: string
+  kind: 'single' | 'set'        // sets of two are their own artwork
+  offers?: PrintOffer[]         // physical print offers (config/commerce.ts, lib/commerce.ts); one per provider
+  etsyListingUrl?: string       // legacy fallback, removed in PLAN-37
+  etsyPrintableUrl?: string     // legacy fallback, removed in PLAN-37
   downloads: number             // auto-incremented by /api/claim-art
 }
 ```
@@ -230,6 +232,12 @@ This provides:
 - Download links are signed JWTs (`lib/download-token.ts`), 72-hour expiry, single artwork per token
 - `lib/download-tracking.ts` and `lib/use-download-tracking.ts` (cookie-based) are **dead code** left over from the pre-email-gate design — do not build on them; they have zero live imports
 
+### Commerce Model
+- Physical prints sell on-site via Fourthwall (merchant of record) with Printful as its manufacturer; Phase 2 swaps to Stripe + Printful (PLAN-34 decisions)
+- `offers[]` on an artwork holds display prices in cents per size; the provider is the source of truth for the charge
+- `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
+- Free downloads are unchanged and never routed through a provider
+
 ### Deprecated Features
 - `generate-zips.js` script — ZIPs are now built on-demand server-side by `lib/build-download-zip.ts`
 - Per-size uploads / `sizes[]` / `artSize` schema / `zipUrl` / `allSizesZip` — replaced by the single `artFile` model (PLAN-12)
@@ -250,3 +258,13 @@ This provides:
 - Use `urlFor()` helper from `sanity/lib/image.ts` for Sanity images
 - Test the download flow with `DISABLE_DOWNLOAD_LIMIT=true` to skip the email gate locally
 - Sanity Studio is accessible at `/studio` (no separate deployment needed), forced into dark mode, and needs a Vercel redeploy to pick up schema code changes (content edits are live immediately)
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

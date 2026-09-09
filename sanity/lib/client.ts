@@ -29,6 +29,25 @@ export interface ArtFile {
   bytes?: number
 }
 
+export interface ShopSizeOffer {
+  _key?: string
+  sizeId: string
+  priceCents: number
+  providerVariantId?: string
+  popular?: boolean
+}
+
+export interface PrintOffer {
+  _key?: string
+  provider: 'fourthwall' | 'etsy' | 'stripe'
+  active?: boolean
+  providerProductId?: string
+  checkoutUrl?: string
+  sizes?: ShopSizeOffer[]
+}
+
+export type ArtworkKind = 'single' | 'set'
+
 export type SanityImageWithDimensions = SanityImageSource & {
   asset?: {
     _id: string
@@ -57,6 +76,8 @@ export interface SanityProduct {
   detailImage?: SanityImageWithDimensions
   galleryImages?: RawGalleryImage[]
   artFile?: ArtFile
+  kind?: ArtworkKind
+  offers?: PrintOffer[]
   etsyListingUrl?: string
   etsyPrintableUrl?: string
   tags?: string[]
@@ -77,6 +98,8 @@ export interface FreeArt {
   detailImage?: string
   galleryImages?: GalleryImage[]
   artFile?: ArtFile
+  kind: ArtworkKind
+  offers: PrintOffer[]
   etsyListingUrl?: string
   etsyPrintableUrl?: string
   tags: string[]
@@ -109,6 +132,8 @@ const PRODUCT_PROJECTION = `
   detailImage,
   galleryImages,
   artFile,
+  kind,
+  offers,
   etsyListingUrl,
   etsyPrintableUrl,
   tags,
@@ -156,6 +181,8 @@ function toFreeArt(product: SanityProduct): FreeArt {
       product.title,
     ),
     artFile: product.artFile,
+    kind: product.kind ?? 'single',
+    offers: product.offers ?? [],
     etsyListingUrl: product.etsyListingUrl,
     etsyPrintableUrl: product.etsyPrintableUrl,
     tags: product.tags || [],
@@ -247,6 +274,8 @@ export async function getRelatedProducts(category: string, currentSlug: string):
       previewImageOrientation,
       detailImage: undefined,
       artFile: undefined,
+      kind: 'single',
+      offers: [],
       tags: [],
       category: product.category,
       downloads: 0,

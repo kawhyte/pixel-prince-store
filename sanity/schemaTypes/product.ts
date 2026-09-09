@@ -6,14 +6,14 @@ import { deriveRatio } from '@/config/print-sizes'
 
 export const product = defineType({
   name: 'product',
-  title: 'Free Art Product',
+  title: 'Artwork',
   type: 'document',
   icon: Gift,
   groups: [
     { name: 'artwork', title: '① Details', default: true },
     { name: 'images', title: '② Images' },
     { name: 'file', title: '③ Print File' },
-    { name: 'shop', title: '④ Shop & Tags' },
+    { name: 'shop', title: '④ Shop' },
     { name: 'stats', title: '⑤ Stats' },
   ],
   fields: [
@@ -45,6 +45,21 @@ export const product = defineType({
       group: 'artwork',
       initialValue: 'The Pixel Prince',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'kind',
+      title: 'Kind',
+      type: 'string',
+      description: 'Single print, or a set sold together (sets are their own artwork entry).',
+      group: 'artwork',
+      options: {
+        list: [
+          { title: 'Single print', value: 'single' },
+          { title: 'Set', value: 'set' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'single',
     }),
     defineField({
       name: 'aiHelper',
@@ -221,17 +236,32 @@ export const product = defineType({
         }),
     }),
     defineField({
+      name: 'offers',
+      title: 'Print offers',
+      type: 'array',
+      description: 'Where this artwork can be bought as a physical print. One offer per provider. Fourthwall = on-site checkout.',
+      group: 'shop',
+      of: [defineArrayMember({ type: 'printOffer' })],
+      validation: (Rule) =>
+        Rule.custom((value) => {
+          const list = (value as { provider?: string }[] | undefined) ?? []
+          const providers = list.map((o) => o.provider)
+          if (new Set(providers).size !== providers.length) return 'Only one offer per provider.'
+          return true
+        }),
+    }),
+    defineField({
       name: 'etsyListingUrl',
-      title: 'Etsy Listing URL (printed version)',
+      title: 'Legacy: Etsy listing URL',
       type: 'url',
-      description: "Direct link to this artwork's listing in the main Etsy shop. Leave empty to fall back to the shop home.",
+      description: 'Fallback only while this artwork has no Fourthwall offer. Prefer an Etsy print offer above. Removed in PLAN-37.',
       group: 'shop',
     }),
     defineField({
       name: 'etsyPrintableUrl',
-      title: 'Etsy Printable URL',
+      title: 'Legacy: Etsy printable URL',
       type: 'url',
-      description: 'Direct link to the printable listing/bundle. Leave empty to fall back to the printables shop home.',
+      description: 'No longer used for new artworks. Removed in PLAN-37.',
       group: 'shop',
     }),
     defineField({
@@ -254,8 +284,9 @@ export const product = defineType({
       hasFile: 'artFile.cloudinaryUrl',
       downloads: 'downloads',
       featured: 'featured',
+      offers: 'offers',
     },
-    prepare({ title, media, width, height, hasFile, downloads, featured }) {
+    prepare({ title, media, width, height, hasFile, downloads, featured, offers }) {
       let fileInfo = '⚠ file missing';
       if (hasFile && width && height) {
         const ratio = deriveRatio(width, height);
@@ -263,9 +294,13 @@ export const product = defineType({
       } else if (hasFile) {
         fileInfo = 'file ready';
       }
+      const list = (offers as { provider?: string; active?: boolean; sizes?: { priceCents?: number }[] }[] | undefined) ?? [];
+      const onSite = list.find((o) => o.provider === 'fourthwall' && o.active !== false);
+      const prices = (onSite?.sizes ?? []).map((s) => s.priceCents).filter((p): p is number => typeof p === 'number');
+      const shopInfo = prices.length ? ` · from $${(Math.min(...prices) / 100).toFixed(2)}` : '';
       return {
         title: featured ? `⭐ ${title}` : title,
-        subtitle: `${fileInfo} · ${downloads ?? 0} downloads`,
+        subtitle: `${fileInfo} · ${downloads ?? 0} downloads${shopInfo}`,
         media,
       }
     },

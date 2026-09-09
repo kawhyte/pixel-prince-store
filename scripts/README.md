@@ -159,3 +159,12 @@ Additional utility scripts will be added here as needed:
 - `optimize-images.js` - Optimize preview images
 - `validate-config.js` - Validate config/free-art.ts structure
 - `test-downloads.js` - Test download endpoints
+
+### `migrate-etsy-to-offers.ts` (PLAN-35)
+
+Wraps each artwork's legacy `etsyListingUrl` in a `printOffer` with `provider: "etsy"`. Dry run by default.
+
+    npx tsx scripts/migrate-etsy-to-offers.ts          # preview
+    npx tsx scripts/migrate-etsy-to-offers.ts --apply  # write
+
+Needs `SANITY_API_WRITE_TOKEN` (or `SANITY_API_TOKEN`) in `.env.local`. Patches drafts and published documents. Safe to re-run: artworks that already have an etsy offer are skipped.

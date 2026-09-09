@@ -1,5 +1,5 @@
 import type {StructureResolver} from 'sanity/structure'
-import { Gift, FileText, Users, Images } from 'lucide-react'
+import { Gift, FileText, Users, Images, ShoppingBag } from 'lucide-react'
 
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
 export const structure: StructureResolver = (S) =>
@@ -13,6 +13,15 @@ export const structure: StructureResolver = (S) =>
           S.documentTypeList('product')
             .title('Artworks')
             .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+        ),
+      S.listItem()
+        .title('In the shop')
+        .icon(ShoppingBag)
+        .child(
+          S.documentList()
+            .title('Artworks with an on-site offer')
+            .filter('_type == "product" && count(offers[provider == "fourthwall" && active != false]) > 0')
+            .defaultOrdering([{ field: 'title', direction: 'asc' }])
         ),
       S.listItem()
         .title('Blog Posts')

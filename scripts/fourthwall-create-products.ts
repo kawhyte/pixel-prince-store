@@ -3,7 +3,7 @@
  *
  *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters                 dry run
  *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply         upload + create (hidden)
- *   options: --margin-poster 18  --margin-framed 30  --frame Black|"Red Oak"|White  --publish  --only "Sweden Map"
+ *   options: --margin-poster 18  --margin-framed 30  --frames "Black,Red Oak,White"  --publish  --only "Sweden Map"
  *
  * Per file (title = file name without extension): one media upload, then the unframed poster
  * ("Title") and the framed poster ("Title | Framed"). Canvas cannot be created through the API;
@@ -44,8 +44,8 @@ const publish = flag("--publish");
 const only = opt("--only");
 const marginPoster = Number(opt("--margin-poster", "18"));
 const marginFramed = Number(opt("--margin-framed", "30"));
-const frameColor = (opt("--frame", "Black") as (typeof FRAME_COLORS)[number]) ?? "Black";
-if (!FRAME_COLORS.includes(frameColor)) throw new Error(`--frame must be one of ${FRAME_COLORS.join(", ")}`);
+const frameColors = (opt("--frames", FRAME_COLORS.join(",")) ?? "").split(",").map((s) => s.trim()).filter(Boolean) as (typeof FRAME_COLORS)[number][];
+if (frameColors.length === 0 || frameColors.some((c) => !FRAME_COLORS.includes(c))) throw new Error(`--frames must list some of ${FRAME_COLORS.join(", ")}`);
 
 const user = process.env.FOURTHWALL_API_USER;
 const password = process.env.FOURTHWALL_API_PASSWORD;
@@ -90,7 +90,7 @@ async function main() {
 
     console.log(
       `${apply ? "create" : "would create"} ${title} (${dims.width}×${dims.height}): ${todo.map((f) => productName(title, f)).join(", ")}` +
-        ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColor})${publish ? " | PUBLISH" : " | hidden"}`
+        ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
       console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
@@ -106,7 +106,7 @@ async function main() {
             title,
             imageId,
             marginUsd: finish === "poster" ? marginPoster : marginFramed,
-            frameColor,
+            frameColors,
             publish,
           });
           console.log(`ok     ${productName(title, finish)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);

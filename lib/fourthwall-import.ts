@@ -14,7 +14,7 @@ export interface FwImage {
 export interface FwVariant {
   id: string;
   unitPrice?: { value?: number; currency?: string };
-  attributes?: { size?: { name?: string } };
+  attributes?: { size?: { name?: string }; color?: { name?: string } };
   name?: string;
   images?: FwImage[];
 }
@@ -48,8 +48,15 @@ export interface MappedSize {
   providerVariantId: string;
 }
 
-/** Variants that match the ladder, in ladder order. `skipped` lists the labels that did not. */
-export function mapVariantsToSizes(variants: FwVariant[]): { sizes: MappedSize[]; skipped: string[] } {
+/** Preferred frame color when a framed product carries several (one variant per color and size). */
+export const PREFERRED_COLOR = "Black";
+
+/**
+ * Variants that match the ladder, in ladder order. `skipped` lists the labels that did not.
+ * When one size exists in several colors, the preferred color wins and the rest are ignored
+ * (a shop offer holds one variant per size).
+ */
+export function mapVariantsToSizes(variants: FwVariant[], preferredColor: string = PREFERRED_COLOR): { sizes: MappedSize[]; skipped: string[] } {
   const ladderIds = SHOP_SIZE_LADDER.map((s) => s.id);
   const sizes: MappedSize[] = [];
   const skipped: string[] = [];
@@ -60,7 +67,14 @@ export function mapVariantsToSizes(variants: FwVariant[]): { sizes: MappedSize[]
       skipped.push(variantSizeLabel(v) || v.id);
       continue;
     }
-    sizes.push({ _type: "shopSize", _key: `fw-${id}`, sizeId: id, priceCents: cents, providerVariantId: v.id });
+    const existing = sizes.findIndex((s) => s.sizeId === id);
+    const row: MappedSize = { _type: "shopSize", _key: `fw-${id}`, sizeId: id, priceCents: cents, providerVariantId: v.id };
+    if (existing >= 0) {
+      const color = v.attributes?.color?.name;
+      if (color === preferredColor) sizes[existing] = row; // preferred color replaces an earlier one
+      continue;
+    }
+    sizes.push(row);
   }
   sizes.sort((a, b) => ladderIds.indexOf(a.sizeId) - ladderIds.indexOf(b.sizeId));
   return { sizes, skipped };

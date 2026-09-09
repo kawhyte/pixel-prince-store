@@ -90,3 +90,12 @@ describe("splitFinish", () => {
     expect(splitFinish("Sweden Map Framed Poster")).toEqual({ baseTitle: "Sweden Map Framed Poster", finish: "framed" });
   });
 });
+
+describe("frame colors", () => {
+  it("keeps one variant per size, preferring Black", async () => {
+    const { mapVariantsToSizes } = await import("@/lib/fourthwall-import");
+    const v = (size: string, color: string, id: string) => ({ id, unitPrice: { value: 50 }, attributes: { size: { name: size }, color: { name: color } } });
+    const { sizes } = mapVariantsToSizes([v('8" x 10"', "White", "w1"), v('8" x 10"', "Black", "b1"), v('8" x 10"', "Red Oak", "o1"), v('11" x 14"', "White", "w2")]);
+    expect(sizes.map((s) => [s.sizeId, s.providerVariantId])).toEqual([["8x10", "b1"], ["11x14", "w2"]]);
+  });
+});

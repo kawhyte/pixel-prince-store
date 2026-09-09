@@ -86,11 +86,11 @@ Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`
 
 ### `fourthwall-create-products.ts` (PLAN-47)
 
-Turns a folder of print files into Fourthwall products: uploads each master to the media library and creates `Title` (Enhanced Matte Paper Poster) and `Title | Framed` (Framed High-Quality Matte Poster, black frame) with the five ladder sizes and one margin per finish. Created hidden unless `--publish`. Canvas cannot be created through the API; the script prints a dashboard reminder per title. Existing names are skipped.
+Turns a folder of print files into Fourthwall products: uploads each master to the media library and creates `Title` (Enhanced Matte Paper Poster) and `Title | Framed` (Framed High-Quality Matte Poster in Black, Red Oak and White, `--frames` to narrow) with the five ladder sizes and one margin per finish. Created hidden unless `--publish`; a hidden product is published later with `setProductAccess` in `lib/fourthwall-platform.ts` (PUT `/products/{id}/state`) or in the dashboard. The storefront's product listing is cached for 60 seconds, so run the import a minute after publishing. The import keeps the Black variant per size. Canvas cannot be created through the API; the script prints a dashboard reminder per title. Existing names are skipped.
 
     npx tsx scripts/fourthwall-create-products.ts --dir ./masters                  # dry run
     npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply          # create, hidden
-    npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply --margin-poster 18 --margin-framed 30 --frame Black --only "Sweden Map"
+    npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply --margin-poster 18 --margin-framed 30 --frames "Black,White" --only "Sweden Map"
 
 Needs `FOURTHWALL_API_USER` and `FOURTHWALL_API_PASSWORD` in `.env.local` (Fourthwall admin > Settings > For Developers > Create API User). Full-access credentials: keep them out of Vercel.
 

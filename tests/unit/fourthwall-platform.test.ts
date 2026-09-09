@@ -60,11 +60,12 @@ describe("fourthwall platform helpers", () => {
       name: "Sweden Map | Framed",
       regions: [{ region: "default", imageId: "img1", placementStrategy: "FULL_REGION" }],
       sizes: [...SIZE_NAMES.framed],
-      colors: ["Black"],
+      colors: ["Black", "Red Oak", "White"],
       profitMargin: 30,
       publishOnCreate: false,
     });
     expect(designProductBody({ finish: "poster", title: "X", imageId: "i", marginUsd: 18 })).not.toHaveProperty("colors");
+    expect(designProductBody({ finish: "framed", title: "X", imageId: "i", marginUsd: 30, frameColors: ["White"] })).toMatchObject({ colors: ["White"] });
   });
 
   it("client sends basic auth and pages the product list", async () => {

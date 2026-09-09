@@ -83,6 +83,7 @@ export function dimsWarning(d: ImageDims): string | null {
 export interface PlatformClient {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
+  put<T>(path: string, body: unknown): Promise<T>;
   del(path: string): Promise<void>;
 }
 
@@ -107,6 +108,7 @@ export function createPlatformClient(user: string, password: string, fetchImpl: 
   return {
     get: (path) => run("GET", path),
     post: (path, body) => run("POST", path, body),
+    put: (path, body) => run("PUT", path, body),
     del: async (path) => {
       await run("DELETE", path);
     },
@@ -166,7 +168,8 @@ export interface CreateDesignOptions {
   title: string;
   imageId: string;
   marginUsd: number;
-  frameColor?: (typeof FRAME_COLORS)[number];
+  /** framed only; defaults to every frame color (one variant per color and size) */
+  frameColors?: readonly (typeof FRAME_COLORS)[number][];
   publish?: boolean;
   description?: string;
 }
@@ -179,7 +182,7 @@ export function designProductBody(o: CreateDesignOptions) {
     ...(o.description ? { description: o.description } : {}),
     regions: [{ region: "default", imageId: o.imageId, placementStrategy: "FULL_REGION" }],
     sizes: [...SIZE_NAMES[o.finish]],
-    ...(o.finish === "framed" ? { colors: [o.frameColor ?? "Black"] } : {}),
+    ...(o.finish === "framed" ? { colors: [...(o.frameColors ?? FRAME_COLORS)] } : {}),
     profitMargin: o.marginUsd,
     publishOnCreate: o.publish === true,
   };
@@ -187,4 +190,9 @@ export function designProductBody(o: CreateDesignOptions) {
 
 export function createDesignProduct(client: PlatformClient, o: CreateDesignOptions): Promise<CreatedProduct> {
   return client.post<CreatedProduct>("/products", designProductBody(o));
+}
+
+/** Publish or hide a product: PUT /products/{id}/state { state: PUBLIC | HIDDEN }. Archive is DELETE. */
+export function setProductAccess(client: PlatformClient, productId: string, access: "PUBLIC" | "HIDDEN"): Promise<PlatformProduct> {
+  return client.put<PlatformProduct>(`/products/${productId}/state`, { state: access });
 }

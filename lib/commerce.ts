@@ -2,8 +2,11 @@ import type { FreeArt, PrintOffer, ShopSizeOffer } from "@/sanity/lib/client";
 import {
   CHECKOUT_UTM,
   CURRENCY,
+  DEFAULT_FINISH,
   DEFAULT_POPULAR_SIZE,
+  FINISHES,
   FOURTHWALL_CHECKOUT_DOMAIN,
+  type FinishId,
   ON_SITE_PROVIDERS,
   PROVIDER_PRIORITY,
   SHOP_SIZE_LADDER,
@@ -21,14 +24,52 @@ function activeOffers(art: WithOffers): PrintOffer[] {
   return (art.offers ?? []).filter((o) => o.active !== false);
 }
 
-/** First active offer by PROVIDER_PRIORITY (fourthwall, stripe, etsy). */
-export function getActiveOffer(art: WithOffers): PrintOffer | null {
+export function offerFinish(offer: PrintOffer): FinishId {
+  return offer.finish ?? DEFAULT_FINISH;
+}
+
+/** Finishes this artwork sells, in FINISHES order, with each finish's active on-site offer. */
+export function getOffersByFinish(art: WithOffers): { finish: FinishId; offer: PrintOffer }[] {
+  const list = activeOffers(art).filter((o) => ON_SITE_PROVIDERS.includes(o.provider));
+  return FINISHES.flatMap((f) => {
+    const offer = list.find((o) => offerFinish(o) === f.id);
+    return offer ? [{ finish: f.id, offer }] : [];
+  });
+}
+
+/** The finish the page opens on: requested, else the artwork's default, else unframed, else the first sold. */
+export function resolveFinish(art: WithOffers & { defaultFinish?: FinishId }, requested?: FinishId | null): FinishId | null {
+  const sold = getOffersByFinish(art).map((x) => x.finish);
+  if (sold.length === 0) return null;
+  for (const candidate of [requested, art.defaultFinish, DEFAULT_FINISH]) {
+    if (candidate && sold.includes(candidate)) return candidate;
+  }
+  return sold[0];
+}
+
+/**
+ * Active offer for a finish, by PROVIDER_PRIORITY (fourthwall, stripe, etsy).
+ * Without a finish: the resolved default finish's on-site offer, else the first active offer of any provider.
+ */
+export function getActiveOffer(art: WithOffers & { defaultFinish?: FinishId }, finish?: FinishId | null): PrintOffer | null {
+  const byFinish = getOffersByFinish(art);
+  const wanted = finish ?? resolveFinish(art);
+  const match = byFinish.find((x) => x.finish === wanted);
+  if (match) return match.offer;
   const list = activeOffers(art);
   for (const provider of PROVIDER_PRIORITY) {
     const found = list.find((o) => o.provider === provider);
     if (found) return found;
   }
   return null;
+}
+
+/** Lowest price across every finish on sale, for cards and the hero. */
+export function fromPriceAcrossFinishes(art: WithOffers): number | null {
+  const prices = getOffersByFinish(art)
+    .map((x) => fromPriceCents(x.offer))
+    .filter((p): p is number => p !== null);
+  return prices.length ? Math.min(...prices) : null;
 }
 
 /** Active offer whose checkout happens on our site, or null. */
@@ -134,7 +175,7 @@ export interface CardCommerce {
 /** Where an ArtCard links and what its price row says. Free prints keep the FREE row. */
 export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): CardCommerce {
   if (!isShopPrint(art)) return { href: `/art/${art.id}`, meta: "Digital print", value: "FREE" };
-  const from = fromPriceCents(getActiveOffer(art));
+  const from = fromPriceAcrossFinishes(art) ?? fromPriceCents(getActiveOffer(art));
   return { href: `/prints/${art.id}`, meta: "Art print", value: from !== null ? `From ${formatPrice(from)}` : "" };
 }
 

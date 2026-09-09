@@ -79,3 +79,14 @@ describe("fourthwall import helpers", () => {
     expect(slugify('Pastel USA Map "with" Capitals!')).toBe("pastel-usa-map-with-capitals");
   });
 });
+
+describe("splitFinish", () => {
+  it("reads the suffix convention and falls back to keywords", async () => {
+    const { splitFinish } = await import("@/lib/fourthwall-import");
+    expect(splitFinish("Sweden Map | Framed")).toEqual({ baseTitle: "Sweden Map", finish: "framed" });
+    expect(splitFinish("Sweden Map |canvas")).toEqual({ baseTitle: "Sweden Map", finish: "canvas" });
+    expect(splitFinish("Sweden Map | Unframed")).toEqual({ baseTitle: "Sweden Map", finish: "unframed" });
+    expect(splitFinish("Sweden Map")).toEqual({ baseTitle: "Sweden Map", finish: "unframed" });
+    expect(splitFinish("Sweden Map Framed Poster")).toEqual({ baseTitle: "Sweden Map Framed Poster", finish: "framed" });
+  });
+});

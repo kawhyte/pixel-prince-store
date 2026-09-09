@@ -3,6 +3,7 @@ import { Gift } from 'lucide-react'
 import { GeminiGenerator } from '../components/GeminiGenerator'
 import { HighResAssetInput } from '../components/HighResAssetInput'
 import { deriveRatio } from '@/config/print-sizes'
+import { FINISHES } from '@/config/commerce'
 
 const isShop = (doc: unknown) => (doc as { listing?: string } | undefined)?.listing === 'shop'
 
@@ -260,18 +261,27 @@ export const product = defineType({
       name: 'offers',
       title: 'Print offers',
       type: 'array',
-      description: 'Where this artwork can be bought as a physical print. One offer per provider. Fourthwall = on-site checkout.',
+      description: 'Where this artwork can be bought as a physical print. One offer per provider and finish. Fourthwall = on-site checkout.',
       group: 'shop',
       hidden: ({ document }) => !isShop(document),
       of: [defineArrayMember({ type: 'printOffer' })],
       validation: (Rule) =>
         Rule.custom((value, context) => {
-          const list = (value as { provider?: string }[] | undefined) ?? []
+          const list = (value as { provider?: string; finish?: string }[] | undefined) ?? []
           if (isShop(context.document) && list.length === 0) return 'A shop print needs at least one offer.'
-          const providers = list.map((o) => o.provider)
-          if (new Set(providers).size !== providers.length) return 'Only one offer per provider.'
+          const keys = list.map((o) => `${o.provider}:${o.finish ?? 'unframed'}`)
+          if (new Set(keys).size !== keys.length) return 'Only one offer per provider and finish.'
           return true
         }),
+    }),
+    defineField({
+      name: 'defaultFinish',
+      title: 'Default finish',
+      type: 'string',
+      description: 'Which finish the shop page opens on. Leave empty for Unframed.',
+      group: 'shop',
+      hidden: ({ document }) => !isShop(document),
+      options: { list: FINISHES.map((f) => ({ title: f.label, value: f.id })), layout: 'radio' },
     }),
     defineField({
       name: 'downloads',

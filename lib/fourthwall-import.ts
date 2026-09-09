@@ -109,6 +109,26 @@ export function pickGalleryImages(p: FwProduct, max = 3): FwImage[] {
   return out;
 }
 
+export type ImportFinish = "unframed" | "framed" | "canvas";
+
+/**
+ * Naming convention: "Sweden Map | Framed", "Sweden Map | Canvas", "Sweden Map" or "Sweden Map | Unframed".
+ * Suffix wins; without one, "framed" or "canvas" anywhere in the name decides; else unframed.
+ */
+export function splitFinish(name: string): { baseTitle: string; finish: ImportFinish } {
+  const m = name.match(/^(.*?)\s*\|\s*(unframed|framed|canvas)\s*$/i);
+  if (m) return { baseTitle: m[1].trim(), finish: m[2].toLowerCase() as ImportFinish };
+  if (/\bcanvas\b/i.test(name)) return { baseTitle: name.trim(), finish: "canvas" };
+  if (/\bframed\b/i.test(name)) return { baseTitle: name.trim(), finish: "framed" };
+  return { baseTitle: name.trim(), finish: "unframed" };
+}
+
+/** Deterministic Sanity id for an artwork: from the unframed product id when present, else the first finish's. */
+export function sanityIdForArtwork(products: FwProduct[]): string {
+  const unframed = products.find((p) => splitFinish(p.name).finish === "unframed") ?? products[0];
+  return sanityIdForFourthwallProduct(unframed.id);
+}
+
 /** Deterministic Sanity id for a Fourthwall product, so re-runs update instead of duplicating. */
 export function sanityIdForFourthwallProduct(productId: string): string {
   return `fw-${productId}`;

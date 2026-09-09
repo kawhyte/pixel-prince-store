@@ -1,6 +1,6 @@
 import { defineType, defineField, defineArrayMember } from 'sanity'
 import { ShoppingBag } from 'lucide-react'
-import { SHOP_SIZE_LADDER, DEFAULT_PRICE_CENTS } from '@/config/commerce'
+import { SHOP_SIZE_LADDER, DEFAULT_PRICE_CENTS, FINISHES, DEFAULT_FINISH } from '@/config/commerce'
 
 interface SizeRow {
   sizeId?: string
@@ -11,6 +11,7 @@ interface SizeRow {
 
 interface OfferValue {
   provider?: string
+  finish?: string
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -37,6 +38,22 @@ export const printOffer = defineType({
       },
       initialValue: 'fourthwall',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'finish',
+      title: 'Finish',
+      type: 'string',
+      description: 'Each finish is its own Fourthwall product. One offer per finish.',
+      options: { list: FINISHES.map((f) => ({ title: f.label, value: f.id })), layout: 'radio' },
+      initialValue: DEFAULT_FINISH,
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'mockup',
+      title: 'Finish mockup',
+      type: 'image',
+      description: 'Shown on the finish tile and as the main image when this finish is selected. The import fills it from Fourthwall.',
+      options: { hotspot: true },
     }),
     defineField({
       name: 'active',
@@ -152,8 +169,8 @@ export const printOffer = defineType({
     }),
   ],
   preview: {
-    select: { provider: 'provider', active: 'active', sizes: 'sizes', checkoutUrl: 'checkoutUrl' },
-    prepare({ provider, active, sizes, checkoutUrl }) {
+    select: { provider: 'provider', finish: 'finish', active: 'active', sizes: 'sizes', checkoutUrl: 'checkoutUrl', media: 'mockup' },
+    prepare({ provider, finish, active, sizes, checkoutUrl, media }) {
       const rows = (sizes as SizeRow[] | undefined) ?? []
       const prices = rows
         .map((r) => r.priceCents)
@@ -164,8 +181,9 @@ export const printOffer = defineType({
           ? 'link only'
           : 'no sizes'
       return {
-        title: `${provider ?? 'offer'}${active === false ? ' (inactive)' : ''}`,
+        title: `${provider ?? 'offer'} · ${finish ?? 'unframed'}${active === false ? ' (inactive)' : ''}`,
         subtitle: `${from} · ${rows.length} size${rows.length === 1 ? '' : 's'}`,
+        media,
       }
     },
   },

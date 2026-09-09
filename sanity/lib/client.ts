@@ -40,6 +40,9 @@ export interface ShopSizeOffer {
 export interface PrintOffer {
   _key?: string
   provider: 'fourthwall' | 'etsy' | 'stripe'
+  finish?: 'unframed' | 'framed' | 'canvas'
+  /** resolved by the projection from the `mockup` image */
+  mockupUrl?: string
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -79,6 +82,7 @@ export interface SanityProduct {
   artFile?: ArtFile
   listing?: ArtworkListing
   kind?: ArtworkKind
+  defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers?: PrintOffer[]
   tags?: string[]
   category?: string
@@ -102,6 +106,7 @@ export interface FreeArt {
   artFile?: ArtFile
   listing: ArtworkListing
   kind: ArtworkKind
+  defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers: PrintOffer[]
   tags: string[]
   category?: string
@@ -136,7 +141,8 @@ const PRODUCT_PROJECTION = `
   artFile,
   listing,
   kind,
-  offers,
+  defaultFinish,
+  offers[]{ ..., "mockupUrl": mockup.asset->url },
   tags,
   category,
   downloads,
@@ -190,6 +196,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     artFile: product.artFile,
     listing: product.listing ?? 'free',
     kind: product.kind ?? 'single',
+    defaultFinish: product.defaultFinish,
     offers: product.offers ?? [],
     tags: product.tags || [],
     category: product.category,

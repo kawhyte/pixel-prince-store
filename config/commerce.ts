@@ -70,3 +70,15 @@ export const CHECKOUT_UTM = { utm_source: "pixelprince", utm_medium: "site" } as
 export const FOURTHWALL_STOREFRONT_TOKEN_PUBLIC = process.env.NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN ?? "";
 export const CART_STORAGE_KEY = "pp_cart_id";
 
+/** Finishes (PLAN-46). One Fourthwall product per finish; the site merges them into one artwork. */
+export const FINISHES = [
+  { id: "unframed", label: "Unframed", blurb: "Matte poster" },
+  { id: "framed", label: "Framed", blurb: "Black wood frame, ready to hang" },
+  { id: "canvas", label: "Canvas", blurb: "Gallery wrap, 1.25 inch deep" },
+] as const;
+export type FinishId = (typeof FINISHES)[number]["id"];
+export const DEFAULT_FINISH: FinishId = "unframed";
+export function getFinish(id: string | undefined) {
+  return FINISHES.find((f) => f.id === id);
+}
+

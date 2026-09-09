@@ -118,3 +118,21 @@ describe("popularSizeId + inchesLabel", () => {
   });
 });
 
+
+describe("finishes", () => {
+  const framed: PrintOffer = { provider: "fourthwall", finish: "framed", providerProductId: "p2", sizes: [{ sizeId: "8x10", priceCents: 5800, providerVariantId: "f1" }] };
+  const canvas: PrintOffer = { provider: "fourthwall", finish: "canvas", providerProductId: "p3", sizes: [{ sizeId: "11x14", priceCents: 5500, providerVariantId: "c1" }] };
+  it("lists finishes in order and resolves the default", async () => {
+    const { getOffersByFinish, resolveFinish, getActiveOffer, fromPriceAcrossFinishes } = await import("@/lib/commerce");
+    const art = { offers: [canvas, framed, fw] };
+    expect(getOffersByFinish(art).map((x) => x.finish)).toEqual(["unframed", "framed", "canvas"]);
+    expect(resolveFinish(art)).toBe("unframed");
+    expect(resolveFinish({ ...art, defaultFinish: "framed" })).toBe("framed");
+    expect(resolveFinish(art, "canvas")).toBe("canvas");
+    expect(resolveFinish({ offers: [canvas] })).toBe("canvas");
+    expect(getActiveOffer(art, "framed")?.providerProductId).toBe("p2");
+    expect(getActiveOffer({ ...art, defaultFinish: "canvas" })?.providerProductId).toBe("p3");
+    expect(fromPriceAcrossFinishes(art)).toBe(2399);
+    expect(resolveFinish({ offers: [etsy] })).toBeNull();
+  });
+});

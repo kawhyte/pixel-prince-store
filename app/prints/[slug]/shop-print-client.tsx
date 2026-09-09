@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice } from "@/lib/commerce";
-import { getShopSize } from "@/config/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, resolveFinish } from "@/lib/commerce";
+import { getShopSize, type FinishId } from "@/config/commerce";
 import {
   SHOP_FEATURES,
   SHOP_GALLERY_EXTRAS,
@@ -42,11 +43,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * questions answered, free-print email band. Buy-first (PLAN-34 decision 10).
  */
 export default function ShopPrintClient({ art, related }: ShopPrintClientProps) {
-  const offer = getActiveOffer(art);
+  // Finish first (PLAN-46): the page owns the finish so the gallery's first slide can follow it.
+  const [finish, setFinish] = useState<FinishId | null>(null);
+  const activeFinish = resolveFinish(art, finish);
+  const offer = getActiveOffer(art, activeFinish);
   const sizes = offer ? orderedSizes(offer) : [];
   const roomPhotos = (art.galleryImages ?? []).slice(0, 3);
   const slides = [
-    { url: art.detailImage || art.previewImage, alt: art.title },
+    { url: offer?.mockupUrl || art.detailImage || art.previewImage, alt: art.title },
     ...(art.galleryImages ?? []),
     ...SHOP_GALLERY_EXTRAS,
   ];
@@ -73,7 +77,7 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
       {/* Hero: print + buy stack */}
       <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-14 lg:pt-6">
         <div className="wall-band rounded-md p-4 sm:p-8 lg:sticky lg:top-24">
-          <ArtGallery images={slides} title={art.title} aspectClass="aspect-[4/5]" frame thumbs="bottom" />
+          <ArtGallery key={activeFinish ?? "default"} images={slides} title={art.title} aspectClass="aspect-[4/5]" frame thumbs="bottom" />
         </div>
 
         <div className="mt-8 flex flex-col gap-7 lg:mt-0">
@@ -113,6 +117,8 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             showPrice
             stickyBar
             sizeGuideHref="#size-guide"
+            finish={activeFinish}
+            onFinishChange={setFinish}
           />
 
           {SHOP_PROMO.enabled && (

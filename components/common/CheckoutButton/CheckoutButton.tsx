@@ -5,20 +5,30 @@ import Link from "next/link";
 import { ArrowUpRight, ShoppingBag } from "lucide-react";
 
 import type { FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, resolveCheckout, formatPrice, fromPriceCents, popularSizeId } from "@/lib/commerce";
-import { getShopSize, inchesLabel } from "@/config/commerce";
+import {
+  getActiveOffer,
+  getOffersByFinish,
+  orderedSizes,
+  resolveCheckout,
+  resolveFinish,
+  formatPrice,
+  fromPriceCents,
+  popularSizeId,
+} from "@/lib/commerce";
+import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
 import { SHOP_TRUST_LINE } from "@/config/shop-copy";
 import { trackAddToCart, trackCheckoutOpened } from "@/lib/analytics";
 import { buildCartCheckoutUrl } from "@/lib/fourthwall-cart";
 import { useCart } from "@/components/common/Cart/CartProvider";
+import FinishPicker from "@/components/common/FinishPicker/FinishPicker";
 import { cn } from "@/lib/utils";
 
 interface CheckoutButtonProps {
   art: FreeArt;
   campaign: string;
-  /** sage = the site accent; ink = paid CTA on shop pages (Direction B), keeps sage for the free CTA */
+  /** sage = the site accent; ink = paid CTA on shop pages, keeps the accent for the free CTA */
   variant?: "sage" | "ink";
-  /** grid = label left, price right (2/3 columns); columns = label over price, 3 columns on phones, 5 on md+ */
+  /** grid = label left, price right; columns = label over price, 3 columns on phones, 5 on md+ */
   sizeLayout?: "grid" | "columns";
   /** selected price + size line above the picker */
   showPrice?: boolean;
@@ -26,11 +36,14 @@ interface CheckoutButtonProps {
   stickyBar?: boolean;
   /** anchor to a size guide on the page */
   sizeGuideHref?: string;
+  /** controlled finish (PLAN-46): the page owns it so the gallery can follow */
+  finish?: FinishId | null;
+  onFinishChange?: (finish: FinishId) => void;
 }
 
 /**
- * Size picker + Buy button. Reads offers only through lib/commerce.ts.
- * Fourthwall: same-tab hand-off to the hosted checkout with the size in the cart.
+ * Finish tiles (when more than one), size picker, Buy. Reads offers only through lib/commerce.ts.
+ * With the cart configured: Add to cart + a Buy now link. Without: direct Fourthwall checkout link.
  * Etsy (legacy): outbound link, no size picker. Stripe: "Coming soon" (Phase 2).
  */
 export default function CheckoutButton({
@@ -41,18 +54,37 @@ export default function CheckoutButton({
   showPrice = false,
   stickyBar = false,
   sizeGuideHref,
+  finish,
+  onFinishChange,
 }: CheckoutButtonProps) {
-  const offer = getActiveOffer(art);
+  const [localFinish, setLocalFinish] = useState<FinishId | null>(null);
+  const activeFinish = resolveFinish(art, finish ?? localFinish);
+  const offer = getActiveOffer(art, activeFinish);
   const sizes = offer ? orderedSizes(offer) : [];
-  const popular = popularSizeId(offer);
-  const [sizeId, setSizeId] = useState<string | null>(popular);
+  const finishKey = activeFinish ?? "none";
+  const [pickedByFinish, setPickedByFinish] = useState<Record<string, string>>({});
+  const sizeId = pickedByFinish[finishKey] ?? popularSizeId(offer);
   const cartCtx = useCart();
 
   if (!offer) return null;
 
+  const setSizeId = (id: string) => setPickedByFinish((prev) => ({ ...prev, [finishKey]: id }));
+  const changeFinish = (f: FinishId) => {
+    setLocalFinish(f);
+    onFinishChange?.(f);
+  };
+
+  const finishOptions = getOffersByFinish(art).map((x) => ({
+    finish: x.finish,
+    fromCents: fromPriceCents(x.offer),
+    mockupUrl: x.offer.mockupUrl,
+    fallbackImage: art.previewImage,
+  }));
+
   const target = resolveCheckout(offer, sizeId, campaign);
   const selected = sizes.find((s) => s.sizeId === sizeId);
   const selectedMeta = selected ? getShopSize(selected.sizeId) : undefined;
+  const popular = popularSizeId(offer);
   const from = fromPriceCents(offer);
   const priceText = selected ? formatPrice(selected.priceCents) : from !== null ? `From ${formatPrice(from)}` : "";
 
@@ -66,7 +98,7 @@ export default function CheckoutButton({
   const addSelected = async () => {
     if (!selected?.providerVariantId) return null;
     const next = await cartCtx.add({ variantId: selected.providerVariantId, quantity: 1 });
-    trackAddToCart(art.id, selected.sizeId);
+    trackAddToCart(art.id, `${finishKey}:${selected.sizeId}`);
     return next;
   };
 
@@ -87,12 +119,7 @@ export default function CheckoutButton({
   const buyControl = (compact = false) =>
     useCartFlow ? (
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={onAddToCart}
-          disabled={cartCtx.busy}
-          className={cn(buttonClass, "disabled:opacity-60")}
-        >
+        <button type="button" onClick={onAddToCart} disabled={cartCtx.busy} className={cn(buttonClass, "disabled:opacity-60")}>
           <ShoppingBag className="size-5" />
           {cartCtx.busy ? "Adding" : "Add to cart"}
           {selected && !compact && <span className="font-normal opacity-90">· {formatPrice(selected.priceCents)}</span>}
@@ -130,6 +157,8 @@ export default function CheckoutButton({
 
   return (
     <div className="space-y-4">
+      <FinishPicker options={finishOptions} value={activeFinish} onChange={changeFinish} />
+
       {showPrice && priceText && (
         <div className="flex items-baseline gap-3">
           <span className="text-[28px] font-semibold text-charcoal">{priceText}</span>
@@ -151,12 +180,7 @@ export default function CheckoutButton({
               selectedMeta && <span className="text-xs text-muted-foreground">{selectedMeta.cm}</span>
             )}
           </div>
-          <div
-            className={cn(
-              "grid gap-2",
-              sizeLayout === "columns" ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 sm:grid-cols-3",
-            )}
-          >
+          <div className={cn("grid gap-2", sizeLayout === "columns" ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 sm:grid-cols-3")}>
             {sizes.map((s) => {
               const active = s.sizeId === sizeId;
               const isPopular = s.sizeId === popular;
@@ -173,7 +197,7 @@ export default function CheckoutButton({
                 >
                   <input
                     type="radio"
-                    name="size"
+                    name={`size-${finishKey}`}
                     value={s.sizeId}
                     checked={active}
                     onChange={() => setSizeId(s.sizeId)}
@@ -210,14 +234,19 @@ export default function CheckoutButton({
       )}
 
       {buyControl()}
-      {target && !target.external && (
+      {(useCartFlow || (target && !target.external)) && (
         <p className="text-center text-xs text-muted-foreground">{SHOP_TRUST_LINE}</p>
       )}
 
       {stickyBar && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-cream/95 px-4 pb-5 pt-3 backdrop-blur-sm lg:hidden">
           <div className="flex flex-col leading-tight">
-            {selectedMeta && <span className="text-xs text-muted-foreground">{inchesLabel(selectedMeta.id)}</span>}
+            {selectedMeta && (
+              <span className="text-xs text-muted-foreground">
+                {activeFinish && finishOptions.length > 1 ? `${activeFinish} · ` : ""}
+                {inchesLabel(selectedMeta.id)}
+              </span>
+            )}
             <span className="text-lg font-semibold text-charcoal">{priceText}</span>
           </div>
           <div className="flex-1">{buyControl(true)}</div>

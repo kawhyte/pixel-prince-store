@@ -8,6 +8,7 @@ import { getAllProducts, getFeaturedProduct, getShopPrints } from "@/sanity/lib/
 import { cardCommerce } from "@/lib/commerce";
 import { COLLECTIONS, matchProductsToCollection } from "@/config/collections";
 import { TRUST_CLAIMS } from "@/config/trust";
+import Testimonials from "@/components/common/Testimonials/Testimonials";
 
 const TILE_SLUGS = [
   { slug: "game-room-wall-art", label: "Game Room Wall Art" },
@@ -224,6 +225,13 @@ export default async function Home() {
               See all prints
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* 7. Reviews */}
+      <section className="bg-card py-14 lg:py-24">
+        <div className="container mx-auto px-4">
+          <Testimonials />
         </div>
       </section>
     </main>

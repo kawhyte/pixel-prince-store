@@ -71,6 +71,7 @@ npm run generate-zips    # [DEPRECATED] Generate ZIP bundles (not used with Clou
    - `/free-downloads` → Gallery of all free art (`app/free-downloads/page.tsx`)
    - `/art/[id]` → Art detail page with print-size info chips + one download button (`app/art/[id]/page.tsx`)
    - `/prints` → Shop grid of published shop prints (ISR 60s), arriving-soon state when empty (PLAN-37)
+   - `/shipping-returns` → Policy page; facts come from `config/support.ts`, reviews from `config/reviews.ts` (PLAN-39)
    - `/prints/[slug]` → Shop print page, buy-first: size picker + `CheckoutButton` hand-off to Fourthwall checkout (`app/prints/[slug]/page.tsx`); shop prints only
    - Static generation at build time via `generateStaticParams()`
 

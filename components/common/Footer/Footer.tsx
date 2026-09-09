@@ -58,6 +58,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/shipping-returns" className={linkClass}>
+                  Shipping &amp; Returns
+                </Link>
+              </li>
+              <li>
                 <Link href="/blog" className={linkClass}>
                   Blog
                 </Link>

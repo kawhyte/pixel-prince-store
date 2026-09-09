@@ -1,4 +1,5 @@
 import { generateMetadata as buildMetadata } from "@/lib/seo";
+import { ORDER_PROCESSOR, ORDER_PROCESSOR_PRIVACY_URL } from "@/config/support";
 
 export const metadata = buildMetadata({
   title: "Privacy Policy",
@@ -12,7 +13,7 @@ export default function PrivacyPage() {
         Privacy Policy
       </h1>
       <p className="mt-4 text-sm text-soft-charcoal">
-        Effective date: July 17, 2026
+        Effective date: September 8, 2026
       </p>
 
       <section>
@@ -24,6 +25,22 @@ export default function PrivacyPage() {
           email address. We also collect anonymous, cookieless analytics via Umami to
           understand which pages and prints are popular. This data cannot be tied back
           to you personally.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="mb-3 mt-10 text-2xl font-semibold text-charcoal">
+          When you buy a print
+        </h2>
+        <p className="text-soft-charcoal">
+          Checkout happens on {ORDER_PROCESSOR}, the merchant of record for printed prints. It
+          collects your name, shipping address, and payment details under{" "}
+          <a href={ORDER_PROCESSOR_PRIVACY_URL} className="underline hover:text-sage-500" rel="noopener" target="_blank">
+            its own privacy policy
+          </a>
+          . We never see your card number. We receive the order details (name, email, address,
+          and what you bought) so we can answer support questions and, unless you unsubscribe,
+          send you the monthly email.
         </p>
       </section>
 
@@ -44,7 +61,8 @@ export default function PrivacyPage() {
           Where it lives
         </h2>
         <p className="text-soft-charcoal">
-          Email delivery and list management is handled by Resend. Download history
+          Email delivery and list management is handled by Resend. Orders and payment
+          records live with {ORDER_PROCESSOR}. Download history
           (used only to enforce the 3-download-per-week fair-use limit) is stored in
           Sanity.
         </p>

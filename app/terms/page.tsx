@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { generateMetadata as buildMetadata } from "@/lib/seo";
 import { LICENSE_SUMMARY } from "@/config/license";
+import { ORDER_PROCESSOR, ORDER_PROCESSOR_TERMS_URL } from "@/config/support";
 
 export const metadata = buildMetadata({
   title: "Terms of Use",
@@ -15,7 +16,7 @@ export default function TermsPage() {
         Terms of Use
       </h1>
       <p className="mt-4 text-sm text-soft-charcoal">
-        Effective date: July 17, 2026
+        Effective date: September 8, 2026
       </p>
 
       <section>
@@ -23,8 +24,8 @@ export default function TermsPage() {
           Acceptance of terms
         </h2>
         <p className="text-soft-charcoal">
-          By downloading a free print from The Pixel Prince, you agree to these terms.
-          If you don&apos;t agree, please don&apos;t use the site or download our files.
+          By downloading a free print or buying a printed print from The Pixel Prince, you
+          agree to these terms. If you don&apos;t agree, please don&apos;t use the site.
         </p>
       </section>
 
@@ -51,6 +52,11 @@ export default function TermsPage() {
           <li>Use it in commercial products, print-on-demand shops, or client work</li>
           <li>Claim it as your own work</li>
         </ul>
+
+        <p className="mt-6 text-soft-charcoal">
+          Buying a printed print gives you that physical print to display, gift, or resell as
+          an object. It does not include a license to reproduce the artwork.
+        </p>
       </section>
 
       <section>
@@ -58,9 +64,18 @@ export default function TermsPage() {
           Purchases
         </h2>
         <p className="text-soft-charcoal">
-          All paid sales happen on Etsy. Purchases made through our Etsy shops are
-          governed by Etsy&apos;s own terms of service and buyer protections, not by this
-          site.
+          Printed prints are sold through {ORDER_PROCESSOR}, which is the merchant of record:
+          it appears as the seller on your receipt, processes your payment, calculates any
+          sales tax at checkout, and sends your confirmation and tracking emails. Prices are in
+          US dollars. Payment and refund handling is governed by{" "}
+          <a href={ORDER_PROCESSOR_TERMS_URL} className="underline hover:text-sage-500" rel="noopener" target="_blank">
+            {ORDER_PROCESSOR}&apos;s terms
+          </a>
+          . Shipping times, damage replacements, and returns are described on our{" "}
+          <Link href="/shipping-returns" className="underline hover:text-sage-500">
+            shipping and returns page
+          </Link>
+          .
         </p>
       </section>
 

@@ -28,7 +28,7 @@ module.exports = {
     )
 
     // Key static routes next-sitemap does not discover on its own.
-    const staticSlugs = ['/prints']
+    const staticSlugs = ['/prints', '/shipping-returns']
     const staticPaths = await Promise.all(
       staticSlugs.map((path) => config.transform(config, path))
     )

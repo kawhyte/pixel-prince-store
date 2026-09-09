@@ -4,6 +4,7 @@
  * guarantee wording against Printful before launch. PLAN-39 turns the shipping
  * and returns answers into standalone pages.
  */
+import { DAMAGE_CLAIM_DAYS } from "@/config/support";
 
 export const SHOP_FEATURES = [
   { title: "Museum-quality matte paper", body: "189 gsm enhanced matte, glare-free, archival inks." },
@@ -21,7 +22,7 @@ export const SHOP_SHIPPING_FAQ = [
     q: "Is a frame included?",
     a: "No. Every print ships unframed so you can pick a frame that fits your wall. The sizes match standard off-the-shelf frames.",
   },
-  { q: "What if it arrives damaged?", a: "Email a photo within 30 days and we reprint and reship it free." },
+  { q: "What if it arrives damaged?", a: `Email a photo within ${DAMAGE_CLAIM_DAYS} days and we reprint and reship it free.` },
   {
     q: "Can I return it?",
     a: "Prints are made to order, so we cannot take returns for a change of mind. Damaged or misprinted orders are always replaced.",

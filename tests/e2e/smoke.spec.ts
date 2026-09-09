@@ -15,6 +15,7 @@ test("home page renders nav and free-downloads link", async ({ page }) => {
   await expect(page.getByText("7,000+ prints shipped").first()).toBeVisible(); // trust strip (footer repeats it)
   await expect(page.locator('main a[href="/prints"]')).toHaveCount(1); // the single shop band CTA
   await expect(page.locator('main a[href^="/collections/"]')).toHaveCount(3); // the three tiles
+  await expect(page.getByRole("heading", { name: /What buyers say/i })).toBeVisible();
 });
 
 test("free downloads gallery renders and navigates to art detail", async ({ page }) => {
@@ -68,3 +69,11 @@ test("basketball hub renders waitlist and faq", async ({ page }) => {
   await expect(page.locator('input[type="email"]').first()).toBeVisible();
   await expect(page.locator("details").first()).toBeVisible();
 });
+
+test("shipping and returns page renders", async ({ page }) => {
+  await page.goto("/shipping-returns");
+  await expect(page.locator("main, body").getByRole("heading", { level: 1, name: /Shipping and returns/i })).toBeVisible();
+  await expect(page.locator('a[href="mailto:hello@thepixelprince.com"]').first()).toBeVisible();
+  await expect(page.locator("details").first()).toBeVisible();
+});
+

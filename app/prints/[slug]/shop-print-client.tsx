@@ -12,6 +12,7 @@ import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 import CheckoutButton from "@/components/common/CheckoutButton/CheckoutButton";
+import Testimonials from "@/components/common/Testimonials/Testimonials";
 
 interface ShopPrintClientProps {
   art: FreeArt;
@@ -109,7 +110,12 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold text-charcoal">Shipping and returns</h2>
               <FaqAccordion faq={[...SHOP_SHIPPING_FAQ]} />
+              <Link href="/shipping-returns" className="inline-block text-sm font-medium text-sage-500 underline hover:text-sage-400">
+                Full shipping and returns policy
+              </Link>
             </div>
+
+            <Testimonials limit={3} offset={3} heading="From other buyers" />
 
             <div className="rounded-md border border-border bg-card p-5">
               <p className="text-sm text-charcoal">

@@ -146,6 +146,9 @@ NEXT_PUBLIC_FOURTHWALL_CHECKOUT_DOMAIN=checkout.thepixelprince.com
 
 # Fourthwall order webhook (PLAN-38): Settings > For Developers > Webhooks, subscribe ORDER_PLACED to /api/webhooks/fourthwall
 FOURTHWALL_WEBHOOK_SECRET=<from the Fourthwall webhook settings>
+
+# Public storefront token for the on-site cart (PLAN-45). Same value as FOURTHWALL_STOREFRONT_TOKEN; reads products, edits carts, nothing else
+NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN=ptkn_...
 ```
 
 **Development Only:**
@@ -244,7 +247,8 @@ This provides:
 - `offers[]` on an artwork holds display prices in cents per size; the provider is the source of truth for the charge
 - `lib/commerce.ts` picks the active offer (`fourthwall` > `stripe` > `etsy`); never read `offers` directly in components
 - Display prices are refreshed from Fourthwall by `scripts/import-fourthwall-products.ts --sync --apply` (PLAN-40); never edit `priceCents` by hand when a Fourthwall offer exists. New shop prints are imported as drafts by the same script.
-- Buy buttons go through `CheckoutButton` and `resolveCheckout()`; never build a checkout URL in a component. Fourthwall link: `https://<domain>/cart/checkout?products=<variantUUID>:1&currency=USD&utm_*`
+- Buy buttons go through `CheckoutButton` and `resolveCheckout()`; never build a checkout URL in a component.
+- Cart (PLAN-45): `components/common/Cart/*` + `lib/fourthwall-cart.ts`. Fourthwall owns the cart; only its id is stored (`localStorage` `pp_cart_id`). With `NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN` + checkout domain set, `CheckoutButton` shows Add to cart + a Buy now link; otherwise it falls back to the direct checkout link and the bag is hidden. Fourthwall link: `https://<domain>/cart/checkout?products=<variantUUID>:1&currency=USD&utm_*`
 - Free downloads are unchanged and never routed through a provider
 - `listing` splits the catalog: `getAllProducts`/`getProductBySlug`/`getFeaturedProduct`/`getRelatedProducts` return free prints only (so `/api/claim-art` can never serve a shop print); `getShopPrints`/`getShopPrintBySlug` return shop prints only
 

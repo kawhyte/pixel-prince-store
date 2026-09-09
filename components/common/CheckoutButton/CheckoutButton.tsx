@@ -8,7 +8,9 @@ import type { FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, resolveCheckout, formatPrice, fromPriceCents, popularSizeId } from "@/lib/commerce";
 import { getShopSize, inchesLabel } from "@/config/commerce";
 import { SHOP_TRUST_LINE } from "@/config/shop-copy";
-import { trackCheckoutOpened } from "@/lib/analytics";
+import { trackAddToCart, trackCheckoutOpened } from "@/lib/analytics";
+import { buildCartCheckoutUrl } from "@/lib/fourthwall-cart";
+import { useCart } from "@/components/common/Cart/CartProvider";
 import { cn } from "@/lib/utils";
 
 interface CheckoutButtonProps {
@@ -44,6 +46,7 @@ export default function CheckoutButton({
   const sizes = offer ? orderedSizes(offer) : [];
   const popular = popularSizeId(offer);
   const [sizeId, setSizeId] = useState<string | null>(popular);
+  const cartCtx = useCart();
 
   if (!offer) return null;
 
@@ -58,8 +61,54 @@ export default function CheckoutButton({
     variant === "ink" ? "bg-charcoal hover:bg-soft-charcoal" : "bg-sage-500 hover:bg-sage-400",
   );
 
+  const useCartFlow = cartCtx.enabled && offer.provider === "fourthwall" && !!selected?.providerVariantId;
+
+  const addSelected = async () => {
+    if (!selected?.providerVariantId) return null;
+    const next = await cartCtx.add({ variantId: selected.providerVariantId, quantity: 1 });
+    trackAddToCart(art.id, selected.sizeId);
+    return next;
+  };
+
+  const onAddToCart = async () => {
+    const next = await addSelected();
+    if (next) cartCtx.setOpen(true);
+  };
+
+  const onBuyNow = async () => {
+    const next = await addSelected();
+    const href = next ? buildCartCheckoutUrl(next.id, campaign) : null;
+    if (href) {
+      trackCheckoutOpened(art.id, sizeId ?? "", "fourthwall");
+      window.location.assign(href);
+    }
+  };
+
   const buyControl = (compact = false) =>
-    target ? (
+    useCartFlow ? (
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={onAddToCart}
+          disabled={cartCtx.busy}
+          className={cn(buttonClass, "disabled:opacity-60")}
+        >
+          <ShoppingBag className="size-5" />
+          {cartCtx.busy ? "Adding" : "Add to cart"}
+          {selected && !compact && <span className="font-normal opacity-90">· {formatPrice(selected.priceCents)}</span>}
+        </button>
+        {!compact && (
+          <button
+            type="button"
+            onClick={onBuyNow}
+            disabled={cartCtx.busy}
+            className="h-11 text-sm font-medium text-sage-500 underline-offset-4 hover:underline disabled:opacity-60"
+          >
+            Buy now, straight to checkout
+          </button>
+        )}
+      </div>
+    ) : target ? (
       <a
         href={target.href}
         target={target.external ? "_blank" : "_self"}

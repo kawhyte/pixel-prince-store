@@ -63,3 +63,10 @@ export const FOURTHWALL_CHECKOUT_DOMAIN = process.env.NEXT_PUBLIC_FOURTHWALL_CHE
 /** Attribution on every checkout hand-off, mirrors etsyUrl(). */
 export const CHECKOUT_UTM = { utm_source: "pixelprince", utm_medium: "site" } as const;
 
+/**
+ * Public Storefront token for the on-site cart (PLAN-45). Read-only for products, read/write for
+ * carts; it cannot see orders or money, which is why it may live in the browser. Empty = no cart UI.
+ */
+export const FOURTHWALL_STOREFRONT_TOKEN_PUBLIC = process.env.NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN ?? "";
+export const CART_STORAGE_KEY = "pp_cart_id";
+

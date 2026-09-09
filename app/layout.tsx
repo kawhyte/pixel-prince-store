@@ -5,6 +5,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ConditionalNavigation from "@/components/common/Navigation/ConditionalNavigation";
 import ConditionalFooter from "@/components/common/Footer/ConditionalFooter";
+import { CartProvider } from "@/components/common/Cart/CartProvider";
+import CartDrawer from "@/components/common/Cart/CartDrawer";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
 
 const inter = Inter({
@@ -78,9 +80,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ConditionalNavigation />
-        {children}
-        <ConditionalFooter />
+        <CartProvider>
+          <ConditionalNavigation />
+          {children}
+          <ConditionalFooter />
+          <CartDrawer />
+        </CartProvider>
         <Toaster />
         {process.env.NODE_ENV === "production" &&
           process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (

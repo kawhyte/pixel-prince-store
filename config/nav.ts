@@ -16,5 +16,10 @@ export const NAV_PRIMARY: NavLink[] = [
 
 export const NAV_SECONDARY: NavLink[] = [
   { label: "Free prints", href: "/free-downloads" },
+];
+
+/** Mobile menu only: links that live in the footer on desktop. */
+export const NAV_MORE: NavLink[] = [
   { label: "About", href: "/about" },
+  { label: "Shipping & returns", href: "/shipping-returns" },
 ];

@@ -26,4 +26,10 @@ export function trackEtsyClickOut(shop: "main" | "printables", page: string) {
 export function trackCheckoutOpened(artId: string, sizeId: string, provider: string) {
   track("checkout_opened", { artId, sizeId, provider });
 }
+export function trackAddToCart(artId: string, sizeId: string) {
+  track("add_to_cart", { artId, sizeId });
+}
+export function trackCartCheckout(items: string) {
+  track("cart_checkout", { items });
+}
 

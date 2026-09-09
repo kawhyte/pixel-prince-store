@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import Wordmark from "@/components/common/Wordmark/Wordmark";
-import { NAV_PRIMARY, NAV_SECONDARY } from "@/config/nav";
+import { NAV_MORE, NAV_PRIMARY, NAV_SECONDARY } from "@/config/nav";
+import CartButton from "@/components/common/Cart/CartButton";
 
 /**
  * Shop-first nav (PLAN-44): logo, category links in the middle, Free prints + About on the right.
@@ -45,17 +46,19 @@ export default function Navigation() {
               ))}
             </div>
 
-            {/* Desktop: secondary on the right */}
-            <div className="hidden items-center gap-6 md:flex">
+            {/* Desktop: secondary + cart on the right */}
+            <div className="hidden items-center gap-4 md:flex">
               {NAV_SECONDARY.map((l) => (
                 <Link key={l.href} href={l.href} className={desktopLink}>
                   {l.label}
                 </Link>
               ))}
+              <CartButton />
             </div>
 
-            {/* Mobile: menu button */}
-            <div className="flex items-center gap-2 md:hidden">
+            {/* Mobile: cart + menu button */}
+            <div className="flex items-center gap-1 md:hidden">
+              <CartButton />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="z-50 flex size-11 items-center justify-center rounded-md text-charcoal transition-colors hover:bg-sage-100"
@@ -82,7 +85,7 @@ export default function Navigation() {
             </Link>
           ))}
           <p className="px-4 pb-1 pt-5 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">More</p>
-          {NAV_SECONDARY.map((l) => (
+          {[...NAV_SECONDARY, ...NAV_MORE].map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setIsMobileMenuOpen(false)} className={mobileLink}>
               {l.label}
             </Link>

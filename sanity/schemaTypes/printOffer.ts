@@ -60,18 +60,21 @@ export const printOffer = defineType({
     }),
     defineField({
       name: 'art',
-      title: 'Flat artwork',
+      title: 'Flat artwork (the art on its own, no room, no frame)',
       type: 'image',
-      description: `The artwork itself, no mockup. Shown full bleed as the main image for an unframed print and on the version tiles. Filled by npm run shop:art from the masters folder. ${SHOP_IMAGE_HINT}`,
+      description: `Used as the main image when Unframed is selected, and on the version tiles. Filled by npm run shop:art from the masters folder, so you rarely touch it. ${SHOP_IMAGE_HINT}`,
       options: { hotspot: true },
       components: { input: ImageWithDetails },
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
       name: 'mockup',
-      title: 'Main photo for this finish',
+      title: 'Main photo (this version and finish only)',
       type: 'image',
-      description: `Shown on the finish tile and as the main image when this finish is selected. Seeded from Fourthwall when the print is first imported; replace it with your own photo. ${SHOP_IMAGE_HINT}`,
+      description:
+        'The big image at the top of the print page when a buyer picks this exact version and finish, and the picture on its finish tile. Each row in this list has its own, so changing it here changes one combination and nothing else. ' +
+        'Not the grid card: that is Preview Image on the Images tab. ' +
+        SHOP_IMAGE_HINT,
       options: { hotspot: true },
       components: { input: ImageWithDetails },
       validation: (Rule) => Rule.warning().custom(minImageWidth()),

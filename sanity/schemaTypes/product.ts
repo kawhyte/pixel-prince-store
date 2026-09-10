@@ -112,10 +112,12 @@ export const product = defineType({
     }),
     defineField({
       name: 'previewImage',
-      title: 'Preview Image',
+      title: 'Card image (the grid, search, related prints)',
       type: 'image',
       components: { input: ImageWithDetails },
-      description: `The card image in the shop grid. Portrait 4:5. ${SHOP_IMAGE_HINT}`,
+      description:
+        'The one picture that represents this print everywhere it appears in a list. Not the big image on its own page: that lives on each offer under Shop, as Main photo. ' +
+        SHOP_IMAGE_HINT,
       group: 'images',
       options: {
         hotspot: true,
@@ -158,9 +160,9 @@ export const product = defineType({
     }),
     defineField({
       name: 'galleryImages',
-      title: 'Extra gallery photos (optional)',
+      title: 'Room photos (shared by every version and finish)',
       description:
-        'Context shots: the artwork framed on a wall, in a room, lifestyle. These appear after the main image as a carousel, and the first three also fill the In the room section. Up to 10, the same as Etsy. Drag to reorder. The artwork itself goes in Main Image above, not here. ' + SHOP_IMAGE_HINT,
+        'Context shots that follow the main image in the carousel, and the first three fill the In the room section. These belong to the whole print, so they show whichever version and finish a buyer has picked. Up to 10, the same as Etsy. Drag to reorder. ' + SHOP_IMAGE_HINT,
       type: 'array',
       group: 'images',
       of: [

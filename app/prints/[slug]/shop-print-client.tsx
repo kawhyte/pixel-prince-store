@@ -86,13 +86,20 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
 
       {/* Hero: print + buy stack */}
       <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.28fr_1fr] lg:items-start lg:gap-10 lg:pt-6">
-        <div className="wall-band rounded-md p-3 sm:p-5 lg:sticky lg:top-24">
+        {/* Shop photos are 1140x1520 (sanity/lib/image-rules.ts), so on a 2x screen the print can
+            fill 570 css px before the browser starts inventing pixels. The frame is 4:5 and the
+            art is 3:4, so it fits by height: a 608 px frame is 760 tall and shows the art at
+            570x760, exactly the file. Past that it goes soft, and the column also grows taller
+            than a sticky viewport can show, which cropped the thumbnails off the bottom. The
+            40 px on the cap is this band's own sm:p-5 padding. */}
+        <div className="wall-band mx-auto w-full max-w-[440px] rounded-md p-3 sm:max-w-[520px] sm:p-5 lg:max-w-[648px] lg:sticky lg:top-24">
           <ArtGallery
             key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`}
             images={slides}
             title={art.title}
             aspectClass="aspect-[4/5]"
             thumbs="bottom"
+            sizes="(max-width: 640px) 440px, (max-width: 1024px) 520px, 608px"
           />
         </div>
 

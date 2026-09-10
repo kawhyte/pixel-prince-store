@@ -19,6 +19,12 @@ interface ArtGalleryProps {
   thumbs?: "bottom" | "left" | "center";
   /** White mat + wall shadow around the frame (shop pages hang the print on a wall). */
   frame?: boolean;
+  /**
+   * The `sizes` hint for the big slides. Give the real rendered width when the frame is capped:
+   * a hint that is wider than the box makes the browser ask for pixels the source may not have,
+   * and Next stops at the source width, so the picture is stretched instead of sharp.
+   */
+  sizes?: string;
 }
 
 export default function ArtGallery({
@@ -27,6 +33,7 @@ export default function ArtGallery({
   aspectClass = "aspect-3/4",
   thumbs = "bottom",
   frame = false,
+  sizes = "(max-width: 1024px) 100vw, 50vw",
 }: ArtGalleryProps) {
   const frameClass = frame
     ? "bg-white p-3 sm:p-4 wall-shadow"
@@ -68,7 +75,7 @@ export default function ArtGallery({
           alt={only.alt || title}
           fill
           className="object-contain"
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          sizes={sizes}
           priority
         />
       </div>
@@ -108,7 +115,7 @@ export default function ArtGallery({
                 alt={img.alt || title}
                 fill
                 className="object-contain"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes={sizes}
                 priority={i === 0}
                 loading={i === 0 ? undefined : "lazy"}
               />

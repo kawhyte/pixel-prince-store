@@ -2,6 +2,7 @@ import { defineType, defineField, defineArrayMember } from 'sanity'
 import { ShoppingBag } from 'lucide-react'
 import { SHOP_SIZE_LADDER, DEFAULT_PRICE_CENTS, FINISHES, DEFAULT_FINISH } from '@/config/commerce'
 import { minImageWidth, SHOP_IMAGE_HINT } from '../lib/image-rules'
+import { ImageWithDetails } from '../components/ImageWithDetails'
 
 interface SizeRow {
   sizeId?: string
@@ -63,6 +64,7 @@ export const printOffer = defineType({
       type: 'image',
       description: `The artwork itself, no mockup. Shown full bleed as the main image for an unframed print and on the version tiles. Filled by npm run shop:art from the masters folder. ${SHOP_IMAGE_HINT}`,
       options: { hotspot: true },
+      components: { input: ImageWithDetails },
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
@@ -71,6 +73,7 @@ export const printOffer = defineType({
       type: 'image',
       description: `Shown on the finish tile and as the main image when this finish is selected. Seeded from Fourthwall when the print is first imported; replace it with your own photo. ${SHOP_IMAGE_HINT}`,
       options: { hotspot: true },
+      components: { input: ImageWithDetails },
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({

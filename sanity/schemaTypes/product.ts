@@ -6,6 +6,7 @@ import { DefaultVersionInput } from '../components/DefaultVersionInput'
 import { deriveRatio } from '@/config/print-sizes'
 import { FINISHES } from '@/config/commerce'
 import { minImageWidth, SHOP_IMAGE_HINT } from '../lib/image-rules'
+import { ImageWithDetails } from '../components/ImageWithDetails'
 
 const isShop = (doc: unknown) => (doc as { listing?: string } | undefined)?.listing === 'shop'
 
@@ -113,6 +114,7 @@ export const product = defineType({
       name: 'previewImage',
       title: 'Preview Image',
       type: 'image',
+      components: { input: ImageWithDetails },
       description: `The card image in the shop grid. Portrait 4:5. ${SHOP_IMAGE_HINT}`,
       group: 'images',
       options: {
@@ -165,6 +167,7 @@ export const product = defineType({
         defineArrayMember({
           type: 'image',
           options: { hotspot: true },
+          components: { input: ImageWithDetails },
           fields: [
             defineField({
               name: 'alt',
@@ -173,6 +176,7 @@ export const product = defineType({
               validation: (rule) => rule.required(),
             }),
           ],
+          validation: (rule) => rule.warning().custom(minImageWidth()),
         }),
       ],
       validation: (rule) => rule.max(10),

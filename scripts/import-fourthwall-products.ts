@@ -6,6 +6,9 @@
  *   npx tsx scripts/import-fourthwall-products.ts --apply          create drafts + sync existing
  *   npx tsx scripts/import-fourthwall-products.ts --sync --apply   sync existing only, no new drafts
  *   add --include-test to also process products named "Test ..."
+ *   Fourthwall's storefront publishes a dashboard change a minute or two late, so a sync run
+ *   immediately after editing prices reads the old ones. Wait, then run it.
+ *
  *   add --reset-images to throw away the photos in Studio and take Fourthwall's again.
  *     Photos are seeded on the first import and are yours after that (PLAN-52).
  *   add --no-trim to keep Fourthwall's wide dead margin around each mockup

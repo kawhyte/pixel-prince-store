@@ -130,7 +130,8 @@ async function main() {
     console.log(`  Every price matches your list. Nothing to do.`);
   } else {
     console.log(`  ${productsNeedingWork} of ${live.length} products need a change, ${rowsNeedingWork} price${rowsNeedingWork === 1 ? "" : "s"} in total.`);
-    console.log(`  Open each link above, edit the Selling price column, save, then run:  npm run shop:sync`);
+    console.log(`  Open each link above, edit the Selling price column and save.`);
+    console.log(`  Fourthwall takes a minute or two to publish a price change, so wait, then run:  npm run shop:sync`);
   }
   if (unchecked > 0) {
     console.log(`  ${unchecked} size${unchecked === 1 ? " is" : "s are"} sold in Fourthwall but not in your target list, so they were not checked.`);

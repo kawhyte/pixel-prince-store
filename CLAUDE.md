@@ -45,9 +45,13 @@ npx sanity dataset export <dataset> <file>  # Export data
 
 ### Utilities
 ```bash
-npx tsx scripts/import-fourthwall-products.ts --apply   # Fourthwall catalog -> Sanity drafts (PLAN-40)
-npx tsx scripts/fourthwall-ids.ts                        # list Fourthwall product + variant ids
+npm run shop:new         # masters/ -> Fourthwall products (add -- --apply --publish)
+npm run shop:sync        # Fourthwall -> Sanity: prices and images, the one command after any dashboard edit
+npm run shop:art         # masters/ -> the flat artwork on each offer (add -- --apply --preview)
+npx tsx scripts/fourthwall-ids.ts   # list Fourthwall product + variant ids
 ```
+
+Ownership: Fourthwall owns prices, sizes and images; Studio owns title, description, tags, category and the defaults. `shop:sync` always replaces images and never touches Studio text. See `docs/ADDING-NEW-ART.md` section 9.
 
 ## Architecture
 

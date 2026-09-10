@@ -279,6 +279,7 @@ This provides:
 - `/api/request-download` → Email-gate handler (POST): validates + rate-limits, signs token, sends email
 - `/api/claim-art` → Download handler (GET, `?token=...`): verifies token, streams the auto-built ZIP
 - `/api/gemini/generate` → AI description generator (POST, requires `x-admin-secret` header)
+- `/api/gemini/alt-text` → looks at an image and writes its alt text (POST, `x-admin-secret`). Used by the button on any image field with an `alt` (PLAN-53). Sanity serves images from a content hash, so file names never reach a crawler; alt text, the Product image array and `/sitemap-images.xml` are what do.
 - `/api/cloudinary/delete` → Delete Cloudinary assets (DELETE, requires `x-admin-secret` header)
 - `/api/webhooks/fourthwall` → Fourthwall ORDER_PLACED handler (POST, base64 HMAC-SHA256 in `X-Fourthwall-Hmac-SHA256`): records an `fwOrder` doc once, increments `sales` on matched artworks, adds the buyer to Resend. Logs `[FW-WEBHOOK]`. Test deliveries (`testMode`) write nothing.
 

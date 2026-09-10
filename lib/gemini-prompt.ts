@@ -39,3 +39,44 @@ export function buildDescriptionPrompt(opts: DescriptionPromptOptions): string {
 
   return lines.join('\n')
 }
+
+export interface AltTextPromptOptions {
+  /** what the product is, so the model does not have to guess the subject */
+  title: string
+  version?: string
+  finish?: string
+  category?: string
+}
+
+/**
+ * Alt text is read by screen readers first and search engines second, and the two want the same
+ * thing: an honest, specific sentence. Keyword stuffing is penalised by Google and useless to a
+ * person, so the prompt asks for neither.
+ */
+export function buildAltTextPrompt(opts: AltTextPromptOptions): string {
+  const facts = [
+    `The product is an art print titled "${opts.title}".`,
+    opts.version ? `This is the "${opts.version}" colorway.` : '',
+    opts.finish && opts.finish !== 'unframed' ? `It is sold ${opts.finish}.` : '',
+    opts.category ? `It belongs in the ${opts.category} category.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return `You write alt text for an online art print shop that sells in the United States.
+
+${facts}
+
+Look at the image and write ONE sentence of alt text describing what is actually visible.
+
+Rules:
+- Describe only what you can see. Never invent a room, an object, a colour or a person that is not there.
+- Lead with the subject, then the setting if there is one. Mention the frame or the surroundings only if they are visible.
+- Include the print's title naturally, and the words "wall art print" if they fit without forcing.
+- Between 60 and 125 characters. Screen readers cut off around there and so does Google.
+- Do not start with "Image of", "Photo of", "A picture of" or the title alone.
+- No keyword lists, no repetition, no marketing language, no full stop at the end.
+- US spelling.
+
+Return only the sentence, with no quotes and no explanation.`
+}

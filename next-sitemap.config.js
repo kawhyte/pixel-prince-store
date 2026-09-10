@@ -4,6 +4,10 @@ module.exports = {
   generateRobotsTxt: true,
   generateIndexSitemap: false,
   robotsTxtOptions: {
+    // The image sitemap is generated at runtime from Sanity, so it is listed rather than built here.
+    additionalSitemaps: [
+      `${process.env.SITE_URL || 'https://www.thepixelprince.com'}/sitemap-images.xml`,
+    ],
     policies: [
       {
         userAgent: '*',

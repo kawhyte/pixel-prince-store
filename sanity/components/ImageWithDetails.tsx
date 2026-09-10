@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Text } from '@sanity/ui';
-import { useClient, type ImageValue, type ObjectInputProps } from 'sanity';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Button, Flex, Stack, Text } from '@sanity/ui';
+import { set, useClient, useFormValue, type ImageValue, type ObjectInputProps } from 'sanity';
 import { MIN_SHOP_IMAGE_WIDTH } from '../lib/image-rules';
+import { getAdminSecret } from '@/lib/admin-secret-client';
 
 interface AssetFacts {
   width?: number
@@ -67,15 +68,64 @@ export function ImageWithDetails(props: ObjectInputProps) {
   }
   const tooSmall = typeof facts?.width === 'number' && facts.width < MIN_SHOP_IMAGE_WIDTH
 
+  // The button only appears where there is an alt field to write into.
+  const hasAltField = props.schemaType.fields.some((field) => field.name === 'alt')
+  const title = (useFormValue(['title']) as string | undefined) ?? ''
+  const category = useFormValue(['category']) as string | undefined
+  const [writing, setWriting] = useState(false)
+  const [problem, setProblem] = useState<string | null>(null)
+
+  const writeAlt = useCallback(async () => {
+    if (!assetId || !title) return
+    setWriting(true)
+    setProblem(null)
+    try {
+      const url = await client.fetch<string | null>(`*[_id == $id][0].url`, { id: assetId })
+      if (!url) throw new Error('That image has no URL yet. Save and try again.')
+      const response = await fetch('/api/gemini/alt-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': getAdminSecret() ?? '' },
+        body: JSON.stringify({ imageUrl: `${url}?w=1024`, title, category }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data?.error ?? `Request failed (${response.status})`)
+      props.onChange(set(data.alt, ['alt']))
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'Something went wrong')
+    } finally {
+      setWriting(false)
+    }
+  }, [assetId, title, category, client, props])
+
   return (
-    <>
+    <Stack space={3}>
       {props.renderDefault(props)}
-      {parts.length > 0 && (
-        <Text size={1} muted={!tooSmall} style={tooSmall ? { color: 'var(--card-badge-caution-fg-color)' } : undefined}>
-          {parts.join(' · ')}
-          {tooSmall ? ' · too small for the shop page' : ''}
+      {(parts.length > 0 || (hasAltField && assetId)) && (
+        <Flex align="center" gap={3} wrap="wrap">
+          {parts.length > 0 && (
+            <Text size={1} muted={!tooSmall} style={tooSmall ? { color: 'var(--card-badge-caution-fg-color)' } : undefined}>
+              {parts.join(' · ')}
+              {tooSmall ? ' · too small for the shop page' : ''}
+            </Text>
+          )}
+          {hasAltField && assetId && (
+            <Button
+              mode="ghost"
+              tone="primary"
+              fontSize={1}
+              padding={2}
+              text={writing ? 'Looking at the image...' : 'Write alt text with AI'}
+              disabled={writing || !title}
+              onClick={writeAlt}
+            />
+          )}
+        </Flex>
+      )}
+      {problem && (
+        <Text size={1} style={{ color: 'var(--card-badge-critical-fg-color)' }}>
+          {problem}
         </Text>
       )}
-    </>
+    </Stack>
   )
 }

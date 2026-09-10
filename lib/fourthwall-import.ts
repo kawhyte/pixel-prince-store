@@ -48,6 +48,22 @@ export interface MappedSize {
   providerVariantId: string;
 }
 
+/**
+ * One variant per size. A framed product repeats every size once per frame colour, so the
+ * preferred colour wins; a poster also carries a colour (the paper), so a variant is never
+ * dropped just for not being black. Keyed by size id, in ladder-agnostic first-seen order.
+ */
+export function pickVariantPerSize<T extends FwVariant>(variants: T[], preferredColor: string = "Black"): Map<string, T> {
+  const bySize = new Map<string, T>();
+  for (const variant of variants) {
+    const sizeId = sizeIdFromLabel(variantSizeLabel(variant));
+    if (!sizeId) continue;
+    const existing = bySize.get(sizeId);
+    if (!existing || variant.attributes?.color?.name === preferredColor) bySize.set(sizeId, variant);
+  }
+  return bySize;
+}
+
 /** Preferred frame color when a framed product carries several (one variant per color and size). */
 export const PREFERRED_COLOR = "Black";
 

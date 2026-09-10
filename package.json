@@ -19,7 +19,8 @@
     "typecheck:scripts": "tsc -p tsconfig.scripts.json",
     "shop:new": "npx tsx scripts/fourthwall-create-products.ts --dir ./masters",
     "shop:art": "npx tsx scripts/upload-flat-art.ts --dir ./masters",
-    "shop:sync": "npx tsx scripts/import-fourthwall-products.ts --apply --remockup"
+    "shop:sync": "npx tsx scripts/import-fourthwall-products.ts --apply --remockup",
+    "shop:prices": "npx tsx scripts/check-prices.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint"

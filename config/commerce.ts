@@ -78,6 +78,18 @@ export const FINISHES = [
 ] as const;
 export type FinishId = (typeof FINISHES)[number]["id"];
 
+/**
+ * What each size should sell for, in cents, per finish. This is the one place to change a
+ * target price: `npm run shop:prices` reads it, compares it against what Fourthwall is
+ * actually charging, and tells you which products to edit. Taken from Kenny's Etsy ladder.
+ * A size left out is simply not checked, which is how canvas skips 8x10.
+ */
+export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = {
+  unframed: { "8x10": 2399, "11x14": 2700, "16x20": 3400, "18x24": 3700, "24x36": 4500 },
+  framed: { "8x10": 5800, "11x14": 6500, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
+  canvas: { "11x14": 5500, "16x20": 11000, "18x24": 13000, "24x36": 19500 },
+};
+
 /** What the version picker is called on the page (PLAN-48). "Style" and "Colour" also read well. */
 export const VERSION_LABEL = "Version";
 export const DEFAULT_FINISH: FinishId = "unframed";

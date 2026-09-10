@@ -115,3 +115,29 @@ describe("artwork versions", () => {
     expect(sanityIdForArtwork([...products].reverse())).toBe("fw-i");
   });
 });
+
+describe("pickVariantPerSize", () => {
+  it("keeps the black frame when a size repeats, and never drops a poster for its paper colour", async () => {
+    const { pickVariantPerSize } = await import("@/lib/fourthwall-import");
+    const make = (size: string, color: string | undefined, id: string) => ({
+      id,
+      unitPrice: { value: 10 },
+      attributes: { size: { name: size }, ...(color ? { color: { name: color } } : {}) },
+    });
+
+    // framed: every size once per frame colour
+    const framed = pickVariantPerSize([
+      make('8" x 10"', "White", "w1"),
+      make('8" x 10"', "Black", "b1"),
+      make('8" x 10"', "Red Oak", "o1"),
+      make('11" x 14"', "White", "w2"),
+    ]);
+    expect(framed.get("8x10")?.id).toBe("b1");
+    expect(framed.get("11x14")?.id).toBe("w2"); // only one, so it stays
+
+    // poster: the colour is the paper, and there is no black
+    const poster = pickVariantPerSize([make('8" x 10"', "White", "p1"), make('16" x 20"', undefined, "p2")]);
+    expect([...poster.keys()]).toEqual(["8x10", "16x20"]);
+    expect(poster.get("8x10")?.id).toBe("p1");
+  });
+});

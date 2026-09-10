@@ -93,7 +93,8 @@ export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = 
   unframed: { "8x10": 2399, "11x14": 2700, "12x16": 2900, "12x18": 3000, "16x20": 3400, "18x24": 3700, "20x30": 3800, "24x36": 4500 },
   // Fourthwall's framed template has no 20x30, so that size is unframed and canvas only.
   framed: { "8x10": 5800, "11x14": 6500, "12x16": 7500, "12x18": 7900, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
-  // Canvas starts at 11x14, matching the Etsy listing.
+  // Canvas is on hold (2026-09-10). Kept so the ladder is ready if it returns; with no canvas
+  // products in Fourthwall nothing is checked against it. Starts at 11x14, matching Etsy.
   canvas: { "11x14": 5500, "12x16": 9500, "16x20": 11000, "18x24": 13000, "20x30": 14500, "24x36": 19500 },
 };
 

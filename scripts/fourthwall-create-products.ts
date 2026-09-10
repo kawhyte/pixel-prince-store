@@ -3,11 +3,12 @@
  *
  *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters                 dry run
  *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply         upload + create (hidden)
- *   options: --margin-poster 18  --margin-framed 30  --frames "Black,Red Oak,White"  --publish  --only "Sweden Map"
+ *   options: --margin-poster 18  --margin-framed 30  --frames "Black,Red Oak,White"  --publish  --only "Sweden Map"  --canvas
  *
  * Per file (title = file name without extension): one media upload, then the unframed poster
- * ("Title") and the framed poster ("Title | Framed"). Canvas cannot be created through the API;
- * the script prints a reminder per title. Existing names are skipped, so re-runs are safe.
+ * ("Title") and the framed poster ("Title | Framed"). Existing names are skipped, so re-runs are
+ * safe. Canvas cannot be created through the API and is on hold; pass --canvas for a per print
+ * reminder of the dashboard steps.
  *
  * Needs FOURTHWALL_API_USER and FOURTHWALL_API_PASSWORD in .env.local (Settings > For Developers,
  * Create API User). Full-access credentials: never NEXT_PUBLIC_, never in Vercel.
@@ -44,6 +45,13 @@ if (!dir) throw new Error("--dir <folder of masters> is required");
 const apply = flag("--apply");
 const publish = flag("--publish");
 const only = opt("--only");
+// Canvas is on hold (Kenny, 2026-09-10). The API cannot create it, so it is a dashboard job;
+// pass --canvas to be reminded of it per print when that changes.
+const wantCanvas = flag("--canvas");
+const canvasReminder = (title: string) => {
+  if (!wantCanvas) return;
+  console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
+};
 const marginPoster = Number(opt("--margin-poster", "18"));
 const marginFramed = Number(opt("--margin-framed", "30"));
 const frameColors = (opt("--frames", FRAME_COLORS.join(",")) ?? "").split(",").map((s) => s.trim()).filter(Boolean) as (typeof FRAME_COLORS)[number][];
@@ -86,7 +94,7 @@ async function main() {
       summary.skipped++;
     }
     if (todo.length === 0) {
-      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
+      canvasReminder(title);
       continue;
     }
 
@@ -95,7 +103,7 @@ async function main() {
         ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
-      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
+      canvasReminder(title);
       continue;
     }
 
@@ -126,12 +134,12 @@ async function main() {
       console.error(`fail   ${title}: upload ${msg}`);
       summary.failed++;
     }
-    console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
+    canvasReminder(title);
   }
 
   console.log(`\n${summary.created} created, ${summary.skipped} skipped, ${summary.failed} failed${apply ? "" : " (dry run; add --apply to write)"}.`);
   if (apply && summary.created > 0) {
-    console.log(`Next: review + publish them in Fourthwall (Products), create the canvas versions, then run\n  npx tsx scripts/import-fourthwall-products.ts --apply`);
+    console.log(`Next: check the prices in Fourthwall, then run\n  npm run shop:sync   and   npm run shop:art -- --apply`);
   }
   if (summary.failed > 0) process.exit(2);
 }

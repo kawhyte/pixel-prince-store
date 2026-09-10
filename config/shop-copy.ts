@@ -8,7 +8,10 @@ import { DAMAGE_CLAIM_DAYS } from "@/config/support";
 
 export const SHOP_FEATURES = [
   { title: "Premium-quality matte paper", body: "189 gsm museum-grade matte, glare-free, archival inks." },
-  { title: "Printed to order, shipped flat or in a tube", body: "Made in the USA, arrives in 5 to 11 days." },
+  // Free shipping is the strongest thing we can say here, and after that buyers want a date, not
+  // a description of the packaging. Where it ships flat or rolled moved to the FAQ below.
+  { title: "Free US shipping on every order", body: "No minimum, no surprise cost at checkout." },
+  { title: "Arrives in 5 to 11 days", body: "Printed to order and made in the USA, tracking by email." },
   { title: "Damage guarantee", body: "Arrives bent or damaged? Send a photo, we reprint it free." },
 ] as const;
 
@@ -17,7 +20,12 @@ export const SHOP_SHIPPING_FAQ = [
     q: "How long does delivery take?",
     a: "Orders arrive within 5 to 11 days of being placed, printing included, anywhere in the US. You get tracking by email.",
   },
+  { q: "How much is shipping?", a: "Nothing. Shipping is free on every order to a US address, whatever the size and however many prints you buy." },
   { q: "Do you ship outside the US?", a: "Not yet. US addresses only for now." },
+  {
+    q: "How is it packaged?",
+    a: "Flat in a rigid mailer or rolled in a sturdy tube, depending on the size. Both are packed to survive the trip.",
+  },
   {
     q: "Is a frame included?",
     a: "No. Every print ships unframed so you can pick a frame that fits your wall. The sizes match standard off-the-shelf frames.",

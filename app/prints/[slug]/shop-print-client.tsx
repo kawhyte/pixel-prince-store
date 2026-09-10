@@ -68,7 +68,8 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   // it with grey bars down both sides.
   const heroRatio = offerImageRatio(offer);
   const category = art.category?.trim();
-  const quickFaq = SHOP_SHIPPING_FAQ.filter((f) => /delivery|return/i.test(f.q));
+  // Cost, timing and returns are the three the buy stack answers up front; the rest stay lower down.
+  const quickFaq = SHOP_SHIPPING_FAQ.filter((f) => /delivery|shipping\?|return/i.test(f.q));
 
   return (
     <div className="min-h-screen bg-cream pb-24 lg:pb-0">

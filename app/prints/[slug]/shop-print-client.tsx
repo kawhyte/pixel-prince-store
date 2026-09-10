@@ -34,6 +34,13 @@ interface ShopPrintClientProps {
 }
 
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Lock];
+/**
+ * Shop photos are 1140x1520 (sanity/lib/image-rules.ts). 570 is the widest one goes before a 2x
+ * screen starts inventing pixels, and 760 is that same photo's height, which makes it the natural
+ * ceiling for a taller shape. A photo taller than 3:4 is shown narrower rather than cropped.
+ */
+const HERO_MAX_WIDTH = 570;
+const HERO_MAX_HEIGHT = 760;
 const SIZE_GUIDE_SLIDE = SHOP_GALLERY_EXTRAS[0];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -69,6 +76,12 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
   // Cut the frame to the photo. Without this the frame was a fixed 4:5 and a 3:4 photo sat inside
   // it with grey bars down both sides.
   const heroRatio = offerImageRatio(offer);
+  // The frame is cut to the photo, so a tall photo made a tall frame: a 2:3 room shot ran to 855
+  // where a 3:4 one stops at 760, which reads as a different page per finish and pushed the column
+  // past what a sticky viewport can show. Cap the height instead and let the width give way, so the
+  // photo is never cropped and never gets grey bars. 760 is the 3:4 photo's own height at 570 wide,
+  // so the tallest frame now matches the shape we already had.
+  const heroMaxWidth = Math.round(Math.min(HERO_MAX_WIDTH, heroRatio ? HERO_MAX_HEIGHT * heroRatio : HERO_MAX_WIDTH));
   // The page owns the chosen size for the same reason it owns finish and version: the price belongs
   // under the title, above the rating, and it has to move when the picker does.
   const [sizeByOffer, setSizeByOffer] = useState<Record<string, string>>({});
@@ -116,7 +129,10 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
             browser starts inventing pixels and going soft. Letting it grow past that also made the
             column taller than a sticky viewport can show, which cropped the thumbnails off the
             bottom. These caps are the photo's own width, so they match the `sizes` hint below. */}
-        <div className="mx-auto w-full max-w-[416px] sm:max-w-[480px] lg:max-w-[570px] lg:sticky lg:top-24">
+        <div
+          className="mx-auto w-full max-w-[416px] sm:max-w-[480px] lg:max-w-[var(--hero-w)] lg:sticky lg:top-24"
+          style={{ "--hero-w": `${heroMaxWidth}px` } as React.CSSProperties}
+        >
           <ArtGallery
             key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`}
             images={slides}
@@ -124,7 +140,7 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
             aspectClass="aspect-[4/5]"
             aspectRatio={heroRatio}
             thumbs="bottom"
-            sizes="(max-width: 640px) 416px, (max-width: 1024px) 480px, 570px"
+            sizes={`(max-width: 640px) 416px, (max-width: 1024px) 480px, ${heroMaxWidth}px`}
           />
         </div>
 

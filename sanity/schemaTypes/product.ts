@@ -261,16 +261,18 @@ export const product = defineType({
       name: 'offers',
       title: 'Print offers',
       type: 'array',
-      description: 'Where this artwork can be bought as a physical print. One offer per provider and finish. Fourthwall = on-site checkout.',
+      description:
+        'Where this artwork can be bought as a physical print. One offer per provider, finish and version, since each is its own Fourthwall product. Fourthwall = on-site checkout. Drag to reorder: the first version is the one the page opens on unless Default version says otherwise.',
       group: 'shop',
       hidden: ({ document }) => !isShop(document),
       of: [defineArrayMember({ type: 'printOffer' })],
       validation: (Rule) =>
         Rule.custom((value, context) => {
-          const list = (value as { provider?: string; finish?: string }[] | undefined) ?? []
+          const list = (value as { provider?: string; finish?: string; version?: string }[] | undefined) ?? []
           if (isShop(context.document) && list.length === 0) return 'A shop print needs at least one offer.'
-          const keys = list.map((o) => `${o.provider}:${o.finish ?? 'unframed'}`)
-          if (new Set(keys).size !== keys.length) return 'Only one offer per provider and finish.'
+          // one Fourthwall product is one offer, and a product is a version in a finish
+          const keys = list.map((o) => `${o.provider}:${o.finish ?? 'unframed'}:${o.version?.trim() ?? ''}`)
+          if (new Set(keys).size !== keys.length) return 'Only one offer per provider, finish and version.'
           return true
         }),
     }),

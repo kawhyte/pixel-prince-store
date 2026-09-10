@@ -111,7 +111,7 @@ Ownership: Fourthwall owns prices, sizes and images; Studio owns title, descript
   featured: boolean             // homepage hero; validated to allow only one
   listing: 'free' | 'shop'      // free = downloadable, never sold; shop = sold, never downloadable (PLAN-35b)
   kind: 'single' | 'set'        // sets of two are their own artwork
-  offers?: PrintOffer[]         // physical print offers (config/commerce.ts, lib/commerce.ts); one per provider
+  offers?: PrintOffer[]         // physical print offers; one per provider, finish and version
   downloads: number             // auto-incremented by /api/claim-art
 }
 ```

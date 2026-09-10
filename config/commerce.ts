@@ -79,10 +79,12 @@ export const FINISHES = [
 export type FinishId = (typeof FINISHES)[number]["id"];
 
 /**
- * What each size should sell for, in cents, per finish. This is the one place to change a
- * target price: `npm run shop:prices` reads it, compares it against what Fourthwall is
- * actually charging, and tells you which products to edit. Taken from Kenny's Etsy ladder.
- * A size left out is simply not checked, which is how canvas skips 8x10.
+ * What each size sells for, in cents, per finish. **The same ladder for every print** (Kenny,
+ * 2026-09-10): a print's price depends on its size and finish, never on which artwork it is.
+ * So this is the whole price list for the shop, and the one place to change it.
+ *
+ * `npm run shop:prices` reads it, compares it against what Fourthwall is actually charging, and
+ * names the products that drifted. A size left out is not checked, which is how canvas skips 8x10.
  */
 export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = {
   unframed: { "8x10": 2399, "11x14": 2700, "16x20": 3400, "18x24": 3700, "24x36": 4500 },

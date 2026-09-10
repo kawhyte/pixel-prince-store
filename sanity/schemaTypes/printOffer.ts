@@ -62,7 +62,11 @@ export const printOffer = defineType({
       name: 'art',
       title: 'Flat artwork (the art on its own, no room, no frame)',
       type: 'image',
-      description: `Used as the main image when Unframed is selected, and on the version tiles. Filled by npm run shop:art from the masters folder, so you rarely touch it. ${SHOP_IMAGE_HINT}`,
+      description:
+        'Shown on the version tiles, where the art is what is being compared. It is also the stand-in ' +
+        'at the top of the print page for an offer with no Main photo yet, so a new listing is never blank. ' +
+        'Filled by npm run shop:art from the masters folder, so you rarely touch it. ' +
+        SHOP_IMAGE_HINT,
       options: { hotspot: true },
       components: { input: ImageWithDetails },
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
@@ -72,7 +76,7 @@ export const printOffer = defineType({
       title: 'Main photo (this version and finish only)',
       type: 'image',
       description:
-        'The big image at the top of the print page when a buyer picks this exact version and finish, and the picture on its finish tile. Each row in this list has its own, so changing it here changes one combination and nothing else. ' +
+        'The big image at the top of the print page when a buyer picks this exact version and finish, and the picture on its finish tile. This is the one to put a room photo in, for framed and unframed alike. Each row in this list has its own, so changing it here changes one combination and nothing else. ' +
         'Not the grid card: that is Preview Image on the Images tab. ' +
         SHOP_IMAGE_HINT,
       options: { hotspot: true },

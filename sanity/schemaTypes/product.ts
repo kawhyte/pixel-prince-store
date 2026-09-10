@@ -2,6 +2,7 @@ import { defineType, defineField, defineArrayMember, type ImageValue } from 'san
 import { Gift } from 'lucide-react'
 import { GeminiGenerator } from '../components/GeminiGenerator'
 import { HighResAssetInput } from '../components/HighResAssetInput'
+import { DefaultVersionInput } from '../components/DefaultVersionInput'
 import { deriveRatio } from '@/config/print-sizes'
 import { FINISHES } from '@/config/commerce'
 
@@ -280,10 +281,10 @@ export const product = defineType({
       name: 'defaultVersion',
       title: 'Default version',
       type: 'string',
-      description:
-        'Which version of the artwork the shop page opens on, typed exactly as it appears on the offer, e.g. Earth. Leave empty and the first version in the offers list wins.',
+      description: 'Which version of the artwork the shop page opens on. Picked from the versions this print sells.',
       group: 'shop',
       hidden: ({ document }) => !isShop(document),
+      components: { input: DefaultVersionInput },
     }),
     defineField({
       name: 'defaultFinish',

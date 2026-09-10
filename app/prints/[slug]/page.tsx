@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getShopPrints, getShopPrintBySlug, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { getActiveOffer, priceRangeCents } from "@/lib/commerce";
+import { deliveryWindow } from "@/lib/delivery";
 import ShopPrintClient from "./shop-print-client";
 
 interface PageProps {
@@ -66,7 +67,7 @@ export default async function ShopPrintPage({ params }: PageProps) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <ShopPrintClient art={art} related={related} />
+      <ShopPrintClient art={art} related={related} deliveryBy={deliveryWindow(new Date()).label} />
     </>
   );
 }

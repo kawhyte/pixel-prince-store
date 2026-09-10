@@ -4,21 +4,19 @@
  * guarantee wording against Printful before launch. PLAN-39 turns the shipping
  * and returns answers into standalone pages.
  */
-import { DAMAGE_CLAIM_DAYS } from "@/config/support";
+import { DAMAGE_CLAIM_DAYS, DELIVERY_WINDOW } from "@/config/support";
 
 export const SHOP_FEATURES = [
   { title: "Premium-quality matte paper", body: "189 gsm museum-grade matte, glare-free, archival inks." },
-  // Free shipping is the strongest thing we can say here, and after that buyers want a date, not
-  // a description of the packaging. Where it ships flat or rolled moved to the FAQ below.
-  { title: "Free US shipping on every order", body: "No minimum, no surprise cost at checkout." },
-  { title: "Arrives in 5 to 11 days", body: "Printed to order and made in the USA, tracking by email." },
+  // Free shipping and the arrival date are promoted to the two check lines under the rating, where
+  // a first-time buyer sees them without scrolling. They are deliberately not repeated here.
   { title: "Damage guarantee", body: "Arrives bent or damaged? Send a photo, we reprint it free." },
 ] as const;
 
 export const SHOP_SHIPPING_FAQ = [
   {
     q: "How long does delivery take?",
-    a: "Orders arrive within 5 to 11 days of being placed, printing included, anywhere in the US. You get tracking by email.",
+    a: `Orders arrive within ${DELIVERY_WINDOW} of being placed, printing included, anywhere in the US. You get tracking by email.`,
   },
   { q: "How much is shipping?", a: "Nothing. Shipping is free on every order to a US address, whatever the size and however many prints you buy." },
   { q: "Do you ship outside the US?", a: "Not yet. US addresses only for now." },
@@ -46,7 +44,7 @@ export const SHOP_SIZE_GUIDE: Record<string, string> = {
   "24x36": "Statement piece for a large wall",
 };
 
-export const SHOP_TRUST_LINE = "Secure checkout · Free US shipping · Arrives in 5 to 11 days";
+export const SHOP_TRUST_LINE = `Secure checkout · Free US shipping · Arrives in ${DELIVERY_WINDOW}`;
 
 /**
  * Promo strip on shop pages (Direction A). Off until the matching Fourthwall promotion exists,
@@ -70,7 +68,7 @@ export const SHOP_GALLERY_EXTRAS: { url: string; alt: string }[] = [
 /** Four-up trust strip under the buy area on shop pages. Icons are picked in the component by index. */
 export const SHOP_TRUST_STRIP = [
   { label: "Free US shipping", sub: "on every order" },
-  { label: "Arrives in 5 to 11 days", sub: "printed to order" },
+  { label: `Arrives in ${DELIVERY_WINDOW}`, sub: "printed to order" },
   { label: "Damage guarantee", sub: "reprinted free" },
   { label: "Secure checkout", sub: "card, Apple Pay, PayPal" },
 ] as const;

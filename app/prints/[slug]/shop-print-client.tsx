@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageRatio, popularSizeId, resolveFinish, resolveVersion } from "@/lib/commerce";
@@ -29,6 +29,8 @@ import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm
 interface ShopPrintClientProps {
   art: FreeArt;
   related: FreeArt[];
+  /** "Sep 15 to 21", worked out on the server so the date is the same one the HTML shipped with */
+  deliveryBy: string;
 }
 
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Lock];
@@ -43,7 +45,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * reference proved out: trust strip, in the room, see it to scale, buyer reviews, complete the set,
  * questions answered, free-print email band. Buy-first (PLAN-34 decision 10).
  */
-export default function ShopPrintClient({ art, related }: ShopPrintClientProps) {
+export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintClientProps) {
   // Finish first (PLAN-46): the page owns the finish so the gallery's first slide can follow it.
   const [finish, setFinish] = useState<FinishId | null>(null);
   const [version, setVersion] = useState<string | null>(null);
@@ -135,9 +137,11 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             {priceText && (
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-1">
                 <span className="text-[28px] font-semibold text-charcoal">{priceText}</span>
-                <span className="text-sm text-muted-foreground">
-                  {selectedSize ? `${inchesLabel(selectedSize.sizeId)} · ` : ""}free US shipping
-                </span>
+                {/* Just the size here. Free shipping is the check line directly below, so saying it
+                    twice inside two lines of each other only makes both lines weaker. */}
+                {selectedSize && (
+                  <span className="text-sm text-muted-foreground">{inchesLabel(selectedSize.sizeId)}</span>
+                )}
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -150,6 +154,25 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
                 {REVIEW_SUMMARY.rating} · {REVIEW_SUMMARY.count} {REVIEW_SUMMARY.source}
               </span>
             </div>
+
+            {/* The two questions a buyer has before they commit: what does postage cost, and when
+                does it land. Both are stated once here and deliberately not repeated in the bullets
+                under the buy controls. No returns line: prints are made to order, so the honest
+                version of that promise is the damage guarantee further down. */}
+            <ul className="space-y-1.5 pt-2">
+              <li className="flex items-start gap-2 text-sm text-soft-charcoal">
+                <Check className="mt-0.5 size-4 shrink-0 text-sage-500" aria-hidden />
+                <span>
+                  <span className="font-semibold text-charcoal">Free US shipping</span>, no minimum
+                </span>
+              </li>
+              <li className="flex items-start gap-2 text-sm text-soft-charcoal">
+                <Check className="mt-0.5 size-4 shrink-0 text-sage-500" aria-hidden />
+                <span>
+                  Get it by <span className="font-semibold text-charcoal">{deliveryBy}</span> if you order today
+                </span>
+              </li>
+            </ul>
           </div>
 
           <CheckoutButton

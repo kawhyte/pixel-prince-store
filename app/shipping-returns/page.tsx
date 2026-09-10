@@ -2,13 +2,13 @@ import Link from "next/link";
 
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { SHOP_SHIPPING_FAQ } from "@/config/shop-copy";
-import { DAMAGE_CLAIM_DAYS, ORDER_PROCESSOR, SUPPORT_EMAIL, SUPPORT_RESPONSE } from "@/config/support";
+import { DAMAGE_CLAIM_DAYS, DELIVERY_WINDOW, ORDER_PROCESSOR, SUPPORT_EMAIL, SUPPORT_RESPONSE } from "@/config/support";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 
 export const metadata = seoMeta({
   title: "Shipping and returns",
   description:
-    "Free US shipping on every print. Printed to order, arrives in 5 to 11 days. Damaged prints are reprinted free.",
+    `Free US shipping on every print. Printed to order, arrives in ${DELIVERY_WINDOW}. Damaged prints are reprinted free.`,
   canonical: "https://www.thepixelprince.com/shipping-returns",
 });
 
@@ -34,7 +34,7 @@ export default function ShippingReturnsPage() {
       <section>
         <h2 className={h2}>How long it takes</h2>
         <p className={p}>
-          Every print is made to order. Orders arrive within 5 to 11 days of being placed, printing included.
+          Every print is made to order. Orders arrive within {DELIVERY_WINDOW} of being placed, printing included.
           You get a confirmation email right away and a tracking email from {ORDER_PROCESSOR} when it ships.
         </p>
       </section>

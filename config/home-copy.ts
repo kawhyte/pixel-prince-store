@@ -2,6 +2,8 @@
  * Homepage copy (PLAN-44, shop-first). Display strings only.
  */
 
+import { DELIVERY_WINDOW } from "@/config/support";
+
 export const HOME_HERO = {
   headline: "Art for your walls. Printed and shipped free.",
   sub: "Premium-quality retro gaming and map prints, drawn by two humans and printed to order on museum-grade matte paper.",
@@ -12,7 +14,7 @@ export const HOME_HERO = {
 /** Four-up strip under the hero. Icons are picked by index in app/page.tsx. */
 export const HOME_TRUST = [
   { label: "Free US shipping", sub: "on every print" },
-  { label: "Arrives in 5 to 11 days", sub: "printed to order" },
+  { label: `Arrives in ${DELIVERY_WINDOW}`, sub: "printed to order" },
   { label: "Damage guarantee", sub: "reprinted free" },
   { label: "7,000+ prints shipped", sub: "since 2009" },
 ] as const;

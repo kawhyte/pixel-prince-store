@@ -43,7 +43,10 @@ export default async function ShopPrintPage({ params }: PageProps) {
     "@type": "Product",
     name: art.title,
     description: art.description,
-    image: art.detailImage || art.previewImage,
+    // Google asks for several images per product, and prefers them in more than one shape.
+    image: [art.detailImage, art.previewImage, ...(art.galleryImages ?? []).map((g) => g.url)].filter(
+      (url, i, all): url is string => !!url && all.indexOf(url) === i
+    ),
     brand: { "@type": "Brand", name: "The Pixel Prince" },
     ...(range
       ? {

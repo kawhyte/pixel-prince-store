@@ -8,6 +8,7 @@ import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, M
 import { type FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, type FinishId } from "@/config/commerce";
+import { imageAlt } from "@/lib/listing-copy";
 import {
   SHOP_FEATURES,
   SHOP_GALLERY_EXTRAS,
@@ -55,7 +56,11 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   const roomPhotos = galleryImages.slice(0, 3);
   // Every room photo is a slide, up to the 10 the field allows. Reorder them in Studio.
   const slides = [
-    { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
+    {
+      url: offerImage(offer) || art.detailImage || art.previewImage,
+      // the main image is the one search engines weigh most, so it says what it is
+      alt: imageAlt({ title: art.title, version: activeVersion, finish: activeFinish ?? undefined, kind: "main" }),
+    },
     ...galleryImages,
     ...SHOP_GALLERY_EXTRAS,
   ];

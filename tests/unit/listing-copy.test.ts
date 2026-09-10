@@ -27,14 +27,14 @@ describe("listing copy", () => {
       versions: ["Earth", "Bright"],
       finishes: ["unframed", "framed"],
     });
-    expect(body).toContain("2 colourways");
+    expect(body).toContain("2 colorways");
     expect(body).toContain("Earth and Bright");
     expect(body).toContain("unframed or framed");
     expect(body.split("\n\n")).toHaveLength(2);
 
     // a print with one version and one finish makes no claims about choice
     const plain = draftLongDescription({ title: "Sweden Map", finishes: ["unframed"] });
-    expect(plain).not.toContain("colourways");
+    expect(plain).not.toContain("colorways");
     expect(plain).not.toContain("Pick it");
   });
 
@@ -55,5 +55,33 @@ describe("listing copy", () => {
       "wall art",
     ]);
     expect(draftTags({ title: "The Art of the Wall Print" })).toEqual(["maps"].slice(0, 0).concat(["wall art"]));
+  });
+});
+
+describe("image naming", () => {
+  it("writes alt text from what is true about the product", async () => {
+    const { imageAlt } = await import("@/lib/listing-copy");
+    expect(imageAlt({ title: "Brooklyn Neighborhood Map", version: "Earth", finish: "framed", kind: "main" })).toBe(
+      "Brooklyn Neighborhood Map wall art print, Earth colorway, in a black wood frame"
+    );
+    expect(imageAlt({ title: "Brooklyn Neighborhood Map", version: "Earth", finish: "unframed", kind: "room", index: 2 })).toBe(
+      "Brooklyn Neighborhood Map wall art print shown on a wall, Earth colorway, view 2"
+    );
+    // a print with one version and no frame says neither
+    expect(imageAlt({ title: "Sweden Map", kind: "main" })).toBe("Sweden Map wall art print");
+    expect(imageAlt({ title: "Sweden Map", finish: "canvas", kind: "main" })).toContain("gallery wrapped canvas");
+  });
+
+  it("builds a file name that is readable and free of repetition", async () => {
+    const { imageFileName } = await import("@/lib/listing-copy");
+    expect(imageFileName({ title: "Brooklyn Neighborhood Map", version: "Earth", finish: "framed", kind: "main" })).toBe(
+      "brooklyn-neighborhood-map-earth-framed.webp"
+    );
+    expect(imageFileName({ title: "Brooklyn Neighborhood Map", version: "Earth", finish: "unframed", kind: "main" })).toBe(
+      "brooklyn-neighborhood-map-earth.webp"
+    );
+    expect(imageFileName({ title: "Brooklyn Neighborhood Map", version: "Bright", finish: "framed", kind: "room", index: 2 }, "png")).toBe(
+      "brooklyn-neighborhood-map-bright-framed-wall-2.png"
+    );
   });
 });

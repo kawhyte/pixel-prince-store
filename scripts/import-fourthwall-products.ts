@@ -23,7 +23,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { chromium, type Browser } from "playwright";
 import { contentBox } from "../lib/image-trim";
-import { draftDescription, draftLongDescription, draftTags } from "../lib/listing-copy";
+import { draftDescription, draftLongDescription, draftTags, imageAlt, imageFileName } from "../lib/listing-copy";
 import {
   type FwProduct,
   type ImportFinish,
@@ -86,6 +86,7 @@ interface ExistingOffer {
 interface ExistingDoc {
   _id: string;
   title?: string;
+  defaultVersion?: string;
   offers?: ExistingOffer[];
   galleryCount?: number;
 }
@@ -93,7 +94,7 @@ interface ExistingDoc {
 async function findExisting(artworkId: string, productIds: string[]): Promise<ExistingDoc[]> {
   return sanity.fetch<ExistingDoc[]>(
     `*[_type == "product" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0)]{
-      _id, title, "galleryCount": count(galleryImages),
+      _id, title, defaultVersion, "galleryCount": count(galleryImages),
       offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
     }`,
     { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds }
@@ -175,7 +176,7 @@ function imageRef(assetId: string) {
 /** The shop page shows the main image about 1280 device pixels wide, so anything smaller is soft. */
 const MIN_MAIN_IMAGE_WIDTH = 1200;
 
-async function uploadFirstImage(p: FwProduct, suffix: string): Promise<string | null> {
+async function uploadFirstImage(p: FwProduct, filename: string): Promise<string | null> {
   const img = p.images?.[0];
   if (!img?.url) return null;
   if (typeof img.width === "number" && img.width > 0 && img.width < MIN_MAIN_IMAGE_WIDTH) {
@@ -183,16 +184,18 @@ async function uploadFirstImage(p: FwProduct, suffix: string): Promise<string | 
       `warn   ${p.name}: the first image is only ${img.width}x${img.height ?? "?"} px. The page shows it about 1280 px wide, so it will look soft. Upload one at least 1600 px wide in Fourthwall.`
     );
   }
-  return uploadImage(img.url, `${p.slug ?? slugify(p.name)}${suffix}.webp`, p.name);
+  return uploadImage(img.url, filename, p.name);
 }
 
-/** Up to three more Fourthwall mockups as gallery photos (thumbnails on the shop page). */
+/** Up to three more Fourthwall renders as the artwork's room photos. */
 async function uploadGallery(p: FwProduct) {
+  const { title, version, finish } = splitProductName(p.name);
   const extras = pickGalleryImages(p);
   const items = [];
   for (const [i, img] of extras.entries()) {
-    const assetId = await uploadImage(img.url, `${p.slug ?? slugify(p.name)}-mockup-${i + 2}.webp`, p.name);
-    items.push({ _key: `fw-mockup-${i + 2}`, ...imageRef(assetId), alt: `${p.name}, mockup ${i + 2}` });
+    const naming = { title, version, finish, kind: "room" as const, index: i + 1 };
+    const assetId = await uploadImage(img.url, imageFileName(naming), p.name);
+    items.push({ _key: `fw-wall-${i + 1}`, ...imageRef(assetId), alt: imageAlt(naming) });
   }
   return items;
 }
@@ -214,9 +217,11 @@ function offerLabel(fp: FinishProduct): string {
   return fp.version ? `${fp.version} ${fp.finish}` : fp.finish;
 }
 
-async function buildOffer(fp: FinishProduct) {
-  const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
-  const mockupId = await uploadFirstImage(fp.product, suffix);
+async function buildOffer(fp: FinishProduct, title: string) {
+  const mockupId = await uploadFirstImage(
+    fp.product,
+    imageFileName({ title, version: fp.version, finish: fp.finish, kind: "main" })
+  );
   return {
     _type: "printOffer",
     _key: offerKey(fp),
@@ -300,21 +305,25 @@ async function main() {
             };
             if (fp.version) patch[`offers[_key=="${offer._key}"].version`] = fp.version;
             if (!offer.hasMockup || resetImages) {
-              const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
-              const mockupId = await uploadFirstImage(fp.product, suffix);
+              const mockupId = await uploadFirstImage(
+                fp.product,
+                imageFileName({ title, version: fp.version, finish: fp.finish, kind: "main" })
+              );
               if (mockupId) patch[`offers[_key=="${offer._key}"].mockup`] = imageRef(mockupId);
             }
             await sanity.patch(doc._id).set(patch).commit();
           } else {
-            const built = await buildOffer(fp);
+            const built = await buildOffer(fp, title);
             claimed.add(built._key);
             await sanity.patch(doc._id).setIfMissing({ offers: [] }).append("offers", [built]).commit();
             console.log(`offer  ${doc._id}: ${offerLabel(fp)} added`);
           }
         }
         // Room photos belong to the artwork, not to one variant of it (PLAN-52). Seeded from
-        // Fourthwall the first time so a listing is never blank, and Kenny's after that.
-        const primary = finishProducts[0].product;
+        // Fourthwall the first time so a listing is never blank, and Kenny's after that. They come
+        // from the version the page opens on, so the seeded photos match what a visitor first sees.
+        const preferred = finishProducts.find((f) => f.version && f.version === doc.defaultVersion);
+        const primary = (preferred ?? finishProducts[0]).product;
         if ((!doc.galleryCount || resetImages) && pickGalleryImages(primary).length > 0) {
           const gallery = await uploadGallery(primary);
           await sanity.patch(doc._id).set({ galleryImages: gallery }).commit();
@@ -334,10 +343,10 @@ async function main() {
     console.log(`${apply ? "create" : "would create"} draft ${title}: ${finishList}, category ${category ?? "none"}`);
     if (!apply) continue;
 
-    const assetId = await uploadFirstImage(primary, "");
+    const assetId = await uploadFirstImage(primary, imageFileName({ title, version: finishProducts[0].version, finish: finishProducts[0].finish, kind: "main" }));
     const gallery = await uploadGallery(primary);
     const offers = [];
-    for (const fp of finishProducts) offers.push(await buildOffer(fp));
+    for (const fp of finishProducts) offers.push(await buildOffer(fp, title));
     const versions = [...new Set(finishProducts.map((f) => f.version).filter((v): v is string => !!v))];
     const finishes = [...new Set(finishProducts.map((f) => f.finish))];
     const copy = { title, category, versions, finishes };

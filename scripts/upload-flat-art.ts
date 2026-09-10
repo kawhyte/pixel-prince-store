@@ -19,6 +19,7 @@ import { readdirSync } from "fs";
 import { join, resolve } from "path";
 import { listMasterFiles, titleFromFilename } from "../lib/fourthwall-platform";
 import { splitVersion } from "../lib/fourthwall-import";
+import { imageFileName } from "../lib/listing-copy";
 
 config({ path: resolve(__dirname, "../.env.local") });
 
@@ -56,6 +57,7 @@ interface OfferRow {
 interface DocRow {
   _id: string;
   title: string;
+  defaultVersion?: string;
   offers?: OfferRow[];
 }
 
@@ -80,7 +82,7 @@ async function main() {
   }
 
   const docs = await sanity.fetch<DocRow[]>(
-    `*[_type == "product" && listing == "shop"]{ _id, title, offers[]{ _key, version, finish, "hasArt": defined(art.asset) } }`
+    `*[_type == "product" && listing == "shop"]{ _id, title, defaultVersion, offers[]{ _key, version, finish, "hasArt": defined(art.asset) } }`
   );
 
   let patched = 0;
@@ -110,15 +112,17 @@ async function main() {
       try {
         const path = webSized(join(root, master.path), tmp);
         const asset = await sanity.assets.upload("image", readFileSync(path), {
-          filename: `${master.file.replace(/\.[^.]+$/, "")}.png`,
+          filename: imageFileName({ title, version, kind: "main" }, "png"),
           contentType: "image/png",
         });
         const image = { _type: "image", asset: { _type: "reference", _ref: asset._id } };
         const patch: Record<string, unknown> = {};
         for (const o of offers) patch[`offers[_key=="${o._key}"].art`] = image;
-        // the card image should be the artwork too, taken from whichever version sorts first
-        const firstVersion = [...new Set((doc.offers ?? []).map((o) => o.version ?? ""))].sort()[0];
-        if (withPreview && (version ?? "") === firstVersion) patch.previewImage = image;
+        // The card should show the version the page opens on: the artwork's default when it has
+        // one, otherwise the first offer, which is what resolveVersion does.
+        const versions = [...new Set((doc.offers ?? []).map((o) => o.version ?? ""))];
+        const cardVersion = doc.defaultVersion && versions.includes(doc.defaultVersion) ? doc.defaultVersion : versions[0];
+        if (withPreview && (version ?? "") === cardVersion) patch.previewImage = image;
         await sanity.patch(doc._id).set(patch).commit();
         patched++;
       } finally {

@@ -16,7 +16,7 @@ export interface CopyInput {
 }
 
 const CATEGORY_LEAD: Record<string, (title: string) => string> = {
-  Maps: (t) => `${t}, drawn by hand and colour blocked so the whole place reads at a glance.`,
+  Maps: (t) => `${t}, drawn by hand and color blocked so the whole place reads at a glance.`,
   "Video Games": (t) => `${t}, built from the palettes and shapes of the games worth remembering.`,
   Quotes: (t) => `${t}, set in type that earns its place on a wall rather than shouting from it.`,
   Funny: (t) => `${t}. It is a joke you will still like in a year, which is the hard part.`,
@@ -32,9 +32,9 @@ export function draftDescription(input: CopyInput): string {
     input.title.trim()
   );
   const versions = input.versions ?? [];
-  const colourway =
+  const colorway =
     versions.length > 1 ? ` ${versions.slice(0, -1).join(", ")} or ${versions[versions.length - 1]}.` : "";
-  const out = `${lead}${colourway} Museum grade matte paper, printed to order.`;
+  const out = `${lead}${colorway} Museum grade matte paper, printed to order.`;
   return out.length <= 200 ? out : `${out.slice(0, 197).trimEnd()}...`;
 }
 
@@ -47,7 +47,7 @@ export function draftLongDescription(input: CopyInput): string {
 
   const choice: string[] = [];
   if (versions.length > 1) {
-    choice.push(`It comes in ${versions.length} colourways, ${versions.slice(0, -1).join(", ")} and ${versions[versions.length - 1]}, so you can match the room rather than work around the print.`);
+    choice.push(`It comes in ${versions.length} colorways, ${versions.slice(0, -1).join(", ")} and ${versions[versions.length - 1]}, so you can match the room rather than work around the print.`);
   }
   if (finishes.length > 1) {
     const names = finishes.map((f) => (f === "unframed" ? "unframed" : f));
@@ -75,4 +75,49 @@ export function draftTags(input: CopyInput): string[] {
   if (input.category) add(input.category);
   add("wall art");
   return out.slice(0, 10);
+}
+
+export type ImageKind = "main" | "room";
+
+export interface ImageNaming {
+  title: string;
+  /** version of the artwork, when it has several */
+  version?: string | null;
+  finish?: string;
+  kind: ImageKind;
+  /** 1-based, only used to keep several room photos distinct */
+  index?: number;
+}
+
+const FINISH_PHRASE: Record<string, string> = {
+  unframed: "",
+  framed: ", in a black wood frame",
+  canvas: ", on a gallery wrapped canvas",
+};
+
+/**
+ * Alt text is the part of an image that search engines and screen readers actually read.
+ * Sanity serves images from a content hash, so the file name never appears in a URL and cannot
+ * help ranking; this can. Built only from what we know to be true about the product, because
+ * inventing what a photo shows is both a lie and a penalty.
+ */
+export function imageAlt({ title, version, finish, kind, index }: ImageNaming): string {
+  const colorway = version ? `, ${version} colorway` : "";
+  const framing = FINISH_PHRASE[finish ?? "unframed"] ?? "";
+  const shown = kind === "room" ? " shown on a wall" : "";
+  const nth = kind === "room" && index && index > 1 ? `, view ${index}` : "";
+  return `${title.trim()} wall art print${shown}${colorway}${framing}${nth}`;
+}
+
+/** A readable, unique file name. It never reaches a URL, but it makes the media library findable. */
+export function imageFileName({ title, version, finish, kind, index }: ImageNaming, extension = "webp"): string {
+  const slug = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/(^-|-$)/g, "");
+  const parts = [slug(title), version ? slug(version) : "", finish && finish !== "unframed" ? slug(finish) : ""];
+  if (kind === "room") parts.push(`wall-${index ?? 1}`);
+  return `${parts.filter(Boolean).join("-")}.${extension}`;
 }

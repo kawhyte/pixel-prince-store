@@ -20,7 +20,8 @@
     "shop:new": "npx tsx scripts/fourthwall-create-products.ts --dir ./masters",
     "shop:art": "npx tsx scripts/upload-flat-art.ts --dir ./masters",
     "shop:sync": "npx tsx scripts/import-fourthwall-products.ts --apply",
-    "shop:prices": "npx tsx scripts/check-prices.ts"
+    "shop:prices": "npx tsx scripts/check-prices.ts",
+    "shop:photo": "npx tsx scripts/attach-photo.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint"

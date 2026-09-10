@@ -158,7 +158,7 @@ export const product = defineType({
       name: 'galleryImages',
       title: 'Extra gallery photos (optional)',
       description:
-        'Context shots — the artwork framed on a wall, in a room, lifestyle. These appear after the main image as a carousel on the art page. The artwork itself goes in Detail Image above, not here. Leave empty to show only the detail image. ' + SHOP_IMAGE_HINT,
+        'Context shots: the artwork framed on a wall, in a room, lifestyle. These appear after the main image as a carousel, and the first three also fill the In the room section. Up to 10, the same as Etsy. Drag to reorder. The artwork itself goes in Main Image above, not here. ' + SHOP_IMAGE_HINT,
       type: 'array',
       group: 'images',
       of: [
@@ -175,7 +175,7 @@ export const product = defineType({
           ],
         }),
       ],
-      validation: (rule) => rule.max(6),
+      validation: (rule) => rule.max(10),
     }),
     defineField({
       name: 'artFile',

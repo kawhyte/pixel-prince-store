@@ -159,7 +159,13 @@ export default function ArtGallery({
       </div>
 
       {/* Thumbnails: desktop */}
-      <div className={`hidden gap-3 md:flex ${leftRail ? "md:w-[76px] md:shrink-0 md:flex-col" : thumbs === "center" ? "justify-center" : ""}`}>
+      <div
+        className={`hidden gap-3 md:flex ${
+          leftRail
+            ? "md:w-[76px] md:shrink-0 md:flex-col md:overflow-y-auto"
+            : `overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${thumbs === "center" ? "justify-center" : ""}`
+        }`}
+      >
         {images.map((img, i) => (
           <button
             type="button"

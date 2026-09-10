@@ -53,10 +53,10 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   // Room photos belong to the artwork and show whichever finish is on screen (PLAN-52).
   const galleryImages = art.galleryImages ?? [];
   const roomPhotos = galleryImages.slice(0, 3);
-  // The carousel takes the first few. Reorder them in Studio to change which ones show.
+  // Every room photo is a slide, up to the 10 the field allows. Reorder them in Studio.
   const slides = [
     { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
-    ...galleryImages.slice(0, 5),
+    ...galleryImages,
     ...SHOP_GALLERY_EXTRAS,
   ];
   const category = art.category?.trim();

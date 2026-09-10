@@ -149,17 +149,6 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             </div>
           </div>
 
-          <ul className="space-y-2.5">
-            {SHOP_FEATURES.map((f) => (
-              <li key={f.title} className="flex items-start gap-3 text-sm">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-sage-500" aria-hidden />
-                <span className="text-soft-charcoal">
-                  <span className="font-semibold text-charcoal">{f.title}.</span> {f.body}
-                </span>
-              </li>
-            ))}
-          </ul>
-
           <CheckoutButton
             art={art}
             campaign={`print-${art.id}`}
@@ -174,6 +163,19 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
             sizeId={activeSizeId}
             onSizeChange={(id) => setSizeByOffer((prev) => ({ ...prev, [offerKey]: id }))}
           />
+
+          {/* Under the buy controls, below CheckoutButton's own trust line: paper, shipping and the
+              guarantee are what a shopper reads after they have picked a size, not before. */}
+          <ul className="space-y-2.5">
+            {SHOP_FEATURES.map((f) => (
+              <li key={f.title} className="flex items-start gap-3 text-sm">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-sage-500" aria-hidden />
+                <span className="text-soft-charcoal">
+                  <span className="font-semibold text-charcoal">{f.title}.</span> {f.body}
+                </span>
+              </li>
+            ))}
+          </ul>
 
           {SHOP_PROMO.enabled && (
             <div className="flex items-center gap-3 rounded-md bg-sage-50 px-4 py-3 text-sm text-charcoal">

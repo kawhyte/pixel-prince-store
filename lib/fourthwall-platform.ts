@@ -6,12 +6,19 @@
 
 export const PLATFORM_BASE = "https://api.fourthwall.com/open-api/v1.0";
 
-/** Verified template ids on 2026-09-09 (docs/PLAN-47). */
+/**
+ * Verified template ids (docs/PLAN-47). Whether the API can create from a template is not a
+ * guess: `GET /product-templates/page/{n}` returns `supportsBackendRendering` per template.
+ * Checked 2026-09-10: both poster templates true, both canvas templates false. So canvas is a
+ * dashboard job whichever canvas you pick, and switching to Thin Canvas would not change that.
+ */
 export const TEMPLATES = {
-  poster: { id: "pro_15bc29bc8a324d449d", label: "Enhanced Matte Paper Poster (in)" },
-  framed: { id: "pro_kRSsoYjwSoyyTEmWko5o0A", label: "Framed High-Quality Matte Poster (in)" },
-  /** not creatable through the API (backend rendering unsupported); listed for the reminder only */
-  canvas: { id: "pro_f0b3df34ce6144fb86", label: "Canvas (in)" },
+  poster: { id: "pro_15bc29bc8a324d449d", label: "Enhanced Matte Paper Poster (in)", apiCreatable: true },
+  framed: { id: "pro_kRSsoYjwSoyyTEmWko5o0A", label: "Framed High-Quality Matte Poster (in)", apiCreatable: true },
+  /** thick gallery wrap, 46 sizes, cheaper at 20x30 and up. The one our copy describes. */
+  canvas: { id: "pro_f0b3df34ce6144fb86", label: "Canvas (in)", apiCreatable: false },
+  /** thin profile on pine with a wall mount, 13 sizes, cheaper below 20x30 */
+  canvasThin: { id: "pro__bw1lug-S9qtAWjykD6lmQ", label: "Thin Canvas (in)", apiCreatable: false },
 } as const;
 
 export type ApiFinish = "poster" | "framed";

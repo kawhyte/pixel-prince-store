@@ -5,12 +5,16 @@ import type { ImageValue, ValidationContext } from 'sanity'
  * upscales and looks soft. Kenny's first uploads were 794 and 1140 px wide, which is exactly
  * the mistake this catches at the moment of upload rather than on the live page.
  */
-export const MIN_SHOP_IMAGE_WIDTH = 1280
+/**
+ * Kenny's Etsy exports are 1140 x 1520, and reusing them here rather than remaking every image
+ * is the point (2026-09-10). The shop page is laid out so a 1140 px file is never stretched by
+ * more than a few percent, so that is the bar rather than an arbitrary bigger number.
+ */
+export const MIN_SHOP_IMAGE_WIDTH = 1140
 
-/** What to aim for. The warning fires below MIN_SHOP_IMAGE_WIDTH, which is the size the page shows. */
-export const IDEAL_SHOP_IMAGE_WIDTH = 1600
+export const IDEAL_SHOP_IMAGE_WIDTH = 1140
 
-export const SHOP_IMAGE_HINT = `Aim for ${IDEAL_SHOP_IMAGE_WIDTH} px wide or more. Below ${MIN_SHOP_IMAGE_WIDTH} px it looks soft, and Studio will say so.`
+export const SHOP_IMAGE_HINT = `1140 x 1520 works, the same as your Etsy images. Below ${MIN_SHOP_IMAGE_WIDTH} px wide it starts to look soft and Studio will say so.`
 
 /**
  * Warns when an uploaded image is narrower than `min`. The asset's dimensions are not on the
@@ -30,7 +34,7 @@ export function minImageWidth(min: number = MIN_SHOP_IMAGE_WIDTH) {
       const width = dimensions?.width
       if (typeof width !== 'number' || width <= 0) return true
       if (width >= min) return true
-      return `This image is ${width} px wide. The shop shows it about ${MIN_SHOP_IMAGE_WIDTH} px across, so it will look soft. Use one ${IDEAL_SHOP_IMAGE_WIDTH} px wide or more.`
+      return `This image is ${width} px wide. The shop needs about ${MIN_SHOP_IMAGE_WIDTH} px across, so it will look soft. Use your ${IDEAL_SHOP_IMAGE_WIDTH} x 1520 export.`
     } catch {
       return true
     }

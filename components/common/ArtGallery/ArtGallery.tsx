@@ -67,7 +67,7 @@ export default function ArtGallery({
           src={only.url}
           alt={only.alt || title}
           fill
-          className="object-cover"
+          className="object-contain"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
         />
@@ -107,7 +107,7 @@ export default function ArtGallery({
                 src={img.url}
                 alt={img.alt || title}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 priority={i === 0}
                 loading={i === 0 ? undefined : "lazy"}

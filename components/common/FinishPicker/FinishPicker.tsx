@@ -56,7 +56,7 @@ export default function FinishPicker({ options, value, onChange }: FinishPickerP
                   alt={`${meta?.label ?? o.finish} finish`}
                   fill
                   sizes="(max-width: 640px) 30vw, 160px"
-                  className="object-cover"
+                  className="object-contain"
                 />
               </span>
               <span className="flex flex-col gap-0.5 px-2.5 py-2">

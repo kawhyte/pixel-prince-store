@@ -52,7 +52,7 @@ export default function VersionPicker({ options, value, onChange }: VersionPicke
                 className="sr-only"
               />
               <span className="relative block size-16 bg-muted">
-                <Image src={o.imageUrl} alt={o.version} fill sizes="64px" className="object-cover" />
+                <Image src={o.imageUrl} alt={o.version} fill sizes="64px" className="object-contain" />
               </span>
               <span className="sr-only">{o.version}</span>
             </label>

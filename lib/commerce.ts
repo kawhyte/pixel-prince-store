@@ -115,12 +115,17 @@ export function getActiveOffer(
 }
 
 /**
- * The image that represents an offer. An unframed print shows the artwork itself, full bleed;
- * a frame or a canvas changes the object, so those show the mockup. Falls back either way.
+ * The image that represents an offer. Whatever is on the offer's "Main photo" field wins, for every
+ * finish, and the flat artwork is only the fallback for an offer that has no photo yet.
+ *
+ * Unframed used to prefer the flat art. That made the finish tiles an unfair comparison, a bare
+ * poster against a framed room shot, and it stopped a real unframed room photo from ever showing.
+ * The one rule this keeps: the picture always matches the finish that is selected. Showing a framed
+ * room shot while the buyer has unframed selected would be selling them something else.
  */
 export function offerImage(offer: PrintOffer | null | undefined): string | undefined {
   if (!offer) return undefined;
-  return offerFinish(offer) === "unframed" ? offer.artUrl || offer.mockupUrl : offer.mockupUrl || offer.artUrl;
+  return offer.mockupUrl || offer.artUrl;
 }
 
 /**
@@ -130,13 +135,9 @@ export function offerImage(offer: PrintOffer | null | undefined): string | undef
  */
 export function offerImageRatio(offer: PrintOffer | null | undefined): number | undefined {
   if (!offer) return undefined;
-  // Follow the same branch offerImage took, or a missing ratio on the chosen photo would hand
-  // back the other photo's shape and the frame would be cut to the wrong picture.
-  const unframed = offerFinish(offer) === "unframed";
-  const chosePrimary = Boolean(unframed ? offer.artUrl : offer.mockupUrl);
-  const ratio = chosePrimary
-    ? (unframed ? offer.artRatio : offer.mockupRatio)
-    : (unframed ? offer.mockupRatio : offer.artRatio);
+  // Follow the same choice offerImage made, or a missing ratio on the chosen photo would hand back
+  // the other photo's shape and the frame would be cut to the wrong picture.
+  const ratio = offer.mockupUrl ? offer.mockupRatio : offer.artRatio;
   return ratio && ratio > 0 ? ratio : undefined;
 }
 

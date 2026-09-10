@@ -198,10 +198,11 @@ describe("offer imagery", () => {
     const unframed = { ...base, finish: "unframed" as const, artUrl: "art.png", mockupUrl: "mock.png" };
     const framed = { ...base, finish: "framed" as const, artUrl: "art.png", mockupUrl: "framed.png" };
 
-    expect(offerImage(unframed)).toBe("art.png");
+    // the offer's own photo wins for every finish, so a real unframed room shot can show
+    expect(offerImage(unframed)).toBe("mock.png");
     expect(offerImage(framed)).toBe("framed.png");
-    // either side falls back when its own image is missing
-    expect(offerImage({ ...unframed, artUrl: undefined })).toBe("mock.png");
+    // the flat artwork is the fallback for an offer that has no photo yet
+    expect(offerImage({ ...unframed, mockupUrl: undefined })).toBe("art.png");
     expect(offerImage({ ...framed, mockupUrl: undefined })).toBe("art.png");
     expect(offerImage(null)).toBeUndefined();
     // version tiles compare artwork, so they prefer the flat art whatever the finish
@@ -215,15 +216,15 @@ describe("offer imagery", () => {
     const unframed = { ...base, finish: "unframed" as const, artUrl: "art.png", artRatio: 0.8, mockupUrl: "mock.png", mockupRatio: 0.75 };
     const framed = { ...base, finish: "framed" as const, artUrl: "art.png", artRatio: 0.8, mockupUrl: "framed.png", mockupRatio: 0.75 };
 
-    expect(offerImageRatio(unframed)).toBe(0.8);
+    expect(offerImageRatio(unframed)).toBe(0.75);
     expect(offerImageRatio(framed)).toBe(0.75);
     // the ratio must follow the same fallback offerImage took, not just any ratio that is present
-    const noArt = { ...unframed, artUrl: undefined };
-    expect(offerImage(noArt)).toBe("mock.png");
-    expect(offerImageRatio(noArt)).toBe(0.75);
     const noMockup = { ...framed, mockupUrl: undefined };
     expect(offerImage(noMockup)).toBe("art.png");
     expect(offerImageRatio(noMockup)).toBe(0.8);
+    const unframedNoPhoto = { ...unframed, mockupUrl: undefined };
+    expect(offerImage(unframedNoPhoto)).toBe("art.png");
+    expect(offerImageRatio(unframedNoPhoto)).toBe(0.8);
     // a missing or nonsense ratio hands back undefined so the caller keeps its own default
     expect(offerImageRatio({ ...framed, mockupRatio: undefined })).toBeUndefined();
     expect(offerImageRatio({ ...framed, mockupRatio: 0 })).toBeUndefined();

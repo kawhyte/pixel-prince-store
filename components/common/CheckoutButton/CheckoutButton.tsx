@@ -47,6 +47,9 @@ interface CheckoutButtonProps {
   /** controlled artwork version (PLAN-48), same reason */
   version?: string | null;
   onVersionChange?: (version: string) => void;
+  /** controlled size, so the page can print the selected price up beside the title */
+  sizeId?: string | null;
+  onSizeChange?: (sizeId: string) => void;
 }
 
 /**
@@ -66,6 +69,8 @@ export default function CheckoutButton({
   onFinishChange,
   version,
   onVersionChange,
+  sizeId: sizeIdProp,
+  onSizeChange,
 }: CheckoutButtonProps) {
   const [localFinish, setLocalFinish] = useState<FinishId | null>(null);
   const [localVersion, setLocalVersion] = useState<string | null>(null);
@@ -75,12 +80,15 @@ export default function CheckoutButton({
   const sizes = offer ? orderedSizes(offer) : [];
   const finishKey = `${activeVersion ?? ""}:${activeFinish ?? "none"}`;
   const [pickedByFinish, setPickedByFinish] = useState<Record<string, string>>({});
-  const sizeId = pickedByFinish[finishKey] ?? popularSizeId(offer);
+  const sizeId = sizeIdProp ?? pickedByFinish[finishKey] ?? popularSizeId(offer);
   const cartCtx = useCart();
 
   if (!offer) return null;
 
-  const setSizeId = (id: string) => setPickedByFinish((prev) => ({ ...prev, [finishKey]: id }));
+  const setSizeId = (id: string) => {
+    setPickedByFinish((prev) => ({ ...prev, [finishKey]: id }));
+    onSizeChange?.(id);
+  };
   const changeFinish = (f: FinishId) => {
     setLocalFinish(f);
     onFinishChange?.(f);
@@ -203,7 +211,14 @@ export default function CheckoutButton({
               selectedMeta && <span className="text-xs text-muted-foreground">{selectedMeta.cm}</span>
             )}
           </div>
-          <div className={cn("grid gap-2", sizeLayout === "columns" ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 sm:grid-cols-3")}>
+          {/* The Popular badge hangs -top-2 over its tile, so the column layout needs a row gap
+              bigger than that or the badge sits on the tile above it. */}
+          <div
+            className={cn(
+              "grid",
+              sizeLayout === "columns" ? "grid-cols-3 gap-x-2 gap-y-5 md:grid-cols-4" : "grid-cols-2 gap-2 sm:grid-cols-3",
+            )}
+          >
             {sizes.map((s) => {
               const active = s.sizeId === sizeId;
               const isPopular = s.sizeId === popular;
@@ -228,7 +243,7 @@ export default function CheckoutButton({
                   />
                   {sizeLayout === "columns" ? (
                     <>
-                      <span className="font-semibold text-charcoal">{inchesLabel(s.sizeId)}</span>
+                      <span className="whitespace-nowrap font-semibold text-charcoal">{inchesLabel(s.sizeId)}</span>
                       <span className="text-xs text-muted-foreground">{formatPrice(s.priceCents)}</span>
                       {isPopular && (
                         <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-[4px] bg-sage-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">

@@ -5,6 +5,11 @@
  * Everything is computed in UTC on purpose. The shop page is statically cached and revalidates on
  * the server, so the label is produced once per revalidation and handed to the client as a prop.
  * Using UTC on both sides keeps that value stable instead of shifting with whoever renders it.
+ *
+ * Known and accepted (Kenny, 2026-09-10): because the page is served from that cache, the first
+ * visitor after midnight UTC can be handed the previous day's label while the refresh happens
+ * behind them. That is one pageview a day at worst. Do not "fix" it by recomputing in the browser
+ * after mount; the decision was to leave the date exactly as the server rendered it.
  */
 import { DELIVERY_DAYS_MIN, DELIVERY_DAYS_MAX } from "@/config/support";
 

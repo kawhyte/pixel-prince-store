@@ -31,14 +31,15 @@ describe("fourthwall import helpers", () => {
   it("maps ladder variants in ladder order, cents, and skips the rest", () => {
     const { sizes, skipped } = mapVariantsToSizes([
       v('16" x 20"', 36.99, "v3"),
-      v('12" x 16"', 30, "v-skip"),
+      // Fourthwall offers sizes the shop does not sell, like this one
+      v('10" x 10"', 30, "v-skip"),
       v('8" x 10"', 23.0, "v1"),
       v('11" x 14"', 29.99, "v2"),
     ]);
     expect(sizes.map((s) => s.sizeId)).toEqual(["8x10", "11x14", "16x20"]);
     expect(sizes[0]).toMatchObject({ _key: "fw-8x10", priceCents: 2300, providerVariantId: "v1" });
     expect(sizes[2].priceCents).toBe(3699);
-    expect(skipped).toEqual(['12" x 16"']);
+    expect(skipped).toEqual(['10" x 10"']);
   });
 
   it("strips html", () => {

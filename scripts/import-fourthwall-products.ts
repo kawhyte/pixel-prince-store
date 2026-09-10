@@ -94,13 +94,18 @@ interface ExistingDoc {
   galleryCount?: number;
 }
 
-async function findExisting(artworkId: string, productIds: string[]): Promise<ExistingDoc[]> {
+/**
+ * The artwork these products belong to. Matched by id, by any offer pointing at one of the
+ * products, or by title, because recreating a product in Fourthwall changes its id and would
+ * otherwise orphan the artwork and create a second one (learned the hard way, 2026-09-10).
+ */
+async function findExisting(artworkId: string, productIds: string[], title: string): Promise<ExistingDoc[]> {
   return sanity.fetch<ExistingDoc[]>(
-    `*[_type == "product" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0)]{
+    `*[_type == "product" && listing == "shop" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0 || title == $title)]{
       _id, title, defaultVersion, "galleryCount": count(galleryImages),
       offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
     }`,
-    { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds }
+    { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds, title }
   );
 }
 
@@ -279,7 +284,7 @@ async function main() {
     );
 
     const artworkId = sanityIdForArtwork(finishProducts.map((f) => f.product));
-    const existing = await findExisting(artworkId, finishProducts.map((f) => f.product.id));
+    const existing = await findExisting(artworkId, finishProducts.map((f) => f.product.id), title);
     const finishList = finishProducts.map((f) => `${offerLabel(f)} (${f.sizes.length} sizes)`).join(", ");
 
     if (existing.length > 0) {

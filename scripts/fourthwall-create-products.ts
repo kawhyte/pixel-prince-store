@@ -26,6 +26,7 @@ import {
   titleFromFilename,
   uploadMedia,
   FRAME_COLORS,
+  SIZE_NAMES,
   PlatformError,
 } from "../lib/fourthwall-platform";
 
@@ -85,7 +86,7 @@ async function main() {
       summary.skipped++;
     }
     if (todo.length === 0) {
-      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
       continue;
     }
 
@@ -94,7 +95,7 @@ async function main() {
         ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
-      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+      console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
       continue;
     }
 
@@ -125,7 +126,7 @@ async function main() {
       console.error(`fail   ${title}: upload ${msg}`);
       summary.failed++;
     }
-    console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes 8x10 / 11x14 / 16x20 / 18x24 / 24x36`);
+    console.log(`canvas ${productName(title, "canvas")}: create in the dashboard from Canvas (in), sizes ${SIZE_NAMES.canvas.join(" / ")}`);
   }
 
   console.log(`\n${summary.created} created, ${summary.skipped} skipped, ${summary.failed} failed${apply ? "" : " (dry run; add --apply to write)"}.`);

@@ -17,10 +17,16 @@ export const TEMPLATES = {
 export type ApiFinish = "poster" | "framed";
 
 /** Ladder sizes in the exact strings each template expects. */
+/**
+ * Ladder sizes in the exact strings each template expects. Verified against the templates on
+ * 2026-09-10: the poster offers all eight, the framed template has no 20x30, and canvas starts
+ * at 11x14 to match the Etsy listing. Canvas is listed for the dashboard reminder only, because
+ * the API cannot create it.
+ */
 export const SIZE_NAMES = {
-  poster: ['8" x 10"', '11" x 14"', '16" x 20"', '18" x 24"', '24" x 36"'],
-  framed: ['8" x 10"', '11" x 14"', '16" x 20"', '18" x 24"', '24" x 36"'],
-  canvas: ["8″×10″", "11″×14″", "16″×20″", "18″×24″", "24″×36″"],
+  poster: ['8" x 10"', '11" x 14"', '12" x 16"', '12" x 18"', '16" x 20"', '18" x 24"', '20" x 30"', '24" x 36"'],
+  framed: ['8" x 10"', '11" x 14"', '12" x 16"', '12" x 18"', '16" x 20"', '18" x 24"', '24" x 36"'],
+  canvas: ["11″×14″", "12″×16″", "16″×20″", "18″×24″", "20″×30″", "24″×36″"],
 } as const;
 
 export const FRAME_COLORS = ["Black", "Red Oak", "White"] as const;

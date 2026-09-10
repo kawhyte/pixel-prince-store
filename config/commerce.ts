@@ -26,8 +26,11 @@ export interface ShopSize {
 export const SHOP_SIZE_LADDER: readonly ShopSize[] = [
   { id: "8x10", label: "8×10″", cm: "20×25 cm", ratio: "4:5" },
   { id: "11x14", label: "11×14″", cm: "28×36 cm", ratio: "11:14" },
+  { id: "12x16", label: "12×16″", cm: "30×40 cm", ratio: "3:4" },
+  { id: "12x18", label: "12×18″", cm: "30×46 cm", ratio: "2:3" },
   { id: "16x20", label: "16×20″", cm: "40×50 cm", ratio: "4:5" },
   { id: "18x24", label: "18×24″", cm: "46×61 cm", ratio: "3:4" },
+  { id: "20x30", label: "20×30″", cm: "50×76 cm", ratio: "2:3" },
   { id: "24x36", label: "24×36″", cm: "61×91 cm", ratio: "2:3" },
 ];
 
@@ -87,9 +90,11 @@ export type FinishId = (typeof FINISHES)[number]["id"];
  * names the products that drifted. A size left out is not checked, which is how canvas skips 8x10.
  */
 export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = {
-  unframed: { "8x10": 2399, "11x14": 2700, "16x20": 3400, "18x24": 3700, "24x36": 4500 },
-  framed: { "8x10": 5800, "11x14": 6500, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
-  canvas: { "11x14": 5500, "16x20": 11000, "18x24": 13000, "24x36": 19500 },
+  unframed: { "8x10": 2399, "11x14": 2700, "12x16": 2900, "12x18": 3000, "16x20": 3400, "18x24": 3700, "20x30": 3800, "24x36": 4500 },
+  // Fourthwall's framed template has no 20x30, so that size is unframed and canvas only.
+  framed: { "8x10": 5800, "11x14": 6500, "12x16": 7500, "12x18": 7900, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
+  // Canvas starts at 11x14, matching the Etsy listing.
+  canvas: { "11x14": 5500, "12x16": 9500, "16x20": 11000, "18x24": 13000, "20x30": 14500, "24x36": 19500 },
 };
 
 /** What the version picker is called on the page (PLAN-48). "Style" and "Colour" also read well. */

@@ -8,6 +8,8 @@ import { ArrowLeft, Check, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, 
 import { type FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageRatio, popularSizeId, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
+// The same numbers Studio validates uploads against, so the check and the layout cannot drift.
+import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
 import { imageAlt } from "@/lib/listing-copy";
 import {
   SHOP_FEATURES,
@@ -34,13 +36,6 @@ interface ShopPrintClientProps {
 }
 
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Lock];
-/**
- * Shop photos are 1140x1520 (sanity/lib/image-rules.ts). 570 is the widest one goes before a 2x
- * screen starts inventing pixels, and 760 is that same photo's height, which makes it the natural
- * ceiling for a taller shape. A photo taller than 3:4 is shown narrower rather than cropped.
- */
-const HERO_MAX_WIDTH = 570;
-const HERO_MAX_HEIGHT = 760;
 const SIZE_GUIDE_SLIDE = SHOP_GALLERY_EXTRAS[0];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -81,7 +76,7 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
   // past what a sticky viewport can show. Cap the height instead and let the width give way, so the
   // photo is never cropped and never gets grey bars. 760 is the 3:4 photo's own height at 570 wide,
   // so the tallest frame now matches the shape we already had.
-  const heroMaxWidth = Math.round(Math.min(HERO_MAX_WIDTH, heroRatio ? HERO_MAX_HEIGHT * heroRatio : HERO_MAX_WIDTH));
+  const heroMaxWidth = heroRatio ? Math.round(heroFrame(heroRatio).width) : HERO_MAX_WIDTH;
   // The page owns the chosen size for the same reason it owns finish and version: the price belongs
   // under the title, above the rating, and it has to move when the picker does.
   const [sizeByOffer, setSizeByOffer] = useState<Record<string, string>>({});

@@ -15,6 +15,11 @@ interface ArtGalleryProps {
   title?: string;
   /** Aspect ratio class for the frame: the CLS guard. */
   aspectClass?: string;
+  /**
+   * Width / height of the main photo. When given it cuts the frame to that shape, so a photo fills
+   * it edge to edge with no grey bars beside it and no crop. Falls back to `aspectClass`.
+   */
+  aspectRatio?: number;
   /** Desktop thumbnail placement: a row under the frame (default) or a vertical rail beside it (shop pages). */
   thumbs?: "bottom" | "left" | "center";
   /** White mat + wall shadow around the frame (shop pages hang the print on a wall). */
@@ -31,6 +36,7 @@ export default function ArtGallery({
   images,
   title = "",
   aspectClass = "aspect-3/4",
+  aspectRatio,
   thumbs = "bottom",
   frame = false,
   sizes = "(max-width: 1024px) 100vw, 50vw",
@@ -38,6 +44,9 @@ export default function ArtGallery({
   const frameClass = frame
     ? "bg-white p-3 sm:p-4 wall-shadow"
     : "rounded-md bg-muted wall-shadow";
+  // A measured ratio wins; the class stays the fallback so nothing loses its CLS guard.
+  const ratioClass = aspectRatio ? "" : aspectClass;
+  const ratioStyle = aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined;
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
@@ -68,7 +77,8 @@ export default function ArtGallery({
     return (
       <div className={frame ? frameClass : undefined}>
       <div
-        className={`relative ${aspectClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
+        className={`relative ${ratioClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
+        style={ratioStyle}
       >
         <Image
           src={only.url}
@@ -93,7 +103,8 @@ export default function ArtGallery({
     <div className={leftRail ? "space-y-3 md:flex md:flex-row-reverse md:gap-4 md:space-y-0" : "space-y-3"}>
       <div className={frame ? `${frameClass} ${leftRail ? "md:min-w-0 md:flex-1" : ""}` : leftRail ? "md:min-w-0 md:flex-1" : undefined}>
       <div
-        className={`group relative ${aspectClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
+        className={`group relative ${ratioClass} overflow-hidden ${frame ? "bg-muted" : frameClass}`}
+        style={ratioStyle}
       >
         <div
           ref={trackRef}

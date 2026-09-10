@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, resolveFinish, resolveVersion } from "@/lib/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageRatio, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, type FinishId } from "@/config/commerce";
 import { imageAlt } from "@/lib/listing-copy";
 import {
@@ -64,6 +64,9 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
     ...galleryImages,
     ...SHOP_GALLERY_EXTRAS,
   ];
+  // Cut the frame to the photo. Without this the frame was a fixed 4:5 and a 3:4 photo sat inside
+  // it with grey bars down both sides.
+  const heroRatio = offerImageRatio(offer);
   const category = art.category?.trim();
   const quickFaq = SHOP_SHIPPING_FAQ.filter((f) => /delivery|return/i.test(f.q));
 
@@ -86,20 +89,20 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
 
       {/* Hero: print + buy stack */}
       <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[1.28fr_1fr] lg:items-start lg:gap-10 lg:pt-6">
-        {/* Shop photos are 1140x1520 (sanity/lib/image-rules.ts), so on a 2x screen the print can
-            fill 570 css px before the browser starts inventing pixels. The frame is 4:5 and the
-            art is 3:4, so it fits by height: a 608 px frame is 760 tall and shows the art at
-            570x760, exactly the file. Past that it goes soft, and the column also grows taller
-            than a sticky viewport can show, which cropped the thumbnails off the bottom. The
-            40 px on the cap is this band's own sm:p-5 padding. */}
-        <div className="wall-band mx-auto w-full max-w-[440px] rounded-md p-3 sm:max-w-[520px] sm:p-5 lg:max-w-[648px] lg:sticky lg:top-24">
+        {/* Shop photos are 1140x1520 (sanity/lib/image-rules.ts), so on a 2x screen the photo can
+            fill 570 css px before the browser starts inventing pixels and going soft. The frame is
+            cut to the photo now, so 570 is the frame itself; the 40 px on the cap is this band's
+            own sm:p-5 padding. Letting it grow past that also made the column taller than a sticky
+            viewport can show, which cropped the thumbnails off the bottom. */}
+        <div className="wall-band mx-auto w-full max-w-[440px] rounded-md p-3 sm:max-w-[520px] sm:p-5 lg:max-w-[610px] lg:sticky lg:top-24">
           <ArtGallery
             key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`}
             images={slides}
             title={art.title}
             aspectClass="aspect-[4/5]"
+            aspectRatio={heroRatio}
             thumbs="bottom"
-            sizes="(max-width: 640px) 440px, (max-width: 1024px) 520px, 608px"
+            sizes="(max-width: 640px) 416px, (max-width: 1024px) 480px, 570px"
           />
         </div>
 

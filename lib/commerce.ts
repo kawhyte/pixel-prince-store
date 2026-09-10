@@ -123,6 +123,23 @@ export function offerImage(offer: PrintOffer | null | undefined): string | undef
   return offerFinish(offer) === "unframed" ? offer.artUrl || offer.mockupUrl : offer.mockupUrl || offer.artUrl;
 }
 
+/**
+ * Width / height of whatever `offerImage` picked. The frame is cut to this so a photo is never
+ * padded with grey bars down its sides, and never cropped either. Undefined when the asset has no
+ * dimensions recorded, and the caller keeps its own default.
+ */
+export function offerImageRatio(offer: PrintOffer | null | undefined): number | undefined {
+  if (!offer) return undefined;
+  // Follow the same branch offerImage took, or a missing ratio on the chosen photo would hand
+  // back the other photo's shape and the frame would be cut to the wrong picture.
+  const unframed = offerFinish(offer) === "unframed";
+  const chosePrimary = Boolean(unframed ? offer.artUrl : offer.mockupUrl);
+  const ratio = chosePrimary
+    ? (unframed ? offer.artRatio : offer.mockupRatio)
+    : (unframed ? offer.mockupRatio : offer.artRatio);
+  return ratio && ratio > 0 ? ratio : undefined;
+}
+
 /** Version tiles compare artwork, so they show the flat art whatever finish is on screen. */
 export function versionImage(offer: PrintOffer | null | undefined): string | undefined {
   if (!offer) return undefined;

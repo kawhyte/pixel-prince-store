@@ -45,8 +45,12 @@ export interface PrintOffer {
   version?: string
   /** resolved by the projection from the `mockup` image */
   mockupUrl?: string
+  /** width / height of `mockup`, so the frame can be cut to the photo instead of padding it */
+  mockupRatio?: number
   /** resolved by the projection from the `art` image: the artwork with no mockup around it */
   artUrl?: string
+  /** width / height of `art` */
+  artRatio?: number
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -149,7 +153,9 @@ const PRODUCT_PROJECTION = `
   kind,
   defaultVersion,
   defaultFinish,
-  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url },
+  offers[]{ ...,
+    "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio,
+    "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio },
   tags,
   category,
   downloads,

@@ -208,6 +208,27 @@ describe("offer imagery", () => {
     expect(versionImage(framed)).toBe("art.png");
     expect(versionImage({ ...framed, artUrl: undefined })).toBe("framed.png");
   });
+
+  it("reports the shape of whichever photo offerImage picked, so the frame is cut to it", async () => {
+    const { offerImage, offerImageRatio } = await import("@/lib/commerce");
+    const base = { provider: "fourthwall" as const, sizes: [{ sizeId: "8x10", priceCents: 2500 }] };
+    const unframed = { ...base, finish: "unframed" as const, artUrl: "art.png", artRatio: 0.8, mockupUrl: "mock.png", mockupRatio: 0.75 };
+    const framed = { ...base, finish: "framed" as const, artUrl: "art.png", artRatio: 0.8, mockupUrl: "framed.png", mockupRatio: 0.75 };
+
+    expect(offerImageRatio(unframed)).toBe(0.8);
+    expect(offerImageRatio(framed)).toBe(0.75);
+    // the ratio must follow the same fallback offerImage took, not just any ratio that is present
+    const noArt = { ...unframed, artUrl: undefined };
+    expect(offerImage(noArt)).toBe("mock.png");
+    expect(offerImageRatio(noArt)).toBe(0.75);
+    const noMockup = { ...framed, mockupUrl: undefined };
+    expect(offerImage(noMockup)).toBe("art.png");
+    expect(offerImageRatio(noMockup)).toBe(0.8);
+    // a missing or nonsense ratio hands back undefined so the caller keeps its own default
+    expect(offerImageRatio({ ...framed, mockupRatio: undefined })).toBeUndefined();
+    expect(offerImageRatio({ ...framed, mockupRatio: 0 })).toBeUndefined();
+    expect(offerImageRatio(null)).toBeUndefined();
+  });
 });
 
 describe("which version opens first", () => {

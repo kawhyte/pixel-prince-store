@@ -5,6 +5,7 @@ import { HighResAssetInput } from '../components/HighResAssetInput'
 import { DefaultVersionInput } from '../components/DefaultVersionInput'
 import { deriveRatio } from '@/config/print-sizes'
 import { FINISHES } from '@/config/commerce'
+import { minImageWidth, SHOP_IMAGE_HINT } from '../lib/image-rules'
 
 const isShop = (doc: unknown) => (doc as { listing?: string } | undefined)?.listing === 'shop'
 
@@ -112,12 +113,13 @@ export const product = defineType({
       name: 'previewImage',
       title: 'Preview Image',
       type: 'image',
-      description: 'The gallery card image. Portrait 600×800 works best.',
+      description: `The gallery card image, portrait 4:5. ${SHOP_IMAGE_HINT}`,
       group: 'images',
       options: {
         hotspot: true,
       },
-      validation: (Rule) =>
+      validation: (Rule) => [
+        Rule.warning().custom(minImageWidth()),
         Rule.required()
           .custom((image: ImageValue | undefined) => {
             // Validate aspect ratio - warn if unusual
@@ -140,6 +142,7 @@ export const product = defineType({
             }
             return true;
           }),
+      ],
     }),
     defineField({
       name: 'detailImage',
@@ -155,7 +158,7 @@ export const product = defineType({
       name: 'galleryImages',
       title: 'Extra gallery photos (optional)',
       description:
-        'Context shots — the artwork framed on a wall, in a room, lifestyle. These appear after the main image as a carousel on the art page. The artwork itself goes in Detail Image above, not here. Leave empty to show only the detail image. 1200×1600 or wider recommended.',
+        'Context shots — the artwork framed on a wall, in a room, lifestyle. These appear after the main image as a carousel on the art page. The artwork itself goes in Detail Image above, not here. Leave empty to show only the detail image. ' + SHOP_IMAGE_HINT,
       type: 'array',
       group: 'images',
       of: [

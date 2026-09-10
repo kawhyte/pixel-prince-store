@@ -1,6 +1,7 @@
 import { defineType, defineField, defineArrayMember } from 'sanity'
 import { ShoppingBag } from 'lucide-react'
 import { SHOP_SIZE_LADDER, DEFAULT_PRICE_CENTS, FINISHES, DEFAULT_FINISH } from '@/config/commerce'
+import { minImageWidth, SHOP_IMAGE_HINT } from '../lib/image-rules'
 
 interface SizeRow {
   sizeId?: string
@@ -60,24 +61,32 @@ export const printOffer = defineType({
       name: 'art',
       title: 'Flat artwork',
       type: 'image',
-      description:
-        'The artwork itself, no mockup. Shown full bleed as the main image for an unframed print and on the version tiles. Filled by scripts/upload-flat-art.ts from the masters folder.',
+      description: `The artwork itself, no mockup. Shown full bleed as the main image for an unframed print and on the version tiles. Filled by npm run shop:art from the masters folder. ${SHOP_IMAGE_HINT}`,
       options: { hotspot: true },
+      validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
       name: 'mockup',
-      title: 'Finish mockup',
+      title: 'Main photo for this finish',
       type: 'image',
-      description: 'Shown on the finish tile and as the main image when this finish is selected. The import fills it from Fourthwall.',
+      description: `Shown on the finish tile and as the main image when this finish is selected. Seeded from Fourthwall when the print is first imported; replace it with your own photo. ${SHOP_IMAGE_HINT}`,
       options: { hotspot: true },
+      validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
       name: 'gallery',
       title: 'Room photos',
       type: 'array',
       description:
-        'Extra photos for this exact product, filled from Fourthwall by the import. Add them in Fourthwall under Photography and design and re-run the import with --remockup.',
-      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', type: 'string', title: 'Alt text' }] }],
+        `Extra photos for this exact product. Seeded from Fourthwall on first import; after that they are yours to change here. ${SHOP_IMAGE_HINT}`,
+      of: [
+        {
+          type: 'image',
+          options: { hotspot: true },
+          fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
+          validation: (Rule) => Rule.warning().custom(minImageWidth()),
+        },
+      ],
       options: { layout: 'grid' },
     }),
     defineField({

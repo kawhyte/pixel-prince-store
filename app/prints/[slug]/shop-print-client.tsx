@@ -101,10 +101,13 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
       </div>
 
       {/* Hero: print + buy stack */}
-      {/* The photo is capped at 570, so letting the column keep growing left dead space between the
-          print and the buy stack at wide widths. 1090 is the width at which 1.28fr lands on 570,
-          and the page margins absorb the rest, where empty space reads as margin. */}
-      <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:max-w-[1090px] lg:grid-cols-[1.28fr_1fr] lg:items-start lg:gap-10 lg:pt-6">
+      {/* Both columns have a real ceiling, so the grid states them rather than dividing what is
+          there. 570 is the widest a 1140 px photo goes before a 2x screen starts inventing pixels.
+          640 is about as wide as the buy stack should get: past that the finish tiles blow up and
+          push the size picker off the screen. Below lg the second track shrinks to whatever is
+          left. justify-center keeps the pair in the middle, so the room left over on a wide screen
+          sits in the page margins instead of opening a gap between the print and the buy stack. */}
+      <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[570px_minmax(0,640px)] lg:justify-center lg:items-start lg:gap-10 lg:pt-6">
         {/* No wall panel behind the photo: the photo already has a room in it, and the panel only
             showed as a beige border down each side. Shop photos are 1140x1520
             (sanity/lib/image-rules.ts), so on a 2x screen the photo can fill 570 css px before the

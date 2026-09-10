@@ -88,6 +88,8 @@ Needs `FOURTHWALL_STOREFRONT_TOKEN` and `SANITY_API_WRITE_TOKEN` in `.env.local`
 
 Versions of the same artwork (PLAN-48) are separate files named `Title (Version).png`; they become `Title (Version)` and `Title (Version) | Framed`, and the import folds them into one artwork with a version picker.
 
+**Who owns what (PLAN-52):** Fourthwall owns prices, sizes and fulfilment. Studio owns title, copy, tags, category and photos. The masters folder owns the artwork. `npm run shop:sync` pulls prices and leaves photos alone; `npm run shop:prices` reports prices that disagree with `TARGET_PRICES`; `npm run shop:art` puts the flat artwork on each offer.
+
 **Folder layout.** `--dir` is walked recursively, so file the art however you like. Folders starting with `.` or `_` are skipped, which makes `_done/` a place to park art that is already live:
 
 ```

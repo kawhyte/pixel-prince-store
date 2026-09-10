@@ -6,8 +6,8 @@
  *   npx tsx scripts/import-fourthwall-products.ts --apply          create drafts + sync existing
  *   npx tsx scripts/import-fourthwall-products.ts --sync --apply   sync existing only, no new drafts
  *   add --include-test to also process products named "Test ..."
- *   add --remockup to re-upload the mockup and room photos of every offer, which is how new
- *     photos added in Fourthwall reach the site
+ *   add --reset-images to throw away the photos in Studio and take Fourthwall's again.
+ *     Photos are seeded on the first import and are yours after that (PLAN-52).
  *   add --no-trim to keep Fourthwall's wide dead margin around each mockup
  *
  * Naming convention: "Title", "Title | Framed", "Title | Canvas" are one artwork with three
@@ -23,6 +23,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { chromium, type Browser } from "playwright";
 import { contentBox } from "../lib/image-trim";
+import { draftDescription, draftLongDescription, draftTags } from "../lib/listing-copy";
 import {
   type FwProduct,
   type ImportFinish,
@@ -47,7 +48,8 @@ if (!sanityToken) throw new Error("SANITY_API_WRITE_TOKEN (or SANITY_API_TOKEN) 
 const apply = process.argv.includes("--apply");
 const syncOnly = process.argv.includes("--sync");
 const includeTest = process.argv.includes("--include-test");
-const remockup = process.argv.includes("--remockup");
+// --remockup was the old name, kept working so a memorised command does not fail
+const resetImages = process.argv.includes("--reset-images") || process.argv.includes("--remockup");
 const trim = !process.argv.includes("--no-trim");
 
 const sanity = createClient({
@@ -78,7 +80,6 @@ interface ExistingOffer {
   provider?: string;
   finish?: string;
   version?: string;
-  hasGallery?: boolean;
   providerProductId?: string;
   hasMockup?: boolean;
 }
@@ -93,7 +94,7 @@ async function findExisting(artworkId: string, productIds: string[]): Promise<Ex
   return sanity.fetch<ExistingDoc[]>(
     `*[_type == "product" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0)]{
       _id, title, "galleryCount": count(galleryImages),
-      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset), "hasGallery": count(gallery) > 0 }
+      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
     }`,
     { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds }
   );
@@ -213,18 +214,6 @@ function offerLabel(fp: FinishProduct): string {
   return fp.version ? `${fp.version} ${fp.finish}` : fp.finish;
 }
 
-/** Room photos for one product: the renders after the first, which is already the mockup. */
-async function uploadOfferGallery(fp: FinishProduct) {
-  const extras = pickGalleryImages(fp.product);
-  const items = [];
-  for (const [i, img] of extras.entries()) {
-    const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
-    const assetId = await uploadImage(img.url, `${fp.product.slug ?? slugify(fp.product.name)}${suffix}-photo-${i + 1}.webp`, fp.product.name);
-    items.push({ _key: `fw-photo-${i + 1}`, ...imageRef(assetId), alt: `${fp.product.name}, photo ${i + 1}` });
-  }
-  return items;
-}
-
 async function buildOffer(fp: FinishProduct) {
   const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
   const mockupId = await uploadFirstImage(fp.product, suffix);
@@ -238,7 +227,6 @@ async function buildOffer(fp: FinishProduct) {
     providerProductId: fp.product.id,
     sizes: fp.sizes,
     ...(mockupId ? { mockup: imageRef(mockupId) } : {}),
-    gallery: await uploadOfferGallery(fp),
   };
 }
 
@@ -290,6 +278,12 @@ async function main() {
       for (const doc of existing) {
         console.log(`${apply ? "sync  " : "would sync"} ${doc._id}  ${doc.title ?? title}: ${finishList}`);
         if (!apply) continue;
+        if (resetImages) {
+          const photos = (doc.offers ?? []).filter((o) => o.hasMockup).length;
+          console.warn(
+            `reset  ${doc.title ?? title}: replacing the photos on ${photos} offer(s) with Fourthwall's. Anything uploaded in Studio for this print is lost.`
+          );
+        }
         const claimed = new Set<string>();
         for (const fp of finishProducts) {
           const fw = (doc.offers ?? []).filter((o) => o.provider === "fourthwall" && !claimed.has(o._key));
@@ -305,14 +299,10 @@ async function main() {
               [`offers[_key=="${offer._key}"].finish`]: fp.finish,
             };
             if (fp.version) patch[`offers[_key=="${offer._key}"].version`] = fp.version;
-            if (!offer.hasMockup || remockup) {
+            if (!offer.hasMockup || resetImages) {
               const suffix = fp.version ? `-${slugify(fp.version)}-${fp.finish}` : `-${fp.finish}`;
               const mockupId = await uploadFirstImage(fp.product, suffix);
               if (mockupId) patch[`offers[_key=="${offer._key}"].mockup`] = imageRef(mockupId);
-            }
-            if (!offer.hasGallery || remockup) {
-              const photos = await uploadOfferGallery(fp);
-              if (photos.length > 0) patch[`offers[_key=="${offer._key}"].gallery`] = photos;
             }
             await sanity.patch(doc._id).set(patch).commit();
           } else {
@@ -322,11 +312,13 @@ async function main() {
             console.log(`offer  ${doc._id}: ${offerLabel(fp)} added`);
           }
         }
+        // Room photos belong to the artwork, not to one variant of it (PLAN-52). Seeded from
+        // Fourthwall the first time so a listing is never blank, and Kenny's after that.
         const primary = finishProducts[0].product;
-        if (!doc.galleryCount && pickGalleryImages(primary).length > 0) {
+        if ((!doc.galleryCount || resetImages) && pickGalleryImages(primary).length > 0) {
           const gallery = await uploadGallery(primary);
           await sanity.patch(doc._id).set({ galleryImages: gallery }).commit();
-          console.log(`gallery ${doc._id}: ${gallery.length} mockup(s) added`);
+          console.log(`photos ${doc._id}: ${gallery.length} room photo(s) ${doc.galleryCount ? "replaced" : "added"}`);
         }
       }
       continue;
@@ -346,7 +338,12 @@ async function main() {
     const gallery = await uploadGallery(primary);
     const offers = [];
     for (const fp of finishProducts) offers.push(await buildOffer(fp));
-    const description = stripHtml(primary.description).slice(0, 200) || `${title}. [KENNY: write this]`;
+    const versions = [...new Set(finishProducts.map((f) => f.version).filter((v): v is string => !!v))];
+    const finishes = [...new Set(finishProducts.map((f) => f.finish))];
+    const copy = { title, category, versions, finishes };
+    // Fourthwall's own description wins when there is one; otherwise write a real first draft
+    // rather than a placeholder, so the listing could go live as it stands (PLAN-52).
+    const description = stripHtml(primary.description).slice(0, 200) || draftDescription(copy);
     await sanity.createIfNotExists({
       _id: `drafts.${artworkId}`,
       _type: "product",
@@ -356,10 +353,11 @@ async function main() {
       slug: { _type: "slug", current: slugify(title) },
       artist: "The Pixel Prince",
       description,
+      longDescription: draftLongDescription(copy),
       ...(assetId ? { previewImage: imageRef(assetId) } : {}),
       ...(gallery.length ? { galleryImages: gallery } : {}),
       ...(category ? { category } : {}),
-      tags: [],
+      tags: draftTags(copy),
       offers,
     });
   }

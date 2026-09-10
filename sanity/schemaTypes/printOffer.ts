@@ -74,22 +74,6 @@ export const printOffer = defineType({
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
-      name: 'gallery',
-      title: 'Room photos',
-      type: 'array',
-      description:
-        `Extra photos for this exact product. Seeded from Fourthwall on first import; after that they are yours to change here. ${SHOP_IMAGE_HINT}`,
-      of: [
-        {
-          type: 'image',
-          options: { hotspot: true },
-          fields: [{ name: 'alt', type: 'string', title: 'Alt text' }],
-          validation: (Rule) => Rule.warning().custom(minImageWidth()),
-        },
-      ],
-      options: { layout: 'grid' },
-    }),
-    defineField({
       name: 'active',
       title: 'Active',
       type: 'boolean',

@@ -50,13 +50,13 @@ export default function ShopPrintClient({ art, related }: ShopPrintClientProps) 
   const activeFinish = resolveFinish(art, finish, activeVersion);
   const offer = getActiveOffer(art, activeFinish, activeVersion);
   const sizes = offer ? orderedSizes(offer) : [];
-  // Photos added to this exact product in Fourthwall come first, then anything on the artwork.
-  const offerPhotos = offer?.gallery ?? [];
-  const roomPhotos = [...offerPhotos, ...(art.galleryImages ?? [])].slice(0, 3);
+  // Room photos belong to the artwork and show whichever finish is on screen (PLAN-52).
+  const galleryImages = art.galleryImages ?? [];
+  const roomPhotos = galleryImages.slice(0, 3);
+  // The carousel takes the first few. Reorder them in Studio to change which ones show.
   const slides = [
     { url: offerImage(offer) || art.detailImage || art.previewImage, alt: art.title },
-    ...offerPhotos,
-    ...(offerPhotos.length > 0 ? [] : (art.galleryImages ?? [])),
+    ...galleryImages.slice(0, 5),
     ...SHOP_GALLERY_EXTRAS,
   ];
   const category = art.category?.trim();

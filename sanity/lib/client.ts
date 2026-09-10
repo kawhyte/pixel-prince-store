@@ -47,8 +47,6 @@ export interface PrintOffer {
   mockupUrl?: string
   /** resolved by the projection from the `art` image: the artwork with no mockup around it */
   artUrl?: string
-  /** room photos for this exact product, resolved by the projection */
-  gallery?: { url: string; alt: string }[]
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -151,7 +149,7 @@ const PRODUCT_PROJECTION = `
   kind,
   defaultVersion,
   defaultFinish,
-  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url, "gallery": gallery[]{ "url": asset->url, "alt": coalesce(alt, "") } },
+  offers[]{ ..., "mockupUrl": mockup.asset->url, "artUrl": art.asset->url },
   tags,
   category,
   downloads,

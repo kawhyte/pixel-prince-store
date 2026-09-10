@@ -40,8 +40,8 @@ interface Row {
   offers?: { _key: string; gallery?: Photo[] }[];
 }
 
-/** Room photos an artwork should end up with: what it already had, then anything new from the offers. */
-const MAX_ROOM_PHOTOS = 8;
+/** Room photos an artwork ends up with: what it already had, then anything new from the offers. */
+const MAX_ROOM_PHOTOS = 6; // the schema caps the field at 6
 
 async function main() {
   const rows = await sanity.fetch<Row[]>(

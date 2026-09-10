@@ -5,9 +5,12 @@ import type { ImageValue, ValidationContext } from 'sanity'
  * upscales and looks soft. Kenny's first uploads were 794 and 1140 px wide, which is exactly
  * the mistake this catches at the moment of upload rather than on the live page.
  */
-export const MIN_SHOP_IMAGE_WIDTH = 1600
+export const MIN_SHOP_IMAGE_WIDTH = 1280
 
-export const SHOP_IMAGE_HINT = `At least ${MIN_SHOP_IMAGE_WIDTH} px wide, portrait 4:5. Smaller files look soft on the shop page.`
+/** What to aim for. The warning fires below MIN_SHOP_IMAGE_WIDTH, which is the size the page shows. */
+export const IDEAL_SHOP_IMAGE_WIDTH = 1600
+
+export const SHOP_IMAGE_HINT = `Aim for ${IDEAL_SHOP_IMAGE_WIDTH} px wide or more. Below ${MIN_SHOP_IMAGE_WIDTH} px it looks soft, and Studio will say so.`
 
 /**
  * Warns when an uploaded image is narrower than `min`. The asset's dimensions are not on the
@@ -27,7 +30,7 @@ export function minImageWidth(min: number = MIN_SHOP_IMAGE_WIDTH) {
       const width = dimensions?.width
       if (typeof width !== 'number' || width <= 0) return true
       if (width >= min) return true
-      return `This image is ${width} px wide. The shop shows it about 1280 px across, so it will look soft. Use one at least ${min} px wide.`
+      return `This image is ${width} px wide. The shop shows it about ${MIN_SHOP_IMAGE_WIDTH} px across, so it will look soft. Use one ${IDEAL_SHOP_IMAGE_WIDTH} px wide or more.`
     } catch {
       return true
     }

@@ -137,6 +137,28 @@ describe("price is the members added up", () => {
   });
 });
 
+describe("size rows and the opening finish", () => {
+  const a = member("A", [offer(), framed()]);
+  const b = member("B", [offer(), framed()]);
+
+  it("shapes rows like an offer's own, so one code path renders both", async () => {
+    const { setSizeRows } = await import("@/lib/sets");
+    expect(setSizeRows(set([a, b]), "framed")).toEqual([
+      { sizeId: "8x10", priceCents: 11600 },
+      { sizeId: "16x20", priceCents: 19000 },
+    ]);
+  });
+
+  it("opens on a finish the set actually has, and honours a valid request", async () => {
+    const { resolveSetFinish } = await import("@/lib/sets");
+    expect(resolveSetFinish(set([a, b]))).toBe("unframed");
+    expect(resolveSetFinish(set([a, b]), "framed")).toBe("framed");
+    // canvas is not offered by either member, so asking for it must not select it
+    expect(resolveSetFinish(set([a, b]), "canvas")).toBe("unframed");
+    expect(resolveSetFinish(set([member("A", [offer()])]))).toBeNull();
+  });
+});
+
 describe("cart variants", () => {
   it("returns one variant per member, in order", () => {
     const a = member("A", [offer({ sizes: [size("8x10", 2399, "va")] })]);

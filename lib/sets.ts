@@ -9,12 +9,21 @@
  * The rule running through all of it is intersection, not union. A set offers a finish or a size
  * only when *every* member has it, because a set that cannot be made in full is not a set.
  */
-import { SHOP_SIZE_LADDER, type FinishId } from "@/config/commerce";
-import { offerFinish, offerVersion, orderedSizes, resolveVersion } from "@/lib/commerce";
+import { DEFAULT_FINISH, SHOP_SIZE_LADDER, type FinishId } from "@/config/commerce";
 import type { FreeArt, PrintOffer, SetMember } from "@/sanity/lib/client";
 
-/** The smallest shape these need, so tests do not have to build a whole artwork. */
-export type WithMembers = Pick<FreeArt, "kind"> & { members?: SetMember[] };
+// Deliberately no import from lib/commerce. Sets are built on config and the raw offers, so the
+// dependency runs one way and `cardCommerce` over there can price a set without a cycle. The two
+// helpers below are the whole of what was borrowed.
+const finishOf = (offer: PrintOffer): FinishId => offer.finish ?? DEFAULT_FINISH;
+const versionOf = (offer: PrintOffer): string | null => offer.version?.trim() || null;
+
+/**
+ * The smallest shape these need, so tests do not have to build a whole artwork and a card can
+ * pass what it has. `kind` is optional because older documents predate it and a missing kind is
+ * simply not a set.
+ */
+export type WithMembers = { kind?: FreeArt["kind"]; members?: SetMember[] };
 
 export interface ResolvedMember {
   id: string;
@@ -44,12 +53,13 @@ export function setMembers(art: WithMembers): ResolvedMember[] {
     if (!print?._id || !print.title) continue;
     const offers = (print.offers ?? []).filter((o) => o.active !== false);
     if (offers.length === 0) continue;
-    const asArt = { offers, defaultVersion: undefined } as unknown as Parameters<typeof resolveVersion>[0];
+    // With nothing pinned, take the member's first version, which is what its own page opens on.
+    const firstVersion = offers.map(versionOf).find((v): v is string => !!v) ?? null;
     out.push({
       id: print.slug?.current ?? print._id,
       title: print.title,
       slug: print.slug?.current ?? "",
-      version: m.version?.trim() || resolveVersion(asArt),
+      version: m.version?.trim() || firstVersion,
       previewImage: print.previewImage,
       offers,
     });
@@ -73,7 +83,7 @@ export function sellableSet(art: WithMembers): boolean {
 function offerFor(member: ResolvedMember, finish: FinishId): PrintOffer | null {
   return (
     member.offers.find(
-      (o) => offerFinish(o) === finish && (member.version === null || offerVersion(o) === member.version),
+      (o) => finishOf(o) === finish && (member.version === null || versionOf(o) === member.version),
     ) ?? null
   );
 }
@@ -89,10 +99,7 @@ export function setFinishes(art: WithMembers, candidates: readonly FinishId[] = 
 export function setSizes(art: WithMembers, finish: FinishId): string[] {
   const members = setMembers(art);
   if (members.length < 2) return [];
-  const perMember = members.map((m) => {
-    const offer = offerFor(m, finish);
-    return new Set((offer ? orderedSizes(offer) : []).map((s) => s.sizeId));
-  });
+  const perMember = members.map((m) => new Set((offerFor(m, finish)?.sizes ?? []).map((s) => s.sizeId)));
   return SHOP_SIZE_LADDER.map((s) => s.id).filter((id) => perMember.every((set) => set.has(id)));
 }
 
@@ -138,6 +145,30 @@ export function setVariantIds(art: WithMembers, finish: FinishId, sizeId: string
     ids.push(row.providerVariantId);
   }
   return ids;
+}
+
+/**
+ * The size rows for a finish, shaped like an offer's own rows so the checkout UI can render a set
+ * and a single print through the same code path. No `providerVariantId`: a set has several, and
+ * `setVariantIds` is the honest way to ask for them.
+ */
+export function setSizeRows(art: WithMembers, finish: FinishId): { sizeId: string; priceCents: number }[] {
+  const rows: { sizeId: string; priceCents: number }[] = [];
+  for (const sizeId of setSizes(art, finish)) {
+    const priceCents = setPriceCents(art, finish, sizeId);
+    if (priceCents !== null) rows.push({ sizeId, priceCents });
+  }
+  return rows;
+}
+
+/**
+ * The finish a set opens on: the first one every member can be made in, cheapest-looking first
+ * because `setFinishes` keeps the candidate order and unframed leads it.
+ */
+export function resolveSetFinish(art: WithMembers, requested?: FinishId | null): FinishId | null {
+  const available = setFinishes(art);
+  if (available.length === 0) return null;
+  return requested && available.includes(requested) ? requested : available[0];
 }
 
 /** "Set of 2", built from what is actually sellable rather than from the title. */

@@ -307,3 +307,36 @@ describe("which version opens first", () => {
     expect(resolveVersion({ ...art, defaultVersion: "Earth" }, "Bright")).toBe("Bright");
   });
 });
+
+describe("cardCommerce for a set", () => {
+  it("prices a set from its members, since it has no offers of its own", async () => {
+    const { cardCommerce } = await import("@/lib/commerce");
+    const offers = [
+      { provider: "fourthwall" as const, finish: "unframed" as const, active: true, sizes: [{ sizeId: "8x10", priceCents: 2399 }] },
+    ];
+    const card = cardCommerce({
+      id: "retro-gaming-set",
+      listing: "shop",
+      offers: [],
+      kind: "set",
+      members: [
+        { print: { _id: "a", title: "A", offers } },
+        { print: { _id: "b", title: "B", offers } },
+      ],
+    });
+    // Without the set branch this slot renders empty on every grid the set appears in.
+    expect(card).toMatchObject({ href: "/prints/retro-gaming-set", meta: "Set of 2", value: "From $47.98" });
+    expect(card.versions).toEqual([]);
+  });
+
+  it("leaves a single print exactly as it was", async () => {
+    const { cardCommerce } = await import("@/lib/commerce");
+    const single = cardCommerce({
+      id: "sweden",
+      listing: "shop",
+      kind: "single",
+      offers: [{ provider: "fourthwall", finish: "unframed", active: true, sizes: [{ sizeId: "8x10", priceCents: 2399 }] }],
+    });
+    expect(single).toMatchObject({ href: "/prints/sweden", meta: "Art print", value: "From $23.99" });
+  });
+});

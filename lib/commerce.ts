@@ -13,6 +13,7 @@ import {
   VERSION_LABEL,
 } from "@/config/commerce";
 import { etsyUrl } from "@/config/links";
+import { setFromPriceCents, setNoun, type WithMembers } from "@/lib/sets";
 
 type WithOffers = Pick<FreeArt, "offers">;
 
@@ -307,9 +308,21 @@ export interface CardCommerce {
  * The version swatches live here rather than at each grid because there are four grids showing shop
  * prints, and the next one added would have quietly shipped without them.
  */
-export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): CardCommerce {
+export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers"> & WithMembers): CardCommerce {
   if (!isShopPrint(art)) {
     return { href: `/art/${art.id}`, meta: "Digital print", value: "FREE", versions: [], versionNoun: VERSION_LABEL };
+  }
+  // A set has no offers of its own, so its price is its members added up (PLAN-54). Without this
+  // branch a set shows a blank price slot on every grid it appears in.
+  if (art.kind === "set" && (art.members?.length ?? 0) > 0) {
+    const from = setFromPriceCents(art);
+    return {
+      href: `/prints/${art.id}`,
+      meta: setNoun(art),
+      value: from !== null ? `From ${formatPrice(from)}` : "",
+      versions: [],
+      versionNoun: VERSION_LABEL,
+    };
   }
   const from = fromPriceAcrossFinishes(art) ?? fromPriceCents(getActiveOffer(art));
   return {

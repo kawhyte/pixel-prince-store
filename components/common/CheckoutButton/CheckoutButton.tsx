@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShoppingBag } from "lucide-react";
 
-import type { FreeArt } from "@/sanity/lib/client";
+import type { FreeArt, ShopSizeOffer } from "@/sanity/lib/client";
 import {
   getActiveOffer,
   getOffersByFinish,
@@ -19,6 +19,15 @@ import {
   fromPriceCents,
   popularSizeId,
 } from "@/lib/commerce";
+import {
+  isSet,
+  resolveSetFinish,
+  sellableSet,
+  setFinishes,
+  setFromPriceCents,
+  setSizeRows,
+  setVariantIds,
+} from "@/lib/sets";
 import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
 import { SHOP_TRUST_LINE } from "@/config/shop-copy";
 import { trackAddToCart, trackCheckoutOpened } from "@/lib/analytics";
@@ -74,16 +83,31 @@ export default function CheckoutButton({
 }: CheckoutButtonProps) {
   const [localFinish, setLocalFinish] = useState<FinishId | null>(null);
   const [localVersion, setLocalVersion] = useState<string | null>(null);
-  const activeVersion = resolveVersion(art, version ?? localVersion);
-  const activeFinish = resolveFinish(art, finish ?? localFinish, activeVersion);
-  const offer = getActiveOffer(art, activeFinish, activeVersion);
-  const sizes = offer ? orderedSizes(offer) : [];
+  // A set has no offers of its own (PLAN-54): its prices, sizes and finishes are its members'
+  // added up, and there is no version to choose because each member pins its own in Studio.
+  const asSet = isSet(art) && sellableSet(art);
+  const activeVersion = asSet ? null : resolveVersion(art, version ?? localVersion);
+  const activeFinish = asSet
+    ? resolveSetFinish(art, finish ?? localFinish)
+    : resolveFinish(art, finish ?? localFinish, activeVersion);
+  const offer = asSet ? null : getActiveOffer(art, activeFinish, activeVersion);
+  // Typed as the offer's own row so one picker renders both. A set's rows carry no
+  // providerVariantId, because a set has several: `setVariantIds` is how the cart asks.
+  const sizes: ShopSizeOffer[] = asSet
+    ? activeFinish
+      ? setSizeRows(art, activeFinish)
+      : []
+    : offer
+      ? orderedSizes(offer)
+      : [];
   const finishKey = `${activeVersion ?? ""}:${activeFinish ?? "none"}`;
   const [pickedByFinish, setPickedByFinish] = useState<Record<string, string>>({});
-  const sizeId = sizeIdProp ?? pickedByFinish[finishKey] ?? popularSizeId(offer);
+  const sizeId =
+    sizeIdProp ?? pickedByFinish[finishKey] ?? (asSet ? (sizes[0]?.sizeId ?? null) : popularSizeId(offer));
   const cartCtx = useCart();
 
-  if (!offer) return null;
+  if (!offer && !asSet) return null;
+  if (asSet && sizes.length === 0) return null;
 
   const setSizeId = (id: string) => {
     setPickedByFinish((prev) => ({ ...prev, [finishKey]: id }));
@@ -98,24 +122,34 @@ export default function CheckoutButton({
     onVersionChange?.(v);
   };
 
-  const finishOptions = getOffersByFinish(art, activeVersion).map((x) => ({
-    finish: x.finish,
-    fromCents: fromPriceCents(x.offer),
-    mockupUrl: offerImage(x.offer),
-    fallbackImage: art.previewImage,
-  }));
+  const finishOptions = asSet
+    ? setFinishes(art).map((f) => ({
+        finish: f,
+        fromCents: setSizeRows(art, f)[0]?.priceCents ?? null,
+        mockupUrl: undefined,
+        fallbackImage: art.previewImage,
+      }))
+    : getOffersByFinish(art, activeVersion).map((x) => ({
+        finish: x.finish,
+        fromCents: fromPriceCents(x.offer),
+        mockupUrl: offerImage(x.offer),
+        fallbackImage: art.previewImage,
+      }));
 
-  // one tile per version, always the flat artwork: the art is what changes between them
-  const versionOptions = getVersions(art).map((x) => ({
+  // one tile per version, always the flat artwork: the art is what changes between them.
+  // A set shows none: the version of each member is pinned in Studio, not chosen by the buyer.
+  const versionOptions = (asSet ? [] : getVersions(art)).map((x) => ({
     version: x.version,
     imageUrl: versionImage(getActiveOffer(art, activeFinish, x.version) ?? x.offer) || art.previewImage,
   }));
 
-  const target = resolveCheckout(offer, sizeId, campaign);
+  const target = offer ? resolveCheckout(offer, sizeId, campaign) : null;
   const selected = sizes.find((s) => s.sizeId === sizeId);
   const selectedMeta = selected ? getShopSize(selected.sizeId) : undefined;
-  const popular = popularSizeId(offer);
-  const from = fromPriceCents(offer);
+  const popular = asSet ? null : popularSizeId(offer);
+  const from = asSet ? setFromPriceCents(art) : fromPriceCents(offer);
+  // Every print in the set, or nothing: half a set in the bag is worse than no button.
+  const setLines = asSet && activeFinish && sizeId ? setVariantIds(art, activeFinish, sizeId) : null;
   const priceText = selected ? formatPrice(selected.priceCents) : from !== null ? `From ${formatPrice(from)}` : "";
 
   const buttonClass = cn(
@@ -123,12 +157,19 @@ export default function CheckoutButton({
     variant === "ink" ? "bg-charcoal hover:bg-soft-charcoal" : "bg-sage-500 hover:bg-sage-400",
   );
 
-  const useCartFlow = cartCtx.enabled && offer.provider === "fourthwall" && !!selected?.providerVariantId;
+  const useCartFlow = asSet
+    ? cartCtx.enabled && !!setLines
+    : cartCtx.enabled && offer!.provider === "fourthwall" && !!selected?.providerVariantId;
 
   const addSelected = async () => {
-    if (!selected?.providerVariantId) return null;
-    const next = await cartCtx.add({ variantId: selected.providerVariantId, quantity: 1 });
-    trackAddToCart(art.id, `${finishKey}:${selected.sizeId}`);
+    const lines = asSet
+      ? setLines?.map((variantId) => ({ variantId, quantity: 1 }))
+      : selected?.providerVariantId
+        ? [{ variantId: selected.providerVariantId, quantity: 1 }]
+        : null;
+    if (!lines || lines.length === 0) return null;
+    const next = await cartCtx.add(lines);
+    trackAddToCart(art.id, `${finishKey}:${sizeId ?? "none"}`);
     return next;
   };
 

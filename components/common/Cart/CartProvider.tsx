@@ -20,7 +20,8 @@ interface CartContextValue {
   busy: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
-  add: (line: CartLine) => Promise<Cart | null>;
+  /** one line, or several at once for a set (PLAN-54): they must land in the bag together */
+  add: (line: CartLine | CartLine[]) => Promise<Cart | null>;
   setQuantity: (variantId: string, quantity: number) => Promise<void>;
   remove: (variantId: string) => Promise<void>;
 }
@@ -74,19 +75,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const add = useCallback(
-    async (line: CartLine) => {
+    async (line: CartLine | CartLine[]) => {
       if (!enabled) return null;
+      // A set adds every print in one call, so the bag never shows half of it, and one failure
+      // cannot leave a buyer holding one poster of a pair.
+      const lines = Array.isArray(line) ? line : [line];
+      if (lines.length === 0) return null;
       setBusy(true);
       try {
         let next: Cart;
         if (cart?.id) {
           try {
-            next = await addToCart(cart.id, [line]);
+            next = await addToCart(cart.id, lines);
           } catch {
-            next = await createCart([line]); // stale cart id: start over
+            next = await createCart(lines); // stale cart id: start over
           }
         } else {
-          next = await createCart([line]);
+          next = await createCart(lines);
         }
         apply(next);
         return next;

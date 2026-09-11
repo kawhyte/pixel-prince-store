@@ -28,7 +28,10 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
   const ratio = art.artFile?.width && art.artFile?.height
     ? deriveRatio(art.artFile.width, art.artFile.height)
     : null;
-  const printSizes = PRINT_SIZES[ratio ?? "4:5"];
+  // No fallback. A null ratio means the crop is not one of the two we print, and guessing the
+  // portrait ladder for a landscape file is how three pages came to advertise frames that do
+  // not fit. Nothing shown beats something wrong.
+  const printSizes = ratio ? PRINT_SIZES[ratio] : null;
   const hasFile = !!(art.artFile?.cloudinaryUrl || art.artFile?.externalUrl);
 
   const aspectClass = art.previewImageOrientation
@@ -91,31 +94,34 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
               </p>
             </div>
 
-            {/* Print Sizes */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-charcoal">
-                One file, many print sizes
-              </h2>
+            {/* Print Sizes. Hidden entirely when the crop is not one we print, rather than
+                falling back to a ladder that does not fit the file. */}
+            {printSizes && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold text-charcoal">
+                  One file, many print sizes
+                </h2>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                {printSizes.map((size) => (
-                  <div
-                    key={size.label}
-                    className="rounded-md border border-border bg-card p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-sage-500" />
-                      <span className="font-semibold text-charcoal">{size.label}</span>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {printSizes.map((size) => (
+                    <div
+                      key={size.label}
+                      className="rounded-md border border-border bg-card p-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-sage-500" />
+                        <span className="font-semibold text-charcoal">{size.label}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{size.cm}</p>
+                      <p className="mt-2 text-xs text-soft-charcoal">{size.fits}</p>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{size.cm}</p>
-                    <p className="mt-2 text-xs text-soft-charcoal">{size.fits}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <p className="text-sm text-soft-charcoal">
+                  One high-res file you can print at any of these sizes. Guide included.
+                </p>
               </div>
-              <p className="text-sm text-soft-charcoal">
-                One high-res file you can print at any of these sizes. Guide included.
-              </p>
-            </div>
+            )}
 
             {/* Primary CTA */}
             <div className="space-y-3">

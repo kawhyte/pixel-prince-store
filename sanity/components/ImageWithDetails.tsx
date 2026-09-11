@@ -87,8 +87,13 @@ export function ImageWithDetails(props: ObjectInputProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: `${url}?w=1024`, title, category }),
       })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data?.error ?? `Request failed (${response.status})`)
+      const data = await response.json().catch(() => null)
+      // The route knows why it failed and says so in `details`. Showing only `error` turned every
+      // failure into "Could not write alt text", which tells you nothing and is not actionable.
+      if (!response.ok) {
+        const why = [data?.error, data?.details].filter(Boolean).join(': ')
+        throw new Error(why || `Request failed (${response.status})`)
+      }
       props.onChange(set(data.alt, ['alt']))
     } catch (error) {
       setProblem(error instanceof Error ? error.message : 'Something went wrong')

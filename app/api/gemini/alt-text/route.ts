@@ -71,9 +71,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ alt });
   } catch (error) {
     console.error("[ALT-TEXT]", error);
-    return NextResponse.json(
-      { error: "Could not write alt text", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    const raw = error instanceof Error ? error.message : "Unknown error";
+    // Gemini's own messages are long and start with an HTTP code. Name the two that actually
+    // happen, because "try again" and "this image will never work" need different reactions.
+    const details = /\b429\b|quota|rate/i.test(raw)
+      ? "Gemini is rate limiting. Wait a minute and try again."
+      : /safety|blocked/i.test(raw)
+        ? "Gemini refused to describe this image."
+        : /\b(500|502|503|504)\b|overload|unavailable/i.test(raw)
+          ? "Gemini is busy. Try again in a moment."
+          : raw;
+    return NextResponse.json({ error: "Could not write alt text", details }, { status: 500 });
   }
 }

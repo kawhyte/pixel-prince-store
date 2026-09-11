@@ -16,11 +16,23 @@ import { apiVersion, dataset, projectId } from '../env'
  */
 const CARD_SOURCE_WIDTH = 1200
 
+/**
+ * The CDN is on in production and off in development.
+ *
+ * Two caches sit between a Publish in Studio and the page: Sanity's CDN (about a minute) and
+ * Next's ISR (`revalidate = 60`, serving the stale page while it refreshes behind you). Stacked,
+ * an edit took up to two minutes to appear and produced the "reload twice" symptom, where the
+ * first reload triggers the refresh and the second one sees it.
+ *
+ * In production that trade is worth it: the CDN is what makes reads fast and cheap. While editing
+ * it is only a delay, so development reads live and the wait halves. Nothing about the built site
+ * changes (Kenny, 2026-09-11).
+ */
 export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
+  useCdn: process.env.NODE_ENV === 'production',
 })
 
 /**

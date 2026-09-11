@@ -5,6 +5,7 @@
  *
  * Pure and tested. No em dashes, house rule.
  */
+import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
 
 export interface CopyInput {
   title: string;
@@ -55,7 +56,9 @@ export function draftLongDescription(input: CopyInput): string {
   }
 
   const second = [choice.join(" "), PAPER].filter(Boolean).join(" ");
-  return `${lead} Five sizes, from 8x10 for a desk wall up to 24x36 when it needs to hold a room on its own.\n\n${second}`;
+  // Built from the ladder, never typed. This said "Five sizes" long after the ladder grew to
+  // eight, which is the kind of claim nobody notices and every visitor can count.
+  return `${lead} ${SIZE_RANGE_SENTENCE}, small enough for a desk wall and big enough to hold a room on its own.\n\n${second}`;
 }
 
 const STOP_WORDS = new Set(["the", "and", "of", "a", "an", "with", "for", "in", "on", "to", "wall", "art", "print"]);

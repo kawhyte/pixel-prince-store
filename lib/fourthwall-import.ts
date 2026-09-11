@@ -117,7 +117,9 @@ export function stripHtml(html: string | undefined): string {
 export function inferCategory(title: string): string | undefined {
   const t = title.toLowerCase();
   if (/\b(map|skyline|neighborhood|state|usa|world|city|cities)s?\b/.test(t)) return "Maps";
-  if (/\b(controller|console|gamer|game|bit|arcade|handheld|patent)s?\b/.test(t)) return "Video Games";
+  // gaming and gamer before game: the alternation takes the first match, and \bgame\b cannot
+  // match "Gaming" any more than \bcontroller\b could match "Controllers".
+  if (/\b(controller|console|gaming|gamer|game|bit|arcade|handheld|patent)s?\b/.test(t)) return "Video Games";
   if (/\b(quote|motivat)/.test(t)) return "Quotes";
   if (/\b(funny|meme)s?\b/.test(t)) return "Funny";
   if (/\b(botanical|plant|floral|flower)s?\b/.test(t)) return "Botanical";

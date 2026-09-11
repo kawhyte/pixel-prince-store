@@ -22,7 +22,9 @@ test("home page renders nav and free-downloads link", async ({ page }) => {
   const tiles = page.locator('main a[href^="/collections/"]');
   const tileCount = await tiles.count();
   expect(tileCount).toBeGreaterThanOrEqual(2);
-  expect(tileCount).toBeLessThanOrEqual(3);
+  // No upper bound. A tile appears for every collection that has a print of its own, so the count
+  // grows with the catalogue: the "<= 3" here contradicted the comment above and broke the day two
+  // retro prints gave two more collections art. rowSizes() in app/page.tsx handles four and up.
   const tileImages = await tiles.locator("img").evaluateAll((els) => els.map((e) => (e as HTMLImageElement).currentSrc));
   expect(new Set(tileImages).size).toBe(tileImages.length);
   await expect(page.getByRole("heading", { name: /What buyers say/i })).toBeVisible();

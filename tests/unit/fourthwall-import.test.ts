@@ -164,7 +164,13 @@ describe("inferCategory and plurals", () => {
     expect(inferCategory("Retro Controllers")).toBe("Video Games");
     expect(inferCategory("Retro Consoles")).toBe("Video Games");
     expect(inferCategory("Sweden Maps")).toBe("Maps");
-    expect(inferCategory("Gaming Memes")).toBe("Funny");
+    expect(inferCategory("Cat Memes")).toBe("Funny");
+    // "Gaming" is not "game" plus an s, and it is how half these titles are written.
+    expect(inferCategory("Retro Gaming Set of 2")).toBe("Video Games");
+    expect(inferCategory("Gaming Room Prints")).toBe("Video Games");
+    // First rule wins, and a gaming meme is filed under Video Games. Worth knowing rather than
+    // discovering: the order in inferCategory is the tie-break.
+    expect(inferCategory("Gaming Memes")).toBe("Video Games");
     expect(inferCategory("Wild Flowers")).toBe("Botanical");
   });
 

@@ -72,12 +72,10 @@ export default function RootLayout({
             __html: JSON.stringify(websiteSchema),
           }}
         />
-        {/* Cloudinary Upload Widget - Required for High-Res Asset Manager */}
-        <script
-          src="https://upload-widget.cloudinary.com/global/all.js"
-          type="text/javascript"
-          async
-        />
+        {/* The Cloudinary upload widget is NOT loaded here. It is only usable inside Studio's
+            asset manager, and in the root layout every visitor to every page paid for the
+            request. components/admin/HighResManager.tsx fetches it on the click that needs it
+            (lib/cloudinary-widget.ts). */}
       </head>
       <body className="antialiased">
         <CartProvider>

@@ -10,6 +10,7 @@ import type {
 } from '@/lib/types/high-res-asset';
 import { extractCloudinaryPublicId } from '@/lib/cloudinary-utils';
 import { adminFetch } from '@/lib/admin-secret-client';
+import { loadCloudinaryWidget } from '@/lib/cloudinary-widget';
 import { AssetPreviewCard } from '@/sanity/components/AssetPreviewCard';
 
 interface CloudinaryWidgetError {
@@ -31,6 +32,8 @@ export function AdminHighResUpload({
   // the gap between a successful upload and that value round-tripping back down.
   const [optimisticAsset, setOptimisticAsset] = useState<HighResAsset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  /** Fetching the widget script itself, which happens once per Studio session on first click. */
+  const [isPreparing, setIsPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const asset = initialAsset ?? optimisticAsset;
 
@@ -77,15 +80,22 @@ export function AdminHighResUpload({
       return;
     }
 
-    if (!window.cloudinary) {
-      setError('Cloudinary widget is not loaded. Please refresh the page.');
+    // The widget script is fetched on this click rather than on every page of the site.
+    setIsPreparing(true);
+    setError(null);
+    let cloudinary;
+    try {
+      cloudinary = await loadCloudinaryWidget();
+    } catch (e) {
+      setIsPreparing(false);
+      setError(e instanceof Error ? e.message : 'Could not load the Cloudinary widget.');
       return;
     }
+    setIsPreparing(false);
 
     setIsUploading(true);
-    setError(null);
 
-    const widget = window.cloudinary.createUploadWidget(
+    const widget = cloudinary.createUploadWidget(
       {
         cloudName,
         uploadPreset,
@@ -155,13 +165,13 @@ export function AdminHighResUpload({
       </p>
       <button
         onClick={openCloudinaryWidget}
-        disabled={isUploading}
+        disabled={isUploading || isPreparing}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-sage-500 px-6 py-4 font-semibold text-white transition-all hover:bg-sage-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isUploading ? (
+        {isUploading || isPreparing ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" />
-            Uploading...
+            {isPreparing ? 'Opening...' : 'Uploading...'}
           </>
         ) : (
           <>

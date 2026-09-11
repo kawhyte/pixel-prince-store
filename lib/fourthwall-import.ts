@@ -106,13 +106,21 @@ export function stripHtml(html: string | undefined): string {
 }
 
 /** Keyword guess; Kenny confirms in Studio. Values are the Sanity `category` list values. */
+/**
+ * The category a title implies, or undefined when nothing fits.
+ *
+ * Every pattern allows a trailing "s". They did not, and `\bcontroller\b` does not match
+ * "Controllers": the boundary needs a non-word character after it and the plural supplies a
+ * letter. So "Retro Controllers" and "Retro Consoles" both imported with no category, which
+ * keeps a print out of every collection page while looking fine on its own.
+ */
 export function inferCategory(title: string): string | undefined {
   const t = title.toLowerCase();
-  if (/\b(map|skyline|neighborhood|state|usa|world|city)\b/.test(t)) return "Maps";
-  if (/\b(controller|console|gamer|game|bit|arcade|handheld|patent)\b/.test(t)) return "Video Games";
+  if (/\b(map|skyline|neighborhood|state|usa|world|city|cities)s?\b/.test(t)) return "Maps";
+  if (/\b(controller|console|gamer|game|bit|arcade|handheld|patent)s?\b/.test(t)) return "Video Games";
   if (/\b(quote|motivat)/.test(t)) return "Quotes";
-  if (/\b(funny|meme)\b/.test(t)) return "Funny";
-  if (/\b(botanical|plant|floral|flower)\b/.test(t)) return "Botanical";
+  if (/\b(funny|meme)s?\b/.test(t)) return "Funny";
+  if (/\b(botanical|plant|floral|flower)s?\b/.test(t)) return "Botanical";
   if (/\bminimal/.test(t)) return "Minimalist";
   return undefined;
 }

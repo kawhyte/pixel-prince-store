@@ -155,3 +155,24 @@ describe("room photos on an artwork that already exists", () => {
     expect(shouldReplaceGallery({ resetImages: false, incomingPhotos: 0 })).toBe(false);
   });
 });
+
+describe("inferCategory and plurals", () => {
+  it("matches a plural title, which is how most of them are written", async () => {
+    const { inferCategory } = await import("@/lib/fourthwall-import");
+    // The bug: \bcontroller\b cannot match "Controllers", so both retro prints imported with no
+    // category, which quietly keeps a print off every collection page.
+    expect(inferCategory("Retro Controllers")).toBe("Video Games");
+    expect(inferCategory("Retro Consoles")).toBe("Video Games");
+    expect(inferCategory("Sweden Maps")).toBe("Maps");
+    expect(inferCategory("Gaming Memes")).toBe("Funny");
+    expect(inferCategory("Wild Flowers")).toBe("Botanical");
+  });
+
+  it("still matches the singular, and still gives up on a title with no clue in it", async () => {
+    const { inferCategory } = await import("@/lib/fourthwall-import");
+    expect(inferCategory("Video Game Controller Evolution")).toBe("Video Games");
+    expect(inferCategory("Brooklyn Neighborhood Map")).toBe("Maps");
+    expect(inferCategory("Minimalist Moon")).toBe("Minimalist");
+    expect(inferCategory("Something Else Entirely")).toBeUndefined();
+  });
+});

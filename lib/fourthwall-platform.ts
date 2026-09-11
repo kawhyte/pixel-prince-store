@@ -215,6 +215,16 @@ export async function uploadMedia(
   return saved.id;
 }
 
+/**
+ * One profit margin for the whole product, which is all Fourthwall accepts. The price ladder in
+ * `config/commerce.ts` is a price per size, and no single margin can produce it: on the framed
+ * ladder the margin each size needs runs from $34.91 to $110.59.
+ *
+ * There is no second chance either. The Platform API's product endpoints are list, create, get,
+ * inventory, availability, state and archive (checked against Fourthwall's own reference,
+ * 2026-09-11). Nothing updates a price after creation, so every new product needs a pass in the
+ * dashboard and `npm run shop:prices` exists to say which rows.
+ */
 export interface CreateDesignOptions {
   finish: ApiFinish;
   title: string;

@@ -139,7 +139,13 @@ async function main() {
 
   console.log(`\n${summary.created} created, ${summary.skipped} skipped, ${summary.failed} failed${apply ? "" : " (dry run; add --apply to write)"}.`);
   if (apply && summary.created > 0) {
-    console.log(`Next: check the prices in Fourthwall, then run\n  npm run shop:sync   and   npm run shop:art -- --apply`);
+    console.log(
+      `\nThe prices are wrong on purpose and need a pass in the dashboard.\n` +
+        `Fourthwall takes one profit margin per product, and the ladder in config/commerce.ts is a\n` +
+        `price per size, so no margin can start them all correct. This names the exact rows:\n\n` +
+        `  npm run shop:prices\n\n` +
+        `Then publish the products and run:  npm run shop:sync   and   npm run shop:art -- --apply`
+    );
   }
   if (summary.failed > 0) process.exit(2);
 }

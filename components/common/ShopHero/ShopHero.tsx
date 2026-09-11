@@ -38,15 +38,22 @@ export default function ShopHero({ items }: ShopHeroProps) {
                       !single && i % 2 === 1 ? "mt-6 sm:mt-10" : ""
                     }`}
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                      <Image
-                        src={item.previewImage}
-                        alt={item.title}
-                        fill
-                        priority={i < 2}
-                        sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
-                        className="object-cover"
-                      />
+                    {/* A mat around the print, and object-contain inside it. These previews are not
+                        one shape: the shop print is 3:4 and the free ones are square, and cover was
+                        cutting 20% off both sides of every square one. Contain shows the whole
+                        image, the padding keeps it off the edges, and `fill` ignores padding, so
+                        the mat has to be the outer element. */}
+                    <div className="bg-card p-3 sm:p-4">
+                      <div className="relative aspect-[4/5] overflow-hidden">
+                        <Image
+                          src={item.previewImage}
+                          alt={item.title}
+                          fill
+                          priority={i < 2}
+                          sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
+                          className="object-contain"
+                        />
+                      </div>
                     </div>
                   </Link>
                 );

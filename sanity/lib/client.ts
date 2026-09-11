@@ -55,6 +55,8 @@ export interface PrintOffer {
   artRatio?: number
   /** alt text typed in Studio for `art` */
   artAlt?: string
+  /** photos of this colorway, shown after the main image and before the shared room photos */
+  gallery?: { url: string; alt?: string }[]
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -159,7 +161,8 @@ const PRODUCT_PROJECTION = `
   defaultFinish,
   offers[]{ ...,
     "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio, "mockupAlt": mockup.alt,
-    "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio, "artAlt": art.alt },
+    "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio, "artAlt": art.alt,
+    "gallery": gallery[]{ "url": asset->url, "alt": alt } },
   tags,
   category,
   downloads,

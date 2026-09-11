@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Check, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageAlt, offerImageRatio, popularSizeId, resolveFinish, resolveVersion } from "@/lib/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
 // The same numbers Studio validates uploads against, so the check and the layout cannot drift.
 import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
@@ -69,6 +69,11 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
         offerImageAlt(offer) ??
         imageAlt({ title: art.title, version: activeVersion, finish: activeFinish ?? undefined, kind: "main" }),
     },
+    // this colorway's own photos come before the ones the whole print shares
+    ...versionGallery(art, activeVersion, activeFinish).map((img) => ({
+      url: img.url,
+      alt: img.alt?.trim() || imageAlt({ title: art.title, version: activeVersion, finish: activeFinish ?? undefined, kind: "room" }),
+    })),
     ...galleryImages,
     // the framed spec card only joins the gallery when the framed finish is on screen
     ...shopGalleryExtras(activeFinish),

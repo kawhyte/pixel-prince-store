@@ -104,6 +104,31 @@ export const printOffer = defineType({
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
+      name: 'gallery',
+      title: 'Extra photos for this version',
+      type: 'array',
+      description:
+        'Photos of this colorway specifically, shown after the main image and before the Room photos that the whole print shares. Leave it empty and this version simply falls back: the other finish of the same version lends its photos, so one set per colorway is enough. Use Room photos on the Images tab for anything true of every colorway. ' +
+        SHOP_IMAGE_HINT,
+      of: [
+        defineArrayMember({
+          type: 'image',
+          options: { hotspot: true },
+          components: { input: ImageWithDetails },
+          fields: [
+            defineField({
+              name: 'alt',
+              title: 'Alt text',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          validation: (Rule) => Rule.warning().custom(minImageWidth()),
+        }),
+      ],
+      validation: (Rule) => Rule.max(8),
+    }),
+    defineField({
       name: 'active',
       title: 'Active',
       type: 'boolean',

@@ -152,6 +152,32 @@ export function offerImageAlt(offer: PrintOffer | null | undefined): string | un
   return trimmed ? trimmed : undefined;
 }
 
+export interface GalleryImage {
+  url: string;
+  alt?: string;
+}
+
+/**
+ * Extra photos for the version on screen, in gallery order.
+ *
+ * Photos hang off an offer, which is a version AND a finish, but a colorway looks the same whether
+ * it is behind glass or not, so shooting four sets would be busywork. An offer with no photos of
+ * its own borrows from another offer of the same version. One set per colorway is enough, and
+ * overriding a single finish still works by filling that offer in.
+ */
+export function versionGallery(
+  art: WithOffers,
+  version?: string | null,
+  finish?: FinishId | null,
+): GalleryImage[] {
+  const own = getActiveOffer(art, finish ?? undefined, version)?.gallery;
+  if (own && own.length > 0) return own.filter((i) => i?.url);
+  const sibling = activeOffers(art).find(
+    (o) => offerVersion(o) === (version ?? undefined) && (o.gallery?.length ?? 0) > 0,
+  );
+  return (sibling?.gallery ?? []).filter((i) => i?.url);
+}
+
 /** Version tiles compare artwork, so they show the flat art whatever finish is on screen. */
 export function versionImage(offer: PrintOffer | null | undefined): string | undefined {
   if (!offer) return undefined;

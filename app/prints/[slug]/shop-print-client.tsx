@@ -77,7 +77,11 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
     ...galleryImages,
     // the framed spec card only joins the gallery when the framed finish is on screen
     ...shopGalleryExtras(activeFinish),
-  ];
+  ]
+    // One photo, one slide. The same image can sit on an offer and in its gallery, or in room
+    // photos, and each of those is a reasonable thing to do on its own; together they put the
+    // picture in the strip twice, which reads as a mistake because it is one.
+    .filter((slide, i, all) => slide.url && all.findIndex((s) => s.url === slide.url) === i);
   // Cut the frame to the photo. Without this the frame was a fixed 4:5 and a 3:4 photo sat inside
   // it with grey bars down both sides.
   const heroRatio = offerImageRatio(offer);

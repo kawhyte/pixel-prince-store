@@ -166,17 +166,22 @@ export interface GalleryImage {
  * its own borrows from another offer of the same version. One set per colorway is enough, and
  * overriding a single finish still works by filling that offer in.
  */
+/**
+ * The extra photos for the offer on screen, and only that offer.
+ *
+ * This used to fall back to a sibling offer of the same version in any finish, so that photos
+ * uploaded once showed on both. That was fine while they were crops of the artwork and wrong the
+ * moment one was a room shot: a framed print on a wall appeared under Unframed, promising a frame
+ * that is not in the box. A gallery lives on an offer, an offer is a version and a finish, and it
+ * does not travel. Photos meant for every finish belong in the artwork's room photos.
+ */
 export function versionGallery(
   art: WithOffers,
   version?: string | null,
   finish?: FinishId | null,
 ): GalleryImage[] {
   const own = getActiveOffer(art, finish ?? undefined, version)?.gallery;
-  if (own && own.length > 0) return own.filter((i) => i?.url);
-  const sibling = activeOffers(art).find(
-    (o) => offerVersion(o) === (version ?? undefined) && (o.gallery?.length ?? 0) > 0,
-  );
-  return (sibling?.gallery ?? []).filter((i) => i?.url);
+  return (own ?? []).filter((i) => i?.url);
 }
 
 /** Version tiles compare artwork, so they show the flat art whatever finish is on screen. */

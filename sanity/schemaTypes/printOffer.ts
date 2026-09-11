@@ -105,10 +105,10 @@ export const printOffer = defineType({
     }),
     defineField({
       name: 'gallery',
-      title: 'Extra photos for this version',
+      title: 'Extra photos for this version and finish',
       type: 'array',
       description:
-        'Photos of this colorway specifically, shown after the main image and before the Room photos that the whole print shares. Leave it empty and this version simply falls back: the other finish of the same version lends its photos, so one set per colorway is enough. Use Room photos on the Images tab for anything true of every colorway. ' +
+        'Photos of this exact thing: this colorway, in this finish. Shown after the main image and before the Room photos the whole print shares, and shown nowhere else. A framed photo here will not appear under Unframed, because it would promise a frame that is not in the box. For anything true of every finish, use Room photos on the Images tab. No need to repeat the main photo above; it is already the first slide. ' +
         SHOP_IMAGE_HINT,
       of: [
         defineArrayMember({

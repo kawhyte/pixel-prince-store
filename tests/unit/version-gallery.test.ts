@@ -19,10 +19,13 @@ describe("per-version gallery", () => {
     expect(versionGallery(art, "Earth", "unframed")).toEqual(earth);
   });
 
-  it("lends a colorway's photos to its other finish, so one set per colorway is enough", () => {
-    // Bright unframed has photos, Bright framed has none
+  it("never lends one finish's photos to the other, whatever the colorway", () => {
+    // This used to lend them, and it put a framed print on a wall into the Unframed gallery,
+    // promising a frame that is not in the box. A photo of a framed product is only true of the
+    // framed product; anything true of both belongs in the artwork's room photos.
     const art = { offers: [offer("Bright", "unframed", bright), offer("Bright", "framed")] };
-    expect(versionGallery(art, "Bright", "framed")).toEqual(bright);
+    expect(versionGallery(art, "Bright", "framed")).toEqual([]);
+    expect(versionGallery(art, "Bright", "unframed")).toEqual(bright);
   });
 
   it("never lends one colorway's photos to another", () => {

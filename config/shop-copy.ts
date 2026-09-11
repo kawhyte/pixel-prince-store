@@ -79,10 +79,16 @@ export const FRAMED_FEATURES_IMAGE: ShopImage = {
 
 /**
  * Slides appended to every shop print's gallery, so a new listing gets them without anyone
- * remembering to. This array is the gallery order: the framed card sits second to last and the
- * size guide closes. Nothing reads it by index any more, so it is safe to reorder.
+ * remembering to. Returned in gallery order: the framed spec card sits second to last and the size
+ * guide closes.
+ *
+ * The frame card is only shown to someone actually looking at the framed product. On an unframed
+ * poster it is at best noise and at worst reads as a promise that a frame is in the box, which is
+ * the one thing the page must never imply.
  */
-export const SHOP_GALLERY_EXTRAS: ShopImage[] = [FRAMED_FEATURES_IMAGE, SIZE_GUIDE_IMAGE];
+export function shopGalleryExtras(finish?: string | null): ShopImage[] {
+  return finish === "framed" ? [FRAMED_FEATURES_IMAGE, SIZE_GUIDE_IMAGE] : [SIZE_GUIDE_IMAGE];
+}
 
 /** Four-up trust strip under the buy area on shop pages. Icons are picked in the component by index. */
 export const SHOP_TRUST_STRIP = [

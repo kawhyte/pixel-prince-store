@@ -13,7 +13,7 @@ import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
 import { imageAlt } from "@/lib/listing-copy";
 import {
   SHOP_FEATURES,
-  SHOP_GALLERY_EXTRAS,
+  shopGalleryExtras,
   SIZE_GUIDE_IMAGE,
   SHOP_PROMO,
   SHOP_SHIPPING_FAQ,
@@ -67,7 +67,8 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
       alt: imageAlt({ title: art.title, version: activeVersion, finish: activeFinish ?? undefined, kind: "main" }),
     },
     ...galleryImages,
-    ...SHOP_GALLERY_EXTRAS,
+    // the framed spec card only joins the gallery when the framed finish is on screen
+    ...shopGalleryExtras(activeFinish),
   ];
   // Cut the frame to the photo. Without this the frame was a fixed 4:5 and a 3:4 photo sat inside
   // it with grey bars down both sides.

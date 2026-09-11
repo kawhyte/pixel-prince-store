@@ -3,8 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 
 import type { FreeArt } from "@/sanity/lib/client";
-import { cardCommerce, getVersions, isNewPrint, versionImage } from "@/lib/commerce";
-import { VERSION_LABEL } from "@/config/commerce";
+import { cardCommerce, isNewPrint } from "@/lib/commerce";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import { cn } from "@/lib/utils";
 
@@ -74,8 +73,8 @@ export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
               meta={card.meta}
               value={card.value}
               badge={isNewPrint(art.createdAt) ? "New" : undefined}
-              versions={getVersions(art).map((v) => ({ label: v.version, imageUrl: versionImage(v.offer) }))}
-              versionNoun={VERSION_LABEL}
+              versions={card.versions}
+              versionNoun={card.versionNoun}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
             />
           );

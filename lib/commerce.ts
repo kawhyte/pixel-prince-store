@@ -10,6 +10,7 @@ import {
   ON_SITE_PROVIDERS,
   PROVIDER_PRIORITY,
   SHOP_SIZE_LADDER,
+  VERSION_LABEL,
 } from "@/config/commerce";
 import { etsyUrl } from "@/config/links";
 
@@ -290,13 +291,29 @@ export interface CardCommerce {
   href: string;
   meta: string;
   value: string;
+  /** one per version, for the card's swatch row. Empty for a free print or a single-version one. */
+  versions: { label: string; imageUrl?: string }[];
+  versionNoun: string;
 }
 
-/** Where an ArtCard links and what its price row says. Free prints keep the FREE row. */
+/**
+ * Where an ArtCard links, what its price row says, and which versions it comes in.
+ *
+ * The version swatches live here rather than at each grid because there are four grids showing shop
+ * prints, and the next one added would have quietly shipped without them.
+ */
 export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): CardCommerce {
-  if (!isShopPrint(art)) return { href: `/art/${art.id}`, meta: "Digital print", value: "FREE" };
+  if (!isShopPrint(art)) {
+    return { href: `/art/${art.id}`, meta: "Digital print", value: "FREE", versions: [], versionNoun: VERSION_LABEL };
+  }
   const from = fromPriceAcrossFinishes(art) ?? fromPriceCents(getActiveOffer(art));
-  return { href: `/prints/${art.id}`, meta: "Art print", value: from !== null ? `From ${formatPrice(from)}` : "" };
+  return {
+    href: `/prints/${art.id}`,
+    meta: "Art print",
+    value: from !== null ? `From ${formatPrice(from)}` : "",
+    versions: getVersions(art).map((v) => ({ label: v.version, imageUrl: versionImage(v.offer) })),
+    versionNoun: VERSION_LABEL,
+  };
 }
 
 /** True when the artwork was created within the last `days` days (New ribbon on the grid). */

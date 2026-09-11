@@ -114,6 +114,8 @@ export default async function CollectionPage({ params }: PageProps) {
                     subtitle={art.category}
                     meta={card.meta}
                     value={card.value}
+                    versions={card.versions}
+                    versionNoun={card.versionNoun}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
                 );

@@ -113,6 +113,8 @@ export default async function Home() {
                   meta={card.meta}
                   value={card.value}
                   badge={isNewPrint(art.createdAt) ? "New" : undefined}
+                  versions={card.versions}
+                  versionNoun={card.versionNoun}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               );

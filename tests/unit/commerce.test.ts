@@ -83,11 +83,39 @@ describe("checkout adapter", () => {
 
 describe("cardCommerce", () => {
   it("routes free prints to /art with the FREE row", () => {
-    expect(cardCommerce({ id: "moon", listing: "free", offers: [] })).toEqual({ href: "/art/moon", meta: "Digital print", value: "FREE" });
+    expect(cardCommerce({ id: "moon", listing: "free", offers: [] })).toMatchObject({
+      href: "/art/moon",
+      meta: "Digital print",
+      value: "FREE",
+    });
   });
   it("routes shop prints to /prints with a from-price", () => {
-    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] })).toEqual({ href: "/prints/sweden", meta: "Art print", value: "From $23.99" });
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] })).toMatchObject({
+      href: "/prints/sweden",
+      meta: "Art print",
+      value: "From $23.99",
+    });
     expect(cardCommerce({ id: "sweden", listing: "shop", offers: [] }).value).toBe("");
+  });
+
+  it("carries the versions so every grid gets the swatch row from one place", () => {
+    const v = (version: string, artUrl: string) => ({ ...fw, version, artUrl });
+    const two = cardCommerce({ id: "brooklyn", listing: "shop", offers: [v("Earth", "e.png"), v("Bright", "b.png")] });
+    expect(two.versions).toEqual([
+      { label: "Earth", imageUrl: "e.png" },
+      { label: "Bright", imageUrl: "b.png" },
+    ]);
+    // the card decides whether to draw them; one version is not worth a row
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [v("Earth", "e.png")] }).versions).toHaveLength(1);
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] }).versions).toHaveLength(0);
+    // a free print has none at all
+    expect(cardCommerce({ id: "moon", listing: "free", offers: [] }).versions).toEqual([]);
+  });
+
+  it("names versions in the shop's own words, so renaming them renames the card", async () => {
+    const { VERSION_LABEL } = await import("@/config/commerce");
+    expect(cardCommerce({ id: "moon", listing: "free", offers: [] }).versionNoun).toBe(VERSION_LABEL);
+    expect(cardCommerce({ id: "sweden", listing: "shop", offers: [fw] }).versionNoun).toBe(VERSION_LABEL);
   });
 });
 

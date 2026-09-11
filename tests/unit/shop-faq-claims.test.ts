@@ -36,3 +36,22 @@ describe("shop FAQ claims match the price list", () => {
     expect(answer(/how long does delivery take/i)).toMatch(/\d+ to \d+ days/);
   });
 });
+
+describe("the size-count sentence tracks the ladder", () => {
+  it("counts what is actually sold, in words", async () => {
+    const { SIZE_RANGE_SENTENCE, SHOP_SIZE_LADDER } = await import("@/config/commerce");
+    expect(SHOP_SIZE_LADDER).toHaveLength(8);
+    expect(SIZE_RANGE_SENTENCE).toBe("Eight sizes, from 8×10 to 24×36");
+    // the endpoints come from the ladder, not from the sentence
+    expect(SIZE_RANGE_SENTENCE).toContain(SHOP_SIZE_LADDER[0].label.replace("″", ""));
+    expect(SIZE_RANGE_SENTENCE).toContain(SHOP_SIZE_LADDER[SHOP_SIZE_LADDER.length - 1].label.replace("″", ""));
+  });
+
+  it("no page hard-codes a size count any more", async () => {
+    const { readFileSync } = await import("fs");
+    for (const f of ["app/prints/page.tsx", "config/home-copy.ts", "app/shipping-returns/page.tsx"]) {
+      const src = readFileSync(f, "utf8");
+      expect(src).not.toMatch(/\b(three|four|five|six|seven|eight|nine|ten)\s+sizes\b/i);
+    }
+  });
+});

@@ -34,6 +34,22 @@ export const SHOP_SIZE_LADDER: readonly ShopSize[] = [
   { id: "24x36", label: "24×36″", cm: "61×91 cm", ratio: "2:3" },
 ];
 
+const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+
+/**
+ * "Eight sizes, from 8×10 to 24×36", built from the ladder above rather than typed into the copy.
+ * Three pages quoted this and all three said "Five" long after the ladder grew to eight, which is
+ * the kind of thing nobody notices and every visitor can check.
+ */
+export const SIZE_RANGE_SENTENCE = (() => {
+  const n = SHOP_SIZE_LADDER.length;
+  const word = COUNT_WORDS[n] ?? String(n);
+  const first = SHOP_SIZE_LADDER[0];
+  const last = SHOP_SIZE_LADDER[n - 1];
+  const plain = (label: string) => label.replace(/″/g, "");
+  return `${word.charAt(0).toUpperCase()}${word.slice(1)} sizes, from ${plain(first.label)} to ${plain(last.label)}`;
+})();
+
 /** Initial prices in cents. Kenny confirms per artwork in Studio; these are Studio defaults only. */
 export const DEFAULT_PRICE_CENTS: Record<string, number> = {
   "8x10": 2399,

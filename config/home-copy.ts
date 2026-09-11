@@ -3,6 +3,7 @@
  */
 
 import { DELIVERY_WINDOW } from "@/config/support";
+import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
 
 export const HOME_HERO = {
   headline: "Art for your walls. Printed and shipped free.",
@@ -63,7 +64,7 @@ export const HOME_SEO = {
     },
     {
       title: "Premium quality, printed the right way",
-      body: "Five sizes from 8×10 to 24×36, all matching standard frames. Museum-grade matte paper, made to order in the USA, free US shipping, and a free reprint if it arrives damaged.",
+      body: `${SIZE_RANGE_SENTENCE}, all matching standard frames. Museum-grade matte paper, made to order in the USA, free US shipping, and a free reprint if it arrives damaged.`,
     },
   ],
 } as const;

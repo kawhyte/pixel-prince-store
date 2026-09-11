@@ -4,13 +4,13 @@ import { generateMetadata as seoMeta } from "@/lib/seo";
 import { getShopPrints } from "@/sanity/lib/client";
 import PrintsGridClient from "./prints-grid-client";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
+import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
 
 export const revalidate = 60;
 
 export const metadata = seoMeta({
   title: "Art prints",
-  description:
-    "Retro gaming and map art prints, printed to order on 189 gsm matte paper and shipped free inside the US. Five sizes, from 8x10 to 24x36.",
+  description: `Retro gaming and map art prints, printed to order on 189 gsm matte paper and shipped free inside the US. ${SIZE_RANGE_SENTENCE}.`,
   canonical: "https://www.thepixelprince.com/prints",
 });
 
@@ -37,7 +37,7 @@ export default async function PrintsPage() {
           <h1 className="text-3xl font-semibold text-charcoal sm:text-4xl">Prints</h1>
           <p className="mt-4 text-lg text-soft-charcoal">
             Premium-quality prints, made to order on 189 gsm museum-grade matte paper and shipped
-            free inside the US. Five sizes, from 8x10 to 24x36.
+            free inside the US. {SIZE_RANGE_SENTENCE}.
           </p>
         </div>
 

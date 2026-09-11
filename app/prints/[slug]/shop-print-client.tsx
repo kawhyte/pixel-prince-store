@@ -6,8 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Check, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, resolveFinish, resolveVersion } from "@/lib/commerce";
-import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
+import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, getVersions, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, versionImage, resolveFinish, resolveVersion } from "@/lib/commerce";
+import { getShopSize, inchesLabel, VERSION_LABEL, type FinishId } from "@/config/commerce";
 // The same numbers Studio validates uploads against, so the check and the layout cannot drift.
 import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
 import { imageAlt } from "@/lib/listing-copy";
@@ -364,6 +364,8 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
                       subtitle={item.category}
                       meta="Art print"
                       value={from !== null ? `From ${formatPrice(from)}` : ""}
+                      versions={getVersions(item).map((v) => ({ label: v.version, imageUrl: versionImage(v.offer) }))}
+                      versionNoun={VERSION_LABEL}
                       sizes="(max-width: 640px) 70vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>

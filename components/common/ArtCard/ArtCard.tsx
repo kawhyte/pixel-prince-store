@@ -38,6 +38,14 @@ export interface ArtCardProps {
   meta?: string;
   /** interactive slot rendered below the card body, outside the link. */
   footer?: React.ReactNode;
+  /**
+   * The versions this print is sold in, for the swatch row. Shown only when there is more than
+   * one, because "1 version" tells a shopper nothing. Not interactive: the card is one link, and
+   * a clickable swatch inside it would be an anchor inside an anchor.
+   */
+  versions?: { label: string; imageUrl?: string }[];
+  /** what a version is called in the shop's own words, e.g. "Version" -> "2 versions". */
+  versionNoun?: string;
 }
 
 export default function ArtCard({
@@ -49,7 +57,10 @@ export default function ArtCard({
   value = "FREE",
   meta = "Digital print",
   footer,
+  versions,
+  versionNoun = "version",
 }: ArtCardProps) {
+  const swatches = versions && versions.length > 1 ? versions : undefined;
   const aspectClass = art.previewImageOrientation
     ? getGridCardAspectClass(art.previewImageOrientation.orientation)
     : "aspect-[2/3]";
@@ -90,6 +101,24 @@ export default function ArtCard({
             <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">
               {subtitle}
             </p>
+          )}
+          {swatches && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <span className="flex -space-x-1">
+                {swatches.slice(0, 4).map((v) => (
+                  <span
+                    key={v.label}
+                    className="relative size-4 overflow-hidden rounded-full border border-cream bg-muted ring-1 ring-border"
+                  >
+                    {/* 32 rather than 16: the swatch is 16 css px, and a 2x screen wants twice that */}
+                    {v.imageUrl && <Image src={v.imageUrl} alt="" fill className="object-cover" sizes="32px" />}
+                  </span>
+                ))}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {swatches.length} {versionNoun.toLowerCase()}s
+              </span>
+            </div>
           )}
           {value && (
             <div className="mt-2 flex items-center justify-between border-t border-border pt-2">

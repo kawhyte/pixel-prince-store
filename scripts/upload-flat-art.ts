@@ -3,8 +3,12 @@
  *
  *   npx tsx scripts/upload-flat-art.ts --dir ./masters                  dry run
  *   npx tsx scripts/upload-flat-art.ts --dir ./masters --apply          upload + patch
- *   options: --preview  set the card image, but only on prints that do not have one yet
- *            --replace-preview  overwrite a card image someone already chose
+ * Additive by default: it fills what is empty and leaves what is set. Adding a print and running
+ * this touches the new print only, so a photo or a card image chosen in Studio survives.
+ *
+ *   options: --preview  set the card image on prints that do not have one
+ *            --replace-preview  overwrite a card image that is already set
+ *            --replace-art  re-upload the flat artwork over what is there (a master changed)
  *            --only "Brooklyn Neighborhood Map"  one print
  *
  * A master file named "Title (Version).png" is matched to the Sanity artwork "Title" and to every
@@ -41,6 +45,12 @@ const withPreview = flag("--preview");
  * print in the shop and the only record of what had been there was Sanity's history.
  */
 const replacePreview = flag("--replace-preview");
+/**
+ * Likewise the artwork itself. Adding one print should not rewrite the other twenty: by default
+ * this fills an offer that has no artwork yet and leaves the rest untouched, so a run after a new
+ * master only ever touches the new master. Pass --replace-art when a master has actually changed.
+ */
+const replaceArt = flag("--replace-art");
 const only = opt("--only");
 const MAX_EDGE = 2400;
 
@@ -114,7 +124,15 @@ async function main() {
         continue;
       }
       const label = `${title}${version ? ` (${version})` : ""}`;
-      console.log(`${apply ? "attach" : "would attach"} ${label} -> ${offers.length} offer(s)${withPreview ? " + card image" : ""}`);
+      const needArt = replaceArt ? offers : offers.filter((o) => !o.hasArt);
+      const needPreview = withPreview && (replacePreview || !doc.hasPreviewImage);
+      if (needArt.length === 0 && !needPreview) {
+        console.log(`keep   ${label}: artwork and card image already set, nothing to do`);
+        skipped++;
+        continue;
+      }
+      const parts = [needArt.length > 0 ? `${needArt.length} offer(s)` : null, needPreview ? "card image" : null].filter(Boolean);
+      console.log(`${apply ? "attach" : "would attach"} ${label} -> ${parts.join(" + ")}`);
       if (!apply) continue;
 
       const tmp = mkdtempSync(join(tmpdir(), "flat-art-"));
@@ -126,18 +144,12 @@ async function main() {
         });
         const image = { _type: "image", asset: { _type: "reference", _ref: asset._id } };
         const patch: Record<string, unknown> = {};
-        for (const o of offers) patch[`offers[_key=="${o._key}"].art`] = image;
+        for (const o of needArt) patch[`offers[_key=="${o._key}"].art`] = image;
         // The card should show the version the page opens on: the artwork's default when it has
         // one, otherwise the first offer, which is what resolveVersion does.
         const versions = [...new Set((doc.offers ?? []).map((o) => o.version ?? ""))];
         const cardVersion = doc.defaultVersion && versions.includes(doc.defaultVersion) ? doc.defaultVersion : versions[0];
-        if (withPreview && (version ?? "") === cardVersion) {
-          if (doc.hasPreviewImage && !replacePreview) {
-            console.warn(`keep   ${label}: card image already set, left alone. Add --replace-preview to overwrite it.`);
-          } else {
-            patch.previewImage = image;
-          }
-        }
+        if (needPreview && (version ?? "") === cardVersion) patch.previewImage = image;
         await sanity.patch(doc._id).set(patch).commit();
         patched++;
       } finally {

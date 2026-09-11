@@ -61,12 +61,28 @@ export const SHOP_PROMO = {
  * Shared gallery images appended after every shop print's own photos (PLAN-43 follow-up).
  * Files live in /public/shop. Add a packaging or reviews graphic here when you have one.
  */
-export const SHOP_GALLERY_EXTRAS: { url: string; alt: string }[] = [
-  {
-    url: "/shop/size-guide.webp",
-    alt: "Size guide: seven print sizes from 8 by 10 to 24 by 36 inches, shown to scale on a wall above a 90 inch sofa",
-  },
-];
+export interface ShopImage {
+  url: string;
+  alt: string;
+}
+
+/** Also the photo in the "Pick the right size" section, which imports it by name. */
+export const SIZE_GUIDE_IMAGE: ShopImage = {
+  url: "/shop/size-guide.webp",
+  alt: "Size guide: seven print sizes from 8 by 10 to 24 by 36 inches, shown to scale on a wall above a 90 inch sofa",
+};
+
+export const FRAMED_FEATURES_IMAGE: ShopImage = {
+  url: "/shop/framed-features.webp",
+  alt: "Framed poster features: hanging hardware already attached, a frame three quarters of an inch thick, and an alder semi-hardwood moulding",
+};
+
+/**
+ * Slides appended to every shop print's gallery, so a new listing gets them without anyone
+ * remembering to. This array is the gallery order: the framed card sits second to last and the
+ * size guide closes. Nothing reads it by index any more, so it is safe to reorder.
+ */
+export const SHOP_GALLERY_EXTRAS: ShopImage[] = [FRAMED_FEATURES_IMAGE, SIZE_GUIDE_IMAGE];
 
 /** Four-up trust strip under the buy area on shop pages. Icons are picked in the component by index. */
 export const SHOP_TRUST_STRIP = [

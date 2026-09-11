@@ -14,6 +14,7 @@ import { imageAlt } from "@/lib/listing-copy";
 import {
   SHOP_FEATURES,
   SHOP_GALLERY_EXTRAS,
+  SIZE_GUIDE_IMAGE,
   SHOP_PROMO,
   SHOP_SHIPPING_FAQ,
   SHOP_SIZE_GUIDE,
@@ -36,7 +37,7 @@ interface ShopPrintClientProps {
 }
 
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Lock];
-const SIZE_GUIDE_SLIDE = SHOP_GALLERY_EXTRAS[0];
+const SIZE_GUIDE_SLIDE = SIZE_GUIDE_IMAGE;
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold uppercase tracking-[0.08em] text-sage-500">{children}</p>;

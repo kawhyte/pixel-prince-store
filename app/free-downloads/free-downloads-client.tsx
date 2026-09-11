@@ -51,7 +51,7 @@ export default function FreeDownloadsClient({ products }: FreeDownloadsClientPro
               Free printable wall art
             </h1>
             <p className="mt-3 text-base text-soft-charcoal sm:text-lg">
-              Free printable wall art delivered to your inbox: retro gaming prints, city maps, and minimalist pieces. 3 downloads a week.
+              Free printable wall art delivered to your inbox: retro gaming prints, city maps, and minimalist pieces.
             </p>
           </div>
         </div>

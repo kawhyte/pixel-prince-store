@@ -3,12 +3,21 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 
 import type { FreeArt } from "@/sanity/lib/client";
-import { cardCommerce, isNewPrint } from "@/lib/commerce";
+import { cardCommerce } from "@/lib/commerce";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import { cn } from "@/lib/utils";
 
 interface PrintsGridClientProps {
   prints: FreeArt[];
+  /**
+   * Which prints wear the "New" ribbon, decided by the server.
+   *
+   * This grid renders on the server and again in the browser. It used to ask `isNewPrint`, which
+   * reads `Date.now()`, so the two renders consulted different clocks; the page is cached, so a
+   * print sitting on the 30 day boundary got a ribbon in the HTML that hydration then removed.
+   * Taking the answer as a prop leaves nothing here for a clock to change.
+   */
+  newIds: string[];
 }
 
 const ALL = "All prints";
@@ -16,7 +25,8 @@ const subscribeNoop = () => () => {};
 const SETS = "Sets";
 
 /** Category chips + card grid for /prints (PLAN-43). Filters the already-fetched list, no refetch. */
-export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
+export default function PrintsGridClient({ prints, newIds }: PrintsGridClientProps) {
+  const isNew = useMemo(() => new Set(newIds), [newIds]);
   const categories = useMemo(() => {
     const seen = new Set<string>();
     for (const p of prints) {
@@ -72,7 +82,7 @@ export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
               subtitle={art.category}
               meta={card.meta}
               value={card.value}
-              badge={isNewPrint(art.createdAt) ? "New" : undefined}
+              badge={isNew.has(art.id) ? "New" : undefined}
               versions={card.versions}
               versionNoun={card.versionNoun}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"

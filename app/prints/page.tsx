@@ -5,6 +5,7 @@ import { getShopPrints } from "@/sanity/lib/client";
 import PrintsGridClient from "./prints-grid-client";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
+import { newPrintIds } from "@/lib/commerce";
 
 export const revalidate = 60;
 
@@ -25,6 +26,9 @@ const breadcrumbSchema = {
 
 export default async function PrintsPage() {
   const prints = await getShopPrints();
+  // Read the clock here, beside the fetch, not inside the markup: one answer per revalidation,
+  // which is what keeps the grid's server render and its hydration agreeing.
+  const newIds = newPrintIds(prints);
 
   return (
     <div className="min-h-screen bg-cream">
@@ -54,7 +58,7 @@ export default async function PrintsPage() {
             <EmailSignupForm source="prints" className="mx-auto mt-6 max-w-md text-left" />
           </div>
         ) : (
-          <PrintsGridClient prints={prints} />
+          <PrintsGridClient prints={prints} newIds={newIds} />
         )}
 
         <p className="mt-12 text-center text-sm text-soft-charcoal">

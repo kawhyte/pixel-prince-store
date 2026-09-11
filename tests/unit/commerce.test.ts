@@ -127,6 +127,22 @@ describe("isNewPrint", () => {
     expect(isNewPrint(undefined, 30, now)).toBe(false);
     expect(isNewPrint("nope", 30, now)).toBe(false);
   });
+
+  it("decides the whole list from one clock, so a cached render and its hydration agree", async () => {
+    const { newPrintIds } = await import("@/lib/commerce");
+    const boundary = "2026-08-09T12:00:00Z"; // exactly 30 days before `now`
+    const prints = [
+      { id: "fresh", createdAt: "2026-09-01T00:00:00Z" },
+      { id: "boundary", createdAt: boundary },
+      { id: "old", createdAt: "2026-07-01T00:00:00Z" },
+      { id: "undated", createdAt: undefined as unknown as string },
+    ];
+    expect(newPrintIds(prints, now)).toEqual(["fresh", "boundary"]);
+    // An hour on, the boundary print drops out. Asking twice is what produced the mismatch;
+    // the grid is handed one answer instead.
+    expect(newPrintIds(prints, now + 60 * 60 * 1000)).toEqual(["fresh"]);
+    expect(newPrintIds([], now)).toEqual([]);
+  });
 });
 
 describe("popularSizeId + inchesLabel", () => {

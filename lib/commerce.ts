@@ -316,11 +316,35 @@ export function cardCommerce(art: Pick<FreeArt, "id" | "listing" | "offers">): C
   };
 }
 
-/** True when the artwork was created within the last `days` days (New ribbon on the grid). */
-export function isNewPrint(createdAt: string | undefined, days = 30, now: number = Date.now()): boolean {
+/** How long a print wears the "New" ribbon. */
+export const NEW_PRINT_DAYS = 30;
+
+/**
+ * True when the artwork was created within the last `days` days (New ribbon on the grid).
+ *
+ * Pass `now` from the server in a client component. The default reads the caller's clock, and a
+ * cached page renders on the server at one moment and hydrates in the browser at another, so a
+ * print on the boundary would get the ribbon in the HTML and lose it a moment later.
+ */
+export function isNewPrint(createdAt: string | undefined, days = NEW_PRINT_DAYS, now: number = Date.now()): boolean {
   if (!createdAt) return false;
   const t = new Date(createdAt).getTime();
   if (!Number.isFinite(t)) return false;
   return now - t <= days * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Which of these prints wear the ribbon, decided once for the whole list.
+ *
+ * A grid that runs on the server and again in the browser must not ask the question twice: the
+ * page is cached, so the two answers come from different moments and a print on the boundary
+ * gets a ribbon in the HTML that hydration then takes away. A server component calls this after
+ * its fetch and hands the result down, which leaves the grid deciding nothing from a clock.
+ */
+export function newPrintIds(
+  prints: readonly Pick<FreeArt, "id" | "createdAt">[],
+  now: number = Date.now(),
+): string[] {
+  return prints.filter((p) => isNewPrint(p.createdAt, NEW_PRINT_DAYS, now)).map((p) => p.id);
 }
 

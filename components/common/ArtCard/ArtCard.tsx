@@ -96,12 +96,20 @@ export default function ArtCard({
           )}
         </div>
         <div className="pt-3">
-          <h3 className="truncate text-base font-medium text-charcoal">{art.title}</h3>
-          {subtitle && (
-            <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">
-              {subtitle}
-            </p>
-          )}
+          {/* Two lines, and always the height of two. One line cut 5 of 6 titles on desktop, most of
+              them by under 100px, so a second line holds all of them. Reserving the height even for
+              a one-line title is what keeps the price rows level across a row of cards; clamping
+              alone would leave them stepped. */}
+          <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-medium leading-snug text-charcoal">{art.title}</h3>
+          {/* Always rendered, even with nothing to say. One print has no category, and dropping the
+              line left its card 18px short, which knocked the price row out of line with the rest
+              of the row. Hidden from screen readers when it is only holding space. */}
+          <p
+            className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground"
+            aria-hidden={!subtitle}
+          >
+            {subtitle || "\u00A0"}
+          </p>
           {swatches && (
             <div className="mt-1.5 flex items-center gap-2">
               <span className="flex -space-x-1">

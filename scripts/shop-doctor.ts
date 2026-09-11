@@ -18,7 +18,9 @@ import { resolve } from "path";
 
 import { PREFERRED_COLOR, pickVariantPerSize, splitProductName } from "../lib/fourthwall-import";
 import { createPlatformClient, PlatformError } from "../lib/fourthwall-platform";
-import { auditPrint, type FwSnapshot, type PrintReport, type StudioSnapshot } from "../lib/shop-doctor";
+import { auditPrint, type FwSnapshot, type PrintReport, type SetSnapshot, type StudioSnapshot } from "../lib/shop-doctor";
+import { setFinishes, setMembers, setSizes, isSet } from "../lib/sets";
+import type { FreeArt } from "../sanity/lib/client";
 
 config({ path: resolve(__dirname, "../.env.local") });
 
@@ -82,7 +84,8 @@ function snapshot(p: FwProduct): FwSnapshot & { title: string } {
 }
 
 const STUDIO_QUERY = `*[_type == "product" && listing == "shop"]{
-  _id, title, description, longDescription, category, tags, defaultVersion,
+  _id, title, description, longDescription, category, tags, defaultVersion, kind,
+  members[]{ version, "print": print->{ _id, title, offers[]{ finish, version, active, sizes[]{ sizeId } } } },
   "hasPreviewImage": defined(previewImage.asset),
   "roomPhotos": count(galleryImages),
   "offers": offers[]{ version, finish, providerProductId,
@@ -150,6 +153,27 @@ async function main() {
   }
   const studio = studioByTitle(docs);
 
+  // Sets are judged on their members rather than on Fourthwall products they do not have.
+  const sets = new Map<string, SetSnapshot>();
+  for (const d of docs) {
+    const art = d as unknown as FreeArt;
+    if (!isSet(art)) continue;
+    const listed = art.members?.length ?? 0;
+    const usable = setMembers(art);
+    const usableIds = new Set(usable.map((m) => m.title));
+    const broken = (art.members ?? [])
+      .map((m) => m.print?.title)
+      .filter((t): t is string => !!t && !usableIds.has(t));
+    const finishes = setFinishes(art);
+    sets.set(String(d.title ?? "").trim(), {
+      listed,
+      sellable: usable.length,
+      broken: broken.length > 0 ? broken : listed > usable.length ? ["a print that is no longer there"] : [],
+      finishes,
+      sizesByFinish: Object.fromEntries(finishes.map((f) => [f, setSizes(art, f).length])),
+    });
+  }
+
   // A print in Studio with nothing left in Fourthwall is still a print, and still worth reporting.
   for (const title of studio.keys()) if (!byTitle.has(title)) byTitle.set(title, []);
 
@@ -159,7 +183,7 @@ async function main() {
     return;
   }
 
-  const reports = titles.map((t) => auditPrint(t, byTitle.get(t)!, studio.get(t) ?? null));
+  const reports = titles.map((t) => auditPrint(t, byTitle.get(t)!, studio.get(t) ?? null, sets.get(t) ?? null));
   // Worst first: someone running this wants the thing that is blocking them, not an alphabet.
   reports.sort((a, b) => {
     const block = (r: PrintReport) => r.findings.filter((f) => f.severity === "blocker").length;

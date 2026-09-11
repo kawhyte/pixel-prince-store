@@ -18,6 +18,7 @@
 import { CURRENCY } from "@/config/commerce";
 import { DAMAGE_CLAIM_DAYS, DELIVERY_DAYS_MAX, DELIVERY_DAYS_MIN } from "@/config/support";
 import { getOffersByFinish, getVersions, offerImage } from "@/lib/commerce";
+import { isSet, sellableSet, setFinishes, setSizeRows } from "@/lib/sets";
 import type { FreeArt, PrintOffer } from "@/sanity/lib/client";
 
 export const SITE_URL = "https://www.thepixelprince.com";
@@ -50,7 +51,16 @@ export interface PriceSpan {
  * clicks later. A price in structured data that the landing page does not show is the one
  * merchant-listing error Google acts on.
  */
-export function priceSpanAcrossOffers(art: Pick<FreeArt, "offers" | "defaultVersion">): PriceSpan | null {
+export function priceSpanAcrossOffers(
+  art: Pick<FreeArt, "offers" | "defaultVersion"> & Pick<FreeArt, "kind" | "members">,
+): PriceSpan | null {
+  // A set has no offers of its own, so the span is its members added up at every size it can be
+  // made in (PLAN-54). Without this it declares no price at all, and a Product with no offer is
+  // the one thing a shopping crawler cannot use.
+  if (isSet(art) && sellableSet(art)) {
+    const totals = setFinishes(art).flatMap((f) => setSizeRows(art, f).map((r) => r.priceCents));
+    return totals.length > 0 ? { min: Math.min(...totals), max: Math.max(...totals), count: totals.length } : null;
+  }
   let min = Infinity;
   let max = -Infinity;
   let count = 0;

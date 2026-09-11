@@ -26,6 +26,7 @@ import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 import CheckoutButton from "@/components/common/CheckoutButton/CheckoutButton";
+import { isSet, sellableSet, setMembers } from "@/lib/sets";
 import Testimonials from "@/components/common/Testimonials/Testimonials";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 
@@ -214,6 +215,44 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
             sizeId={activeSizeId}
             onSizeChange={(id) => setSizeByOffer((prev) => ({ ...prev, [offerKey]: id }))}
           />
+
+          {/* What is actually in a set, each linking to its own page. A buyer should be able to
+              see the two prints they are being sold and go and read about either, because both are
+              still on sale on their own and this is not a bundle of things they cannot inspect. */}
+          {isSet(art) && sellableSet(art) && (
+            <div className="rounded-md border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                What is in this set
+              </p>
+              <ul className="mt-3 space-y-3">
+                {setMembers(art).map((m) => (
+                  <li key={m.id}>
+                    <Link
+                      href={`/prints/${m.slug || m.id}`}
+                      className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sage-500"
+                    >
+                      <span className="relative size-12 shrink-0 overflow-hidden rounded border border-border bg-muted">
+                        {m.previewImage?.asset?.url && (
+                          <Image src={m.previewImage.asset.url} alt="" fill className="object-cover" sizes="48px" />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-charcoal group-hover:text-sage-500">
+                          {m.title}
+                        </span>
+                        {m.version && (
+                          <span className="block text-xs text-muted-foreground">{m.version}</span>
+                        )}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-soft-charcoal">
+                Both prints ship together. Each is also sold on its own.
+              </p>
+            </div>
+          )}
 
           {/* Under the buy controls, below CheckoutButton's own trust line: paper, shipping and the
               guarantee are what a shopper reads after they have picked a size, not before. */}

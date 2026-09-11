@@ -22,7 +22,12 @@ test("add to cart shows the bag count and a checkout link with the cart id", asy
   const checkout = drawer.getByRole("link", { name: /Checkout/i });
   await expect(checkout).toHaveAttribute("href", /cart\/checkout\?cartId=/);
 
-  // Clean up so the next run starts empty.
-  await drawer.getByRole("button", { name: /Remove/i }).first().click();
+  // Clean up so the next run starts empty. However many lines went in: a set adds one per print
+  // (PLAN-54), so removing the first and expecting an empty bag was only ever right for a single.
+  const remove = drawer.getByRole("button", { name: /Remove/i });
+  for (let lines = await remove.count(); lines > 0; lines--) {
+    await remove.first().click();
+    await expect(remove).toHaveCount(lines - 1);
+  }
   await expect(drawer.getByText(/Your cart is empty/i)).toBeVisible();
 });

@@ -164,3 +164,51 @@ describe("auditPrint", () => {
     expect(severities.indexOf("blocker")).toBeLessThan(severities.indexOf("warning"));
   });
 });
+
+describe("auditPrint for a set", () => {
+  const setSnap = (over: Partial<import("@/lib/shop-doctor").SetSnapshot> = {}) => ({
+    listed: 2,
+    sellable: 2,
+    broken: [] as string[],
+    finishes: ["unframed", "framed"],
+    sizesByFinish: { unframed: 8, framed: 7 },
+    ...over,
+  });
+
+  it("passes a healthy set without ever asking it for a Fourthwall product", () => {
+    // A set has none. Every price, publish and mockup check would be a blocker it cannot clear.
+    const r = auditPrint("Retro Gaming Set", [], studio({ title: "Retro Gaming Set" }), setSnap());
+    expect(r.ready).toBe(true);
+    expect(r.findings).toEqual([]);
+    expect(r.priceRowsWrong).toBe(0);
+  });
+
+  it("blocks when a member is gone, and names it", () => {
+    // Unpublishing a print is one click, and the effect lands on a page nobody was looking at.
+    const r = auditPrint("Retro Gaming Set", [], studio(), setSnap({ sellable: 1, broken: ["Retro Consoles"] }));
+    expect(r.ready).toBe(false);
+    expect(r.findings[0].message).toContain("Retro Consoles");
+  });
+
+  it("warns, without blocking, when a set of three loses one", () => {
+    const r = auditPrint("Trio", [], studio(), setSnap({ listed: 3, sellable: 2, broken: ["Third Print"] }));
+    expect(r.ready).toBe(true);
+    expect(r.findings.map((f) => f.message).join(" ")).toContain("Third Print");
+  });
+
+  it("blocks a set whose prints share no finish or no size", () => {
+    const noFinish = auditPrint("X", [], studio(), setSnap({ finishes: [], sizesByFinish: {} }));
+    expect(noFinish.ready).toBe(false);
+    expect(noFinish.findings[0].message).toMatch(/share no finish/);
+
+    const noSize = auditPrint("X", [], studio(), setSnap({ finishes: ["framed"], sizesByFinish: { framed: 0 } }));
+    expect(noSize.ready).toBe(false);
+    expect(noSize.findings.some((f) => /share no size/.test(f.message))).toBe(true);
+  });
+
+  it("insists on a card image, because a set has no artwork to fall back on", () => {
+    const r = auditPrint("X", [], studio({ hasPreviewImage: false }), setSnap());
+    expect(r.ready).toBe(false);
+    expect(r.findings.some((f) => /no card image/.test(f.message))).toBe(true);
+  });
+});

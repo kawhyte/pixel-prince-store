@@ -92,6 +92,20 @@ export interface StudioSnapshot {
   offers: { version: string | null; finish: string; hasMockup: boolean; hasArt: boolean; providerProductId?: string }[];
 }
 
+/** A set, reduced to what the doctor can judge without fetching anything (PLAN-54). */
+export interface SetSnapshot {
+  /** how many members Studio lists */
+  listed: number;
+  /** how many of those can actually be sold: published, with an active offer */
+  sellable: number;
+  /** names of the ones that cannot */
+  broken: string[];
+  /** finishes every member shares */
+  finishes: string[];
+  /** sizes every member shares, per finish */
+  sizesByFinish: Record<string, number>;
+}
+
 export interface PrintReport {
   title: string;
   findings: Finding[];
@@ -118,12 +132,82 @@ export function isUntouchedCopy(
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 /**
+ * A set is only as healthy as its members. Unpublishing a print is one click and its effect
+ * lands here, on a page the person clicking was not looking at, so this names the print.
+ */
+function auditSet(title: string, set: SetSnapshot, studio: StudioSnapshot | null): PrintReport {
+  const findings: Finding[] = [];
+
+  if (set.sellable < 2) {
+    findings.push({
+      severity: "blocker",
+      message:
+        set.broken.length > 0
+          ? `only ${plural(set.sellable, "print")} left in the set: ${set.broken.join(", ")} cannot be sold`
+          : `only ${plural(set.sellable, "print")} in the set, and a set needs two`,
+      fix: "publish the missing print, or pick a different one in Studio",
+    });
+  } else if (set.broken.length > 0) {
+    findings.push({
+      severity: "warning",
+      message: `${set.broken.join(", ")} cannot be sold and has been dropped from the set`,
+      fix: "publish it again, or remove it in Studio",
+    });
+  }
+
+  if (set.sellable >= 2 && set.finishes.length === 0) {
+    findings.push({
+      severity: "blocker",
+      message: "the prints share no finish, so the set cannot be made at all",
+      fix: "every member needs the same finish available in Fourthwall",
+    });
+  }
+  for (const finish of set.finishes) {
+    if ((set.sizesByFinish[finish] ?? 0) === 0) {
+      findings.push({
+        severity: "blocker",
+        message: `${finish}: the prints share no size, so nothing can be bought`,
+        fix: "check the sizes on each member in Fourthwall",
+      });
+    }
+  }
+
+  if (!studio) {
+    findings.push({ severity: "blocker", message: "not in Studio", fix: "create it in Studio" });
+  } else {
+    if (studio.isDraft) findings.push({ severity: "blocker", message: "still a draft in Studio", fix: "open it in Studio and press Publish" });
+    if (!studio.hasPreviewImage) {
+      findings.push({
+        severity: "blocker",
+        message: "no card image, and a set has no artwork of its own to fall back on",
+        fix: "upload a photo of the prints together in Studio",
+      });
+    }
+    if (!studio.category) findings.push({ severity: "warning", message: "no category", fix: "set it in Studio" });
+    if (!studio.tags?.length) findings.push({ severity: "warning", message: "no tags", fix: "set them in Studio" });
+  }
+
+  const order = { blocker: 0, warning: 1 };
+  findings.sort((a, b) => order[a.severity] - order[b.severity]);
+  return { title, findings, ready: !findings.some((f) => f.severity === "blocker"), priceRowsWrong: 0 };
+}
+
+/**
  * Everything wrong with one print, worst first. A blocker means it cannot go live; a warning
  * means it can, but someone chose not to finish it.
  */
-export function auditPrint(title: string, fw: FwSnapshot[], studio: StudioSnapshot | null): PrintReport {
+export function auditPrint(
+  title: string,
+  fw: FwSnapshot[],
+  studio: StudioSnapshot | null,
+  set?: SetSnapshot | null,
+): PrintReport {
   const findings: Finding[] = [];
   let priceRowsWrong = 0;
+
+  // A set has no Fourthwall products of its own, so every check below about prices, publishing
+  // and mockups would be a blocker it can never clear. It is judged on its members instead.
+  if (set) return auditSet(title, set, studio);
 
   const selling = fw.filter((p) => p.access !== "ARCHIVED");
 

@@ -3,7 +3,9 @@
  *
  *   npx tsx scripts/upload-flat-art.ts --dir ./masters                  dry run
  *   npx tsx scripts/upload-flat-art.ts --dir ./masters --apply          upload + patch
- *   options: --preview  also set the artwork's card image  --only "Brooklyn Neighborhood Map"
+ *   options: --preview  set the card image, but only on prints that do not have one yet
+ *            --replace-preview  overwrite a card image someone already chose
+ *            --only "Brooklyn Neighborhood Map"  one print
  *
  * A master file named "Title (Version).png" is matched to the Sanity artwork "Title" and to every
  * offer of that version, so the page can lead with the artwork itself instead of a grey mockup.
@@ -33,6 +35,12 @@ const opt = (n: string, d?: string) => {
 const dir = opt("--dir", "./masters")!;
 const apply = flag("--apply");
 const withPreview = flag("--preview");
+/**
+ * --preview replaces the card image, which is a photo someone chose. It now refuses to overwrite
+ * one that already exists unless you say so, because a single unscoped run reset the card on every
+ * print in the shop and the only record of what had been there was Sanity's history.
+ */
+const replacePreview = flag("--replace-preview");
 const only = opt("--only");
 const MAX_EDGE = 2400;
 
@@ -58,6 +66,7 @@ interface DocRow {
   _id: string;
   title: string;
   defaultVersion?: string;
+  hasPreviewImage?: boolean;
   offers?: OfferRow[];
 }
 
@@ -82,7 +91,7 @@ async function main() {
   }
 
   const docs = await sanity.fetch<DocRow[]>(
-    `*[_type == "product" && listing == "shop"]{ _id, title, defaultVersion, offers[]{ _key, version, finish, "hasArt": defined(art.asset) } }`
+    `*[_type == "product" && listing == "shop"]{ _id, title, defaultVersion, "hasPreviewImage": defined(previewImage.asset), offers[]{ _key, version, finish, "hasArt": defined(art.asset) } }`
   );
 
   let patched = 0;
@@ -122,7 +131,13 @@ async function main() {
         // one, otherwise the first offer, which is what resolveVersion does.
         const versions = [...new Set((doc.offers ?? []).map((o) => o.version ?? ""))];
         const cardVersion = doc.defaultVersion && versions.includes(doc.defaultVersion) ? doc.defaultVersion : versions[0];
-        if (withPreview && (version ?? "") === cardVersion) patch.previewImage = image;
+        if (withPreview && (version ?? "") === cardVersion) {
+          if (doc.hasPreviewImage && !replacePreview) {
+            console.warn(`keep   ${label}: card image already set, left alone. Add --replace-preview to overwrite it.`);
+          } else {
+            patch.previewImage = image;
+          }
+        }
         await sanity.patch(doc._id).set(patch).commit();
         patched++;
       } finally {

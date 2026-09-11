@@ -218,7 +218,8 @@ export function isImportable(p: FwProduct, includeTest = false): boolean {
  * nothing here is needed to keep a fresh listing from being blank.
  *
  * The rule this encodes (PLAN-52): Fourthwall owns money and fulfilment, Studio owns what a
- * customer looks at. An empty gallery is a decision, and a sync does not get a vote.
+ * customer looks at. An empty gallery is a decision, and a sync does not get a vote. The same
+ * now holds for an offer's main photo, which the import used to refill whenever it was blank.
  */
 export function shouldReplaceGallery(opts: { resetImages: boolean; incomingPhotos: number }): boolean {
   return opts.resetImages && opts.incomingPhotos > 0;

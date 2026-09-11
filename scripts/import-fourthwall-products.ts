@@ -313,7 +313,12 @@ async function main() {
               [`offers[_key=="${offer._key}"].finish`]: fp.finish,
             };
             if (fp.version) patch[`offers[_key=="${offer._key}"].version`] = fp.version;
-            if (!offer.hasMockup || resetImages) {
+            // Only on an explicit --reset-images. An offer that exists already has whatever photo
+            // Kenny chose for it, and "no photo" is one of those choices: an unframed offer with
+            // its mockup cleared shows the flat artwork, which is the point. Refilling an empty
+            // one put Fourthwall's render back over a deliberate blank. Same rule as the room
+            // photos in shouldReplaceGallery, for the same reason.
+            if (resetImages) {
               const mockupId = await uploadFirstImage(
                 fp.product,
                 imageFileName({ title, version: fp.version, finish: fp.finish, kind: "main" })

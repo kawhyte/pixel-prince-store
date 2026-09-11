@@ -44,6 +44,20 @@ export default async function Home() {
     return [{ slug: collection.slug, label: collection.title, tagline: collection.tagline, image: match.previewImage }];
   });
 
+  /**
+   * The `sizes` hint has to follow rowClass below, or the browser asks for the wrong width. With one
+   * or two cards the row is a fixed max-width, not a fraction of the viewport, and calling it 25vw
+   * under-states it and fetches an image too small for the box.
+   */
+  const rowSizes = (count: number) =>
+    count >= 4
+      ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      : count === 3
+        ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        : count === 2
+          ? "(max-width: 640px) 100vw, 384px"
+          : "(max-width: 640px) 100vw, 384px";
+
   // Rows are built for four cards. With fewer, widen them instead of leaving holes.
   const rowClass = (count: number) =>
     count >= 4
@@ -115,7 +129,7 @@ export default async function Home() {
                   badge={isNewPrint(art.createdAt) ? "New" : undefined}
                   versions={card.versions}
                   versionNoun={card.versionNoun}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  sizes={rowSizes(bestSellers.length)}
                 />
               );
             })}

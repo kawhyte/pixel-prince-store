@@ -1,10 +1,20 @@
 import { createClient } from 'next-sanity'
 import type { SanityImageSource } from '@sanity/image-url/lib/types/types'
 import { urlFor } from './image'
-import { getImageOrientation, getOptimalImageDimensions, type ImageOrientation } from '@/lib/image-utils'
+import { getImageOrientation, type ImageOrientation } from '@/lib/image-utils'
 import { mapGalleryImages, type GalleryImage, type RawGalleryImage } from '@/lib/gallery-images'
 
 import { apiVersion, dataset, projectId } from '../env'
+
+/**
+ * How wide a card image is fetched from Sanity. Cards are laid out by width and next/image already
+ * picks a size per viewport from `sizes`, so the only job here is to hand it a source big enough to
+ * pick from. It was previously sized per orientation with the long edge capped at 800, which capped
+ * a portrait image at 600 WIDE while a square one got 800. Cards are width-constrained, so every
+ * portrait print was fetched 25% narrower than the square ones and looked softer beside them.
+ * Sanity will not upscale, so a smaller original simply comes back at its own size.
+ */
+const CARD_SOURCE_WIDTH = 1200
 
 export const client = createClient({
   projectId,
@@ -189,13 +199,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     const { width, height } = product.previewImage.asset.metadata.dimensions;
     previewImageOrientation = getImageOrientation(width, height);
 
-    const { width: transformWidth, height: transformHeight } =
-      getOptimalImageDimensions(width, height, previewImageOrientation.orientation);
-
-    previewImageUrl = urlFor(product.previewImage)
-      .width(transformWidth)
-      .height(transformHeight)
-      .url();
+    previewImageUrl = urlFor(product.previewImage).width(CARD_SOURCE_WIDTH).url();
   } else {
     previewImageUrl = product.previewImage
       ? urlFor(product.previewImage).width(600).height(800).url()
@@ -314,14 +318,7 @@ export async function getRelatedProducts(category: string, currentSlug: string):
       const { width, height } = product.previewImage.asset.metadata.dimensions;
       previewImageOrientation = getImageOrientation(width, height);
 
-      // Apply optimal image transform based on detected orientation
-      const { width: transformWidth, height: transformHeight } =
-        getOptimalImageDimensions(width, height, previewImageOrientation.orientation);
-
-      previewImageUrl = urlFor(product.previewImage)
-        .width(transformWidth)
-        .height(transformHeight)
-        .url();
+      previewImageUrl = urlFor(product.previewImage).width(CARD_SOURCE_WIDTH).url();
     } else {
       // Fallback for images without metadata (default to portrait 3:4)
       previewImageUrl = product.previewImage

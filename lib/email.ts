@@ -50,7 +50,7 @@ export const emailProvider: EmailProvider = {
       preheader: "Player 2 has entered your inbox.",
       heading: "Hey, I'm Kenny",
       bodyHtml: `
-        <p style="margin:0 0 12px 0;">I design retro gaming and map wall art. Every piece drawn by an actual human.</p>
+        <p style="margin:0 0 12px 0;">I design retro gaming and map wall art. Every piece designed by an actual human, not pulled from a generator.</p>
         <p style="margin:0 0 12px 0;">Here's the deal: <strong>one email a month</strong> with a brand-new free print, plus whatever's new in the shop. That's it. No spam.</p>
         <p style="margin:0;">
           <a href="https://www.thepixelprince.com/prints?utm_source=pixelprince&utm_medium=email&utm_campaign=welcome" style="color:#c2521f;">Browse the prints</a>

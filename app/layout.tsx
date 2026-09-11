@@ -17,7 +17,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "The Pixel Prince | Retro gaming and map art prints",
-  description: "Retro gaming and map art prints, drawn by humans, printed to order and shipped free in the US. Plus a free printable every month.",
+  description: "Retro gaming and map art prints, designed by humans, printed to order and shipped free in the US. Plus a free printable every month.",
  icons: {
     icon: [
       { url: '/favicon.ico' },

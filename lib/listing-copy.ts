@@ -16,19 +16,19 @@ export interface CopyInput {
 }
 
 const CATEGORY_LEAD: Record<string, (title: string) => string> = {
-  Maps: (t) => `${t}, drawn by hand and color blocked so the whole place reads at a glance.`,
+  Maps: (t) => `${t}, designed and color blocked so the whole place reads at a glance.`,
   "Video Games": (t) => `${t}, built from the palettes and shapes of the games worth remembering.`,
   Quotes: (t) => `${t}, set in type that earns its place on a wall rather than shouting from it.`,
   Funny: (t) => `${t}. It is a joke you will still like in a year, which is the hard part.`,
   Minimalist: (t) => `${t}, stripped back to the few shapes that carry it.`,
-  Botanical: (t) => `${t}, drawn from the plant rather than traced from a stock photo.`,
+  Botanical: (t) => `${t}, designed from the plant rather than traced from a stock photo.`,
 };
 
 const PAPER = "Printed to order on 189 gsm museum grade matte paper with archival inks, shipped flat or in a tube.";
 
 /** The card and meta description. Sanity caps this at 200 characters. */
 export function draftDescription(input: CopyInput): string {
-  const lead = (CATEGORY_LEAD[input.category ?? ""] ?? ((t: string) => `${t}, drawn by hand and printed to order.`))(
+  const lead = (CATEGORY_LEAD[input.category ?? ""] ?? ((t: string) => `${t}, designed in the studio and printed to order.`))(
     input.title.trim()
   );
   const versions = input.versions ?? [];
@@ -41,7 +41,7 @@ export function draftDescription(input: CopyInput): string {
 /** The longer body on the print page. Two short paragraphs. */
 export function draftLongDescription(input: CopyInput): string {
   const title = input.title.trim();
-  const lead = (CATEGORY_LEAD[input.category ?? ""] ?? ((t: string) => `${t}, drawn by hand.`))(title);
+  const lead = (CATEGORY_LEAD[input.category ?? ""] ?? ((t: string) => `${t}, designed in the studio.`))(title);
   const versions = input.versions ?? [];
   const finishes = input.finishes ?? [];
 

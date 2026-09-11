@@ -7,7 +7,7 @@ import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
 
 export const HOME_HERO = {
   headline: "Art for your walls. Printed and shipped free.",
-  sub: "Premium-quality retro gaming and map prints, drawn by two humans and printed to order on museum-grade matte paper.",
+  sub: "Premium-quality retro gaming and map prints, designed by two humans and printed to order on museum-grade matte paper.",
   cta: "Shop all prints",
   secondary: "Or get a free print every month",
 } as const;
@@ -23,7 +23,7 @@ export const HOME_TRUST = [
 export const HOME_CALLOUTS = [
   {
     title: "Designed by humans",
-    body: "Every piece is drawn by Kenny and Rene, not pulled from a generator. Retro palettes, real places, small details you keep finding.",
+    body: "Every piece is designed by Kenny and Rene, not pulled from a generator. Retro palettes, real places, small details you keep finding.",
   },
   {
     title: "Premium quality, every print",
@@ -56,7 +56,7 @@ export const HOME_SEO = {
   columns: [
     {
       title: "Game room wall art",
-      body: "Controllers, consoles, 8-bit palettes and patent-style blueprints, drawn to read as gaming without leaning on any one franchise. Sized for a desk wall or the space behind the TV.",
+      body: "Controllers, consoles, 8-bit palettes and patent-style blueprints, designed to read as gaming without leaning on any one franchise. Sized for a desk wall or the space behind the TV.",
     },
     {
       title: "Map prints",

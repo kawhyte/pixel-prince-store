@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAllProducts, getProductBySlug, getRelatedProducts, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
+import { freeArtBreadcrumb, freeArtSchema } from "@/lib/artwork-schema";
 import ArtDetailClient from "./art-detail-client";
 
 interface PageProps {
@@ -51,33 +52,15 @@ export default async function ArtDetailPage({ params }: PageProps) {
     getRelatedShopPrints(art.category || '', id),
   ]);
 
-  /**
-   * A free printable is a work, not a product. It was declared as a Product with a $0 Offer, which
-   * tells Google this is something purchasable at no cost and invites product rich results a free
-   * download cannot honour. VisualArtwork with isAccessibleForFree says what it actually is.
-   *
-   * Also: one image became several. Google asks for more than one per item and prefers a mix of
-   * shapes, which is what the shop page already sends.
-   */
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "VisualArtwork",
-    name: art.title,
-    description: art.description,
-    image: [art.detailImage, art.previewImage, ...(art.galleryImages ?? []).map((g) => g.url)].filter(
-      (url, i, all): url is string => !!url && all.indexOf(url) === i
-    ),
-    creator: { "@type": "Organization", name: art.artist || "The Pixel Prince" },
-    isAccessibleForFree: true,
-    url: `https://www.thepixelprince.com/art/${art.id}`,
-    ...(art.category ? { genre: art.category } : {}),
-  };
-
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeArtSchema(art)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeArtBreadcrumb(art)) }}
       />
       <ArtDetailClient art={art} relatedArt={relatedArt} shopPrints={shopPrints} />
     </>

@@ -46,6 +46,7 @@ npx sanity dataset export <dataset> <file>  # Export data
 ### Utilities
 ```bash
 npm run shop:new         # masters/ -> Fourthwall products (add -- --apply --publish)
+npm run shop:doctor      # is every print finished? the one check before making a listing public
 npm run shop:sync        # Fourthwall -> Sanity: prices and images, the one command after any dashboard edit
 npm run shop:art         # masters/ -> the flat artwork on each offer (add -- --apply --preview)
 npx tsx scripts/fourthwall-ids.ts   # list Fourthwall product + variant ids

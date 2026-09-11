@@ -15,7 +15,8 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { createPlatformClient, PlatformError } from "../lib/fourthwall-platform";
 import { pickVariantPerSize, splitProductName, PREFERRED_COLOR } from "../lib/fourthwall-import";
-import { TARGET_PRICES, SHOP_SIZE_LADDER, getShopSize } from "../config/commerce";
+import { getShopSize } from "../config/commerce";
+import { comparePrices } from "../lib/shop-doctor";
 
 config({ path: resolve(__dirname, "../.env.local") });
 
@@ -74,30 +75,26 @@ async function main() {
 
   for (const product of live) {
     const { finish } = splitProductName(product.name);
-    const targets = TARGET_PRICES[finish] ?? {};
-
     const bySize = pickVariantPerSize(product.variants ?? [], PREFERRED_COLOR);
 
-    const rows: Row[] = [];
-    const seen = new Set<string>();
+    // The comparison itself lives in lib/shop-doctor.ts, so this report and `npm run shop:doctor`
+    // can never disagree about which prices are wrong. What is added here is the printer's cost,
+    // which only this report shows.
+    const live = new Map<string, number | null>();
     for (const [sizeId, variant] of bySize) {
-      seen.add(sizeId);
-      const target = targets[sizeId];
-      if (target === undefined) {
-        unchecked++;
-        continue;
-      }
-      const now = typeof variant.unitPrice?.value === "number" ? Math.round(variant.unitPrice.value * 100) : null;
-      const cost = typeof variant.unitCost?.value === "number" ? Math.round(variant.unitCost.value * 100) : null;
-      rows.push({ size: sizeId, now, target, keep: cost === null ? null : target - cost });
+      live.set(sizeId, typeof variant.unitPrice?.value === "number" ? Math.round(variant.unitPrice.value * 100) : null);
     }
+    const compared = comparePrices(finish, live);
+    unchecked += compared.unchecked.length;
 
-    // sizes in the target list that this product does not sell at all
-    for (const sizeId of Object.keys(targets)) {
-      if (!seen.has(sizeId)) rows.push({ size: sizeId, now: null, target: targets[sizeId]!, keep: null });
-    }
-
-    rows.sort((a, b) => SHOP_SIZE_LADDER.findIndex((s) => s.id === a.size) - SHOP_SIZE_LADDER.findIndex((s) => s.id === b.size));
+    const costOf = (sizeId: string) => {
+      const c = bySize.get(sizeId)?.unitCost?.value;
+      return typeof c === "number" ? Math.round(c * 100) : null;
+    };
+    const rows: Row[] = compared.rows.map((r) => {
+      const cost = r.now === null ? null : costOf(r.sizeId);
+      return { size: r.sizeId, now: r.now, target: r.target, keep: cost === null ? null : r.target - cost };
+    });
     const wrong = rows.filter((r) => r.now !== r.target);
     if (wrong.length === 0 && !showAll) continue;
     if (wrong.length > 0) {

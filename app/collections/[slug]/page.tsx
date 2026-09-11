@@ -103,7 +103,7 @@ export default async function CollectionPage({ params }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10 xl:grid-cols-4">
+            <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
               {matchedProducts.map((art) => {
                 const card = cardCommerce(art);
                 return (

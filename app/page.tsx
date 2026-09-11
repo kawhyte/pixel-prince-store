@@ -61,11 +61,11 @@ export default async function Home() {
   // Rows are built for four cards. With fewer, widen them instead of leaving holes.
   const rowClass = (count: number) =>
     count >= 4
-      ? "mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-4"
+      ? "mt-8 grid gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12 lg:grid-cols-4"
       : count === 3
-        ? "mt-8 grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3"
+        ? "mt-8 grid gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12 lg:grid-cols-3"
         : count === 2
-          ? "mt-8 grid max-w-3xl gap-6 sm:grid-cols-2 md:gap-8"
+          ? "mt-8 grid max-w-3xl gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12"
           : "mt-8 grid max-w-sm gap-6";
 
   return (

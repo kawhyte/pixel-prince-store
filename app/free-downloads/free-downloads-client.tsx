@@ -87,7 +87,7 @@ export default function FreeDownloadsClient({ products }: FreeDownloadsClientPro
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10 xl:grid-cols-4">
+          <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
             {products.map((art) => (
               <ArtCard
                 key={art.id}

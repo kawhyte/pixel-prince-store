@@ -196,7 +196,7 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
             <h2 className="mb-8 text-3xl font-bold text-charcoal">
               You might also like
             </h2>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-14">
               {relatedArt.slice(0, 3).map((relatedItem) => (
                 <ArtCard
                   key={relatedItem.id}

@@ -61,7 +61,7 @@ export default function PrintsGridClient({ prints }: PrintsGridClientProps) {
         </div>
       )}
 
-      <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10 xl:grid-cols-4">
+      <div className="mt-8 grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
         {shown.map((art) => {
           const card = cardCommerce(art);
           return (

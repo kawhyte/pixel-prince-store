@@ -175,7 +175,9 @@ export const product = defineType({
               name: 'alt',
               title: 'Alt text',
               type: 'string',
-              validation: (rule) => rule.required(),
+              description:
+                'What the photo shows, for screen readers and for search. A warning rather than a blocker: leave it and the page falls back to the artwork title.',
+              validation: (rule) => rule.warning().required(),
             }),
           ],
           validation: (rule) => rule.warning().custom(minImageWidth()),

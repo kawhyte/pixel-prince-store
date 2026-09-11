@@ -120,7 +120,9 @@ export const printOffer = defineType({
               name: 'alt',
               title: 'Alt text',
               type: 'string',
-              validation: (Rule) => Rule.required(),
+              description:
+                'What the photo shows. A warning rather than a blocker: leave it and the page falls back to a line built from the title, version and finish.',
+              validation: (Rule) => Rule.warning().required(),
             }),
           ],
           validation: (Rule) => Rule.warning().custom(minImageWidth()),

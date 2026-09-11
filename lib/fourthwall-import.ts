@@ -200,3 +200,18 @@ export function isImportable(p: FwProduct, includeTest = false): boolean {
   if (!includeTest && /\btest\b/i.test(p.name)) return false;
   return true;
 }
+
+/**
+ * Whether a sync may write room photos onto an artwork that already exists in Sanity.
+ *
+ * Only on an explicit --reset-images. It used to seed whenever the gallery was empty, which
+ * cannot tell "never seeded" from "emptied on purpose": Kenny deleted Brooklyn's Fourthwall
+ * renders, and the next sync put three back. A new artwork is seeded where it is created, so
+ * nothing here is needed to keep a fresh listing from being blank.
+ *
+ * The rule this encodes (PLAN-52): Fourthwall owns money and fulfilment, Studio owns what a
+ * customer looks at. An empty gallery is a decision, and a sync does not get a vote.
+ */
+export function shouldReplaceGallery(opts: { resetImages: boolean; incomingPhotos: number }): boolean {
+  return opts.resetImages && opts.incomingPhotos > 0;
+}

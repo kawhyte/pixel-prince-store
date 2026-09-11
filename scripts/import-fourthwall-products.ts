@@ -36,6 +36,7 @@ import {
   mapVariantsToSizes,
   pickGalleryImages,
   sanityIdForArtwork,
+  shouldReplaceGallery,
   slugify,
   splitProductName,
   stripHtml,
@@ -327,15 +328,16 @@ async function main() {
             console.log(`offer  ${doc._id}: ${offerLabel(fp)} added`);
           }
         }
-        // Room photos belong to the artwork, not to one variant of it (PLAN-52). Seeded from
-        // Fourthwall the first time so a listing is never blank, and Kenny's after that. They come
-        // from the version the page opens on, so the seeded photos match what a visitor first sees.
+        // Room photos belong to the artwork, not to one variant of it (PLAN-52). A new listing is
+        // seeded where it is created, further down; on an artwork that already exists the photos
+        // are Kenny's, and "none" is one of the answers he is allowed to give. They come from the
+        // version the page opens on, so a --reset-images matches what a visitor first sees.
         const preferred = finishProducts.find((f) => f.version && f.version === doc.defaultVersion);
         const primary = (preferred ?? finishProducts[0]).product;
-        if ((!doc.galleryCount || resetImages) && pickGalleryImages(primary).length > 0) {
+        if (shouldReplaceGallery({ resetImages, incomingPhotos: pickGalleryImages(primary).length })) {
           const gallery = await uploadGallery(primary);
           await sanity.patch(doc._id).set({ galleryImages: gallery }).commit();
-          console.log(`photos ${doc._id}: ${gallery.length} room photo(s) ${doc.galleryCount ? "replaced" : "added"}`);
+          console.log(`photos ${doc._id}: ${gallery.length} room photo(s) replaced`);
         }
       }
       continue;

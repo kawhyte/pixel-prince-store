@@ -142,3 +142,16 @@ describe("pickVariantPerSize", () => {
     expect(poster.get("8x10")?.id).toBe("p1");
   });
 });
+
+describe("room photos on an artwork that already exists", () => {
+  it("only writes on an explicit --reset-images", async () => {
+    const { shouldReplaceGallery } = await import("@/lib/fourthwall-import");
+    // The regression: Kenny deleted Brooklyn's Fourthwall renders, the gallery went to 0, and the
+    // next sync read that as "never seeded" and put three back. An empty gallery is a decision.
+    expect(shouldReplaceGallery({ resetImages: false, incomingPhotos: 3 })).toBe(false);
+    expect(shouldReplaceGallery({ resetImages: true, incomingPhotos: 3 })).toBe(true);
+    // Nothing to copy means nothing to do, so --reset-images cannot blank a gallery by accident.
+    expect(shouldReplaceGallery({ resetImages: true, incomingPhotos: 0 })).toBe(false);
+    expect(shouldReplaceGallery({ resetImages: false, incomingPhotos: 0 })).toBe(false);
+  });
+});

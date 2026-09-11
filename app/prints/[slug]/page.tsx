@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 
 import { getShopPrints, getShopPrintBySlug, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
-import { getActiveOffer, priceRangeCents } from "@/lib/commerce";
 import { deliveryWindow } from "@/lib/delivery";
+import { shopPrintBreadcrumb, shopPrintSchema } from "@/lib/product-schema";
 import ShopPrintClient from "./shop-print-client";
 
 interface PageProps {
@@ -36,37 +36,17 @@ export default async function ShopPrintPage({ params }: PageProps) {
   if (!art) notFound();
 
   const related = await getRelatedShopPrints(art.category || "", slug);
-  const offer = getActiveOffer(art);
-  const range = priceRangeCents(offer);
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: art.title,
-    description: art.description,
-    // Google asks for several images per product, and prefers them in more than one shape.
-    image: [art.detailImage, art.previewImage, ...(art.galleryImages ?? []).map((g) => g.url)].filter(
-      (url, i, all): url is string => !!url && all.indexOf(url) === i
-    ),
-    brand: { "@type": "Brand", name: "The Pixel Prince" },
-    ...(range
-      ? {
-          offers: {
-            "@type": "AggregateOffer",
-            lowPrice: (range.min / 100).toFixed(2),
-            highPrice: (range.max / 100).toFixed(2),
-            priceCurrency: "USD",
-            offerCount: offer?.sizes?.length ?? 0,
-            availability: "https://schema.org/InStock",
-            url: `https://www.thepixelprince.com/prints/${art.id}`,
-          },
-        }
-      : {}),
-  };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shopPrintSchema(art)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shopPrintBreadcrumb(art)) }}
+      />
       <ShopPrintClient art={art} related={related} deliveryBy={deliveryWindow(new Date()).label} />
     </>
   );

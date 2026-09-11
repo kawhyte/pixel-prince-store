@@ -34,7 +34,11 @@ export default function ShopHero({ items }: ShopHeroProps) {
                   <Link
                     key={item.id}
                     href={card.href}
-                    className={`group block self-start wall-shadow transition-transform duration-200 hover:-translate-y-0.5 ${
+                    // No card background and no box shadow. Three of these previews are transparent
+                    // PNGs, so a background was showing through as a white panel and the shadow was
+                    // outlining a box nobody could see. Left bare, each print sits straight on the
+                    // wall, and the drop shadow already drawn into the mockups does the rest.
+                    className={`group block self-start transition-transform duration-200 hover:-translate-y-0.5 ${
                       !single && i % 2 === 1 ? "mt-6 sm:mt-10" : ""
                     }`}
                   >
@@ -44,7 +48,7 @@ export default function ShopHero({ items }: ShopHeroProps) {
                         cropping them here rather than at render is what Juniqe does and is the only
                         thing that makes a row of them look deliberate. Falls back to the raw preview
                         for anything that has not been through the pipeline. */}
-                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                    <div className="relative aspect-[4/5] overflow-hidden">
                       <Image
                         src={item.heroImage || item.previewImage}
                         alt={item.title}

@@ -62,7 +62,10 @@ export const SHOP_PROMO = {
  * Files live in /public/shop. Add a packaging or reviews graphic here when you have one.
  */
 export const SHOP_GALLERY_EXTRAS: { url: string; alt: string }[] = [
-  { url: "/shop/size-guide.png", alt: "Size guide: the five print sizes shown to scale on a wall above a sofa" },
+  {
+    url: "/shop/size-guide.webp",
+    alt: "Size guide: seven print sizes from 8 by 10 to 24 by 36 inches, shown to scale on a wall above a 90 inch sofa",
+  },
 ];
 
 /** Four-up trust strip under the buy area on shop pages. Icons are picked in the component by index. */

@@ -288,8 +288,14 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
       {/* See it to scale */}
       {sizes.length > 0 && (
         <section id="size-guide" className="scroll-mt-24 border-t border-border bg-card py-14 lg:py-20">
-          <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-cream shadow-card">
+          {/* The size guide is a static 1086 px file (public/shop/size-guide.webp). Half of that is
+              543, the widest it goes before a 2x screen stretches it, and it happens to sit right
+              next to the hero's own 570 so the two sections read as one page. Centred, so the room
+              left over lands in the page margins rather than between the photo and the list. Swap
+              in a wider file and this number can grow with it. */}
+          <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-[543px_minmax(0,640px)] lg:justify-center lg:items-center lg:gap-14">
+            {/* 3:4 to match the photo, so the 24x36 label at the top is not cropped away */}
+            <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-cream shadow-card">
               <Image src={SIZE_GUIDE_SLIDE.url} alt={SIZE_GUIDE_SLIDE.alt} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
             </div>
             <div>

@@ -79,10 +79,13 @@ export function schemaImages(art: FreeArt): string[] {
 /**
  * Free US shipping, as a shipping rate rather than a sentence.
  *
- * `config/support.ts` records the total promise (5 to 11 days) and not how it splits between
- * printing and post, so handling is declared as zero and the whole window as transit. Google
- * adds the two to get the arrival date it displays, so the number a shopper sees is right; if
- * the split is ever recorded, move the printing days into handlingTime.
+ * `config/support.ts` records the total promise and not how it splits between printing and post,
+ * so handling is declared as zero and the whole window as transit. Google adds the two to get the
+ * arrival date it displays, so the number a shopper sees is right; if the split is ever recorded,
+ * move the printing days into handlingTime.
+ *
+ * These are business days, which is the convention Google reads these fields in, and since
+ * 2026-09-11 it is also what the promise actually means.
  */
 function shippingDetails() {
   return {

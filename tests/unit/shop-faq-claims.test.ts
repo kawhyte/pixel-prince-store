@@ -33,7 +33,8 @@ describe("shop FAQ claims match the price list", () => {
 
   it("still answers the two questions the buy stack pulls up front", () => {
     expect(answer(/how much is shipping/i)).toMatch(/free/i);
-    expect(answer(/how long does delivery take/i)).toMatch(/\d+ to \d+ days/);
+    // "business days" specifically: nothing ships at a weekend, and the promise says so.
+    expect(answer(/how long does delivery take/i)).toMatch(/\d+ to \d+ business days/);
   });
 });
 

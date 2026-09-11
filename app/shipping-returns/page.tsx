@@ -42,8 +42,9 @@ export default function ShippingReturnsPage() {
       <section>
         <h2 className={h2}>Packaging</h2>
         <p className={p}>
-          Prints ship unframed, flat in a rigid mailer or rolled in a tube depending on size, so you can pick
-          the frame that fits your wall. All five sizes match standard off-the-shelf frames.
+          An unframed print ships flat in a rigid mailer or rolled in a sturdy tube, depending on the size,
+          and the sizes match standard off-the-shelf frames if you are framing it yourself. A framed print
+          ships assembled in its frame, ready to hang.
         </p>
       </section>
 

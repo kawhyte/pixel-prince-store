@@ -22,11 +22,11 @@ export const SHOP_SHIPPING_FAQ = [
   { q: "Do you ship outside the US?", a: "Not yet. US addresses only for now." },
   {
     q: "How is it packaged?",
-    a: "Flat in a rigid mailer or rolled in a sturdy tube, depending on the size. Both are packed to survive the trip.",
+    a: "An unframed print ships flat in a rigid mailer or rolled in a sturdy tube, depending on the size. A framed print ships assembled in its frame and boxed, so it arrives ready to hang.",
   },
   {
     q: "Is a frame included?",
-    a: "No. Every print ships unframed so you can pick a frame that fits your wall. The sizes match standard off-the-shelf frames.",
+    a: "That depends on the finish you pick. Unframed is the poster on its own, and the sizes match standard off-the-shelf frames if you want to frame it yourself. Framed arrives in a black alder wood frame three quarters of an inch deep, with the hanging hardware already attached. Every size can be framed except 20 by 30.",
   },
   { q: "What if it arrives damaged?", a: `Email a photo within ${DAMAGE_CLAIM_DAYS} days and we reprint and reship it free.` },
   {

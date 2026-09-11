@@ -274,7 +274,10 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
         <section className="container mx-auto px-4 py-14 lg:py-20">
           <SectionLabel>In the room</SectionLabel>
           <h2 className="mt-2 text-[28px] font-bold tracking-tight text-charcoal">Premium quality you can see on the wall.</h2>
-          <p className="mt-2 max-w-2xl text-soft-charcoal">Printed to order on 189 gsm museum-grade matte paper, unframed so you pick the frame that fits your room.</p>
+          <p className="mt-2 max-w-2xl text-soft-charcoal">
+            Printed to order on 189 gsm museum-grade matte paper. Take it unframed and choose your own frame, or
+            framed in black wood and ready to hang.
+          </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {roomPhotos.map((img) => (
               <figure key={img.url}>

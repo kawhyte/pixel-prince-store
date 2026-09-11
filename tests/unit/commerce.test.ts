@@ -210,6 +210,20 @@ describe("offer imagery", () => {
     expect(versionImage({ ...framed, artUrl: undefined })).toBe("framed.png");
   });
 
+  it("prefers alt text typed in Studio, and never returns a blank one", async () => {
+    const { offerImageAlt } = await import("@/lib/commerce");
+    const base = { provider: "fourthwall" as const, sizes: [{ sizeId: "8x10", priceCents: 2500 }] };
+    const framed = { ...base, finish: "framed" as const, artUrl: "art.png", artAlt: "the flat art", mockupUrl: "framed.png", mockupAlt: "framed on a wall" };
+
+    expect(offerImageAlt(framed)).toBe("framed on a wall");
+    // follows the same fallback offerImage takes
+    expect(offerImageAlt({ ...framed, mockupUrl: undefined })).toBe("the flat art");
+    // whitespace is not alt text, and an empty alt is worse than the generated line
+    expect(offerImageAlt({ ...framed, mockupAlt: "   " })).toBeUndefined();
+    expect(offerImageAlt({ ...framed, mockupAlt: undefined })).toBeUndefined();
+    expect(offerImageAlt(null)).toBeUndefined();
+  });
+
   it("reports the shape of whichever photo offerImage picked, so the frame is cut to it", async () => {
     const { offerImage, offerImageRatio } = await import("@/lib/commerce");
     const base = { provider: "fourthwall" as const, sizes: [{ sizeId: "8x10", priceCents: 2500 }] };

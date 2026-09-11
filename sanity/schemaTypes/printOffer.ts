@@ -69,6 +69,16 @@ export const printOffer = defineType({
         SHOP_IMAGE_HINT,
       options: { hotspot: true },
       components: { input: ImageWithDetails },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description:
+            'What the photo shows, for screen readers and for search. A warning rather than a hard stop: the page falls back to a line built from the title, version and finish when this is empty.',
+          validation: (Rule) => Rule.warning().required(),
+        }),
+      ],
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({
@@ -81,6 +91,16 @@ export const printOffer = defineType({
         SHOP_IMAGE_HINT,
       options: { hotspot: true },
       components: { input: ImageWithDetails },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description:
+            'What the photo shows, for screen readers and for search. A warning rather than a hard stop: the page falls back to a line built from the title, version and finish when this is empty.',
+          validation: (Rule) => Rule.warning().required(),
+        }),
+      ],
       validation: (Rule) => Rule.warning().custom(minImageWidth()),
     }),
     defineField({

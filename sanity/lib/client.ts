@@ -47,10 +47,14 @@ export interface PrintOffer {
   mockupUrl?: string
   /** width / height of `mockup`, so the frame can be cut to the photo instead of padding it */
   mockupRatio?: number
+  /** alt text typed in Studio for `mockup`; the page falls back to a generated line when empty */
+  mockupAlt?: string
   /** resolved by the projection from the `art` image: the artwork with no mockup around it */
   artUrl?: string
   /** width / height of `art` */
   artRatio?: number
+  /** alt text typed in Studio for `art` */
+  artAlt?: string
   active?: boolean
   providerProductId?: string
   checkoutUrl?: string
@@ -154,8 +158,8 @@ const PRODUCT_PROJECTION = `
   defaultVersion,
   defaultFinish,
   offers[]{ ...,
-    "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio,
-    "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio },
+    "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio, "mockupAlt": mockup.alt,
+    "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio, "artAlt": art.alt },
   tags,
   category,
   downloads,

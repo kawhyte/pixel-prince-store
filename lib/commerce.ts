@@ -141,6 +141,17 @@ export function offerImageRatio(offer: PrintOffer | null | undefined): number | 
   return ratio && ratio > 0 ? ratio : undefined;
 }
 
+/**
+ * Alt text typed in Studio for whichever photo `offerImage` picked. Undefined when nobody has
+ * written one, and the caller keeps its own generated line rather than shipping an empty alt.
+ */
+export function offerImageAlt(offer: PrintOffer | null | undefined): string | undefined {
+  if (!offer) return undefined;
+  const alt = offer.mockupUrl ? offer.mockupAlt : offer.artAlt;
+  const trimmed = alt?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 /** Version tiles compare artwork, so they show the flat art whatever finish is on screen. */
 export function versionImage(offer: PrintOffer | null | undefined): string | undefined {
   if (!offer) return undefined;

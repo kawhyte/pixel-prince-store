@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GEMINI_DESCRIPTION_MODEL } from '@/config/gemini'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSecret } from '@/lib/admin-auth'
 import { buildDescriptionPrompt } from '@/lib/gemini-prompt'
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const genAI = new GoogleGenerativeAI(apiKey)
     
     // *** FIX: Use the specific pinned version ***
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: GEMINI_DESCRIPTION_MODEL })
 
     const prompt = buildDescriptionPrompt({ title, category, tags, keywords })
 

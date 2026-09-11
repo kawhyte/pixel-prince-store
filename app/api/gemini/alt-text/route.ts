@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSecret } from "@/lib/admin-auth";
 import { buildAltTextPrompt } from "@/lib/gemini-prompt";
+import { GEMINI_ALT_TEXT_MODEL } from "@/config/gemini";
 
 interface AltTextRequest {
   imageUrl?: string;
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const base64 = Buffer.from(await imageResponse.arrayBuffer()).toString("base64");
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: GEMINI_ALT_TEXT_MODEL });
     const result = await model.generateContent([
       buildAltTextPrompt({ title, version: body.version, finish: body.finish, category: body.category }),
       { inlineData: { data: base64, mimeType: imageResponse.headers.get("content-type") || "image/jpeg" } },

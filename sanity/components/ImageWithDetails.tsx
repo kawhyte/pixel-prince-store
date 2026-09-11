@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Flex, Stack, Text } from '@sanity/ui';
 import { set, useClient, useFormValue, type ImageValue, type ObjectInputProps } from 'sanity';
 import { MIN_SHOP_IMAGE_WIDTH } from '../lib/image-rules';
-import { getAdminSecret } from '@/lib/admin-secret-client';
+import { adminFetch } from '@/lib/admin-secret-client';
 
 interface AssetFacts {
   width?: number
@@ -82,9 +82,9 @@ export function ImageWithDetails(props: ObjectInputProps) {
     try {
       const url = await client.fetch<string | null>(`*[_id == $id][0].url`, { id: assetId })
       if (!url) throw new Error('That image has no URL yet. Save and try again.')
-      const response = await fetch('/api/gemini/alt-text', {
+      const response = await adminFetch('/api/gemini/alt-text', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': getAdminSecret() ?? '' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: `${url}?w=1024`, title, category }),
       })
       const data = await response.json()

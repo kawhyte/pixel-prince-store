@@ -9,7 +9,7 @@ import type {
   CloudinaryUploadResult
 } from '@/lib/types/high-res-asset';
 import { extractCloudinaryPublicId } from '@/lib/cloudinary-utils';
-import { getAdminSecret } from '@/lib/admin-secret-client';
+import { adminFetch } from '@/lib/admin-secret-client';
 import { AssetPreviewCard } from '@/sanity/components/AssetPreviewCard';
 
 interface CloudinaryWidgetError {
@@ -36,12 +36,10 @@ export function AdminHighResUpload({
 
   const deleteFromCloudinary = async (publicId: string) => {
     try {
-      const adminSecret = getAdminSecret();
-      const response = await fetch('/api/cloudinary/delete', {
+      const response = await adminFetch('/api/cloudinary/delete', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-secret': adminSecret ?? '',
         },
         body: JSON.stringify({ publicId }),
       });
@@ -49,7 +47,6 @@ export function AdminHighResUpload({
       const result = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) sessionStorage.removeItem('pp_admin_secret');
         console.error('[HighResManager] Failed to delete from Cloudinary:', result);
         alert(`Failed to delete from Cloudinary: ${result.error || 'Unknown error'}\nCheck console for details.`);
         return false;

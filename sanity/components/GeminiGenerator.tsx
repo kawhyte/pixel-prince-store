@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react'
 import { useClient, useFormValue } from 'sanity'
 import imageUrlBuilder from '@sanity/image-url'
 import { toast } from 'sonner'
-import { getAdminSecret } from '@/lib/admin-secret-client'
+import { adminFetch } from '@/lib/admin-secret-client'
 import { keywordsForCategory } from '@/config/seo-keywords'
 
 interface ImageAsset {
@@ -61,15 +61,13 @@ export function GeminiGenerator() {
     try {
       // Resolve the image URL
       const imageUrl = urlFor(previewImage).width(800).url()
-      const adminSecret = getAdminSecret()
       const keywords = keywordsForCategory(category)
 
       // Call the Next.js API route
-      const response = await fetch('/api/gemini/generate', {
+      const response = await adminFetch('/api/gemini/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-secret': adminSecret ?? '',
         },
         body: JSON.stringify({
           title,
@@ -81,7 +79,6 @@ export function GeminiGenerator() {
       })
 
       if (!response.ok) {
-        if (response.status === 401) sessionStorage.removeItem('pp_admin_secret')
         const error = await response.json()
         console.error('API Error Response:', error)
         throw new Error(error.error || error.details || 'Failed to generate descriptions')

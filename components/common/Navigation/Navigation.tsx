@@ -4,14 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import Wordmark from "@/components/common/Wordmark/Wordmark";
-import { NAV_MORE, NAV_PRIMARY, NAV_SECONDARY } from "@/config/nav";
+import { NAV_MORE, NAV_PRIMARY, NAV_SECONDARY, type NavLink } from "@/config/nav";
 import CartButton from "@/components/common/Cart/CartButton";
 
 /**
  * Shop-first nav (PLAN-44): logo, category links in the middle, Free prints + About on the right.
  * Categories filter /prints. Free prints is a plain link by decision, not the lead.
  */
-export default function Navigation() {
+/**
+ * `primary` comes from the server so a link that leads nowhere is never drawn. It defaults to the
+ * full set, which keeps this usable on its own and in tests.
+ */
+export default function Navigation({ primary = NAV_PRIMARY }: { primary?: NavLink[] }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Lock body scroll while the mobile menu overlay is open.
@@ -39,7 +43,7 @@ export default function Navigation() {
 
             {/* Desktop: categories in the middle */}
             <div className="hidden items-center gap-6 md:flex lg:gap-8">
-              {NAV_PRIMARY.map((l) => (
+              {primary.map((l) => (
                 <Link key={l.href} href={l.href} className={desktopLink}>
                   {l.label}
                 </Link>
@@ -79,7 +83,7 @@ export default function Navigation() {
       >
         <div className="flex flex-col space-y-1 p-4">
           <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Shop</p>
-          {NAV_PRIMARY.map((l) => (
+          {primary.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setIsMobileMenuOpen(false)} className={mobileLink}>
               {l.label}
             </Link>

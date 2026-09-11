@@ -266,6 +266,15 @@ export async function getAllProducts(): Promise<FreeArt[]> {
 }
 
 /** Shop prints only (PLAN-35b). Rendered by /prints/[slug] from PLAN-36. */
+/**
+ * How many sets are for sale. Counted rather than fetched, because the only question the nav and
+ * the homepage band ask is "is there anything behind this link", and a link to an empty grid is
+ * worse than no link: someone clicked it wanting to buy.
+ */
+export async function getShopSetCount(): Promise<number> {
+  return client.fetch<number>(`count(*[${SHOP_FILTER} && kind == "set"])`)
+}
+
 export async function getShopPrints(): Promise<FreeArt[]> {
   const query = `*[${SHOP_FILTER}] | order(_createdAt desc) { ${PRODUCT_PROJECTION} }`
   const products = await client.fetch<SanityProduct[]>(query)

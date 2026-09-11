@@ -4,6 +4,8 @@ import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ConditionalNavigation from "@/components/common/Navigation/ConditionalNavigation";
+import { getShopSetCount } from "@/sanity/lib/client";
+import { primaryNav } from "@/config/nav";
 import ConditionalFooter from "@/components/common/Footer/ConditionalFooter";
 import { CartProvider } from "@/components/common/Cart/CartProvider";
 import CartDrawer from "@/components/common/Cart/CartDrawer";
@@ -41,11 +43,13 @@ export const metadata: Metadata = {
 
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // One count for the whole site: the Sets link is drawn only when a set exists to sell.
+  const setCount = await getShopSetCount();
   const organizationSchema = generateOrganizationSchema();
   const websiteSchema = generateWebsiteSchema();
 
@@ -79,7 +83,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <CartProvider>
-          <ConditionalNavigation />
+          <ConditionalNavigation primary={primaryNav(setCount)} />
           {children}
           <ConditionalFooter />
           <CartDrawer />

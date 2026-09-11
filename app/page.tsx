@@ -26,6 +26,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
  */
 export default async function Home() {
   const [freePrints, shopPrints] = await Promise.all([getAllProducts(), getShopPrints()]);
+  const setCount = shopPrints.filter((p) => p.kind === "set").length;
   const bestSellers = [...shopPrints]
     .sort((a, b) => (b.sales ?? 0) - (a.sales ?? 0) || (b.createdAt > a.createdAt ? 1 : -1))
     .slice(0, 8);
@@ -234,20 +235,23 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 8. Sets band */}
-      <section className="bg-charcoal py-16 text-cream">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-sage-300">{HOME_BAND.eyebrow}</p>
-          <h2 className="mt-3 text-[28px] font-semibold tracking-tight sm:text-[34px]">{HOME_BAND.headline}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-cream/70">{HOME_BAND.body}</p>
-          <Link
-            href={HOME_BAND.href}
-            className="mt-7 inline-flex h-12 items-center rounded-md bg-sage-500 px-8 font-semibold text-white transition-colors hover:bg-sage-400"
-          >
-            {HOME_BAND.cta}
-          </Link>
-        </div>
-      </section>
+      {/* 8. Sets band. Only when there is a set to sell: the copy promises matched palettes and
+           one frame run, which is a claim about products, not a tease. It returns on its own. */}
+      {setCount > 0 && (
+        <section className="bg-charcoal py-16 text-cream">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-sage-300">{HOME_BAND.eyebrow}</p>
+            <h2 className="mt-3 text-[28px] font-semibold tracking-tight sm:text-[34px]">{HOME_BAND.headline}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-cream/70">{HOME_BAND.body}</p>
+            <Link
+              href={HOME_BAND.href}
+              className="mt-7 inline-flex h-12 items-center rounded-md bg-sage-500 px-8 font-semibold text-white transition-colors hover:bg-sage-400"
+            >
+              {HOME_BAND.cta}
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* 9. SEO copy */}
       <section className="container mx-auto px-4 py-14 lg:py-20">

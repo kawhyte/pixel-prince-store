@@ -88,6 +88,24 @@ export interface PrintOffer {
 export type ArtworkKind = 'single' | 'set'
 export type ArtworkListing = 'free' | 'shop'
 
+/**
+ * One print inside a set (PLAN-54). The set owns nothing a member already has: the price, the
+ * sizes and the variant ids are all read back off `print.offers`, so a set cannot go stale when
+ * `shop:sync` refreshes a member's prices.
+ */
+export interface SetMember {
+  /** which colorway of the member, when it sells more than one. Empty means the member's default. */
+  version?: string
+  print?: {
+    _id: string
+    title: string
+    slug?: { current?: string }
+    category?: string
+    previewImage?: SanityImageWithDimensions
+    offers?: PrintOffer[]
+  }
+}
+
 export type SanityImageWithDimensions = SanityImageSource & {
   asset?: {
     _id: string
@@ -121,6 +139,7 @@ export interface SanityProduct {
   defaultVersion?: string
   defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers?: PrintOffer[]
+  members?: SetMember[]
   tags?: string[]
   category?: string
   downloads?: number
@@ -152,6 +171,8 @@ export interface FreeArt {
   defaultVersion?: string
   defaultFinish?: 'unframed' | 'framed' | 'canvas'
   offers: PrintOffer[]
+  /** only on `kind: "set"`: the prints sold together here (PLAN-54) */
+  members?: SetMember[]
   tags: string[]
   category?: string
   downloads?: number
@@ -192,6 +213,16 @@ const PRODUCT_PROJECTION = `
     "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio, "mockupAlt": mockup.alt,
     "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio, "artAlt": art.alt,
     "gallery": gallery[]{ "url": asset->url, "alt": alt } },
+  members[]{
+    version,
+    "print": print->{
+      _id, title, slug, category,
+      previewImage { ..., asset->{ _id, url, metadata { dimensions { width, height, aspectRatio } } } },
+      offers[]{ ...,
+        "mockupUrl": mockup.asset->url, "mockupRatio": mockup.asset->metadata.dimensions.aspectRatio, "mockupAlt": mockup.alt,
+        "artUrl": art.asset->url, "artRatio": art.asset->metadata.dimensions.aspectRatio, "artAlt": art.alt }
+    }
+  },
   tags,
   category,
   downloads,
@@ -245,6 +276,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     defaultVersion: product.defaultVersion,
     defaultFinish: product.defaultFinish,
     offers: product.offers ?? [],
+    ...(product.members?.length ? { members: product.members } : {}),
     tags: product.tags || [],
     category: product.category,
     downloads: product.downloads || 0,

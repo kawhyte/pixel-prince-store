@@ -84,6 +84,49 @@ export const product = defineType({
       initialValue: 'single',
     }),
     defineField({
+      name: 'members',
+      title: 'Prints in this set',
+      type: 'array',
+      group: 'shop',
+      description:
+        'The prints sold together here, in the order they should read. Each one keeps its own page and stays on sale by itself. Two to four. The set offers only the sizes and finishes every member has, so a print that is not sold framed makes the whole set unframed only.',
+      hidden: ({ parent }) => (parent as { kind?: string } | undefined)?.kind !== 'set',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'setMember',
+          fields: [
+            defineField({
+              name: 'print',
+              title: 'Print',
+              type: 'reference',
+              to: [{ type: 'product' }],
+              // A set never contains a set: nothing downstream is written to unwrap one.
+              options: { filter: 'listing == "shop" && kind != "set"' },
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'version',
+              title: 'Which version',
+              type: 'string',
+              description:
+                'Leave empty to use whichever the print itself opens on. Only matters for a print sold in more than one colorway.',
+            }),
+          ],
+          preview: {
+            select: { title: 'print.title', subtitle: 'version' },
+            prepare: ({ title, subtitle }) => ({ title: title ?? 'Pick a print', subtitle: subtitle || undefined }),
+          },
+        }),
+      ],
+      validation: (Rule) =>
+        Rule.custom((members, context) => {
+          if ((context.document as { kind?: string } | undefined)?.kind !== 'set') return true
+          const count = (members as unknown[] | undefined)?.length ?? 0
+          return count >= 2 && count <= 4 ? true : 'A set holds two to four prints.'
+        }),
+    }),
+    defineField({
       name: 'aiHelper',
       title: 'AI Description Generator',
       type: 'string',

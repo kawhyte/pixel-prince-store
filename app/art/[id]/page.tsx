@@ -51,24 +51,26 @@ export default async function ArtDetailPage({ params }: PageProps) {
     getRelatedShopPrints(art.category || '', id),
   ]);
 
-  // Generate JSON-LD structured data for SEO (Product Schema)
+  /**
+   * A free printable is a work, not a product. It was declared as a Product with a $0 Offer, which
+   * tells Google this is something purchasable at no cost and invites product rich results a free
+   * download cannot honour. VisualArtwork with isAccessibleForFree says what it actually is.
+   *
+   * Also: one image became several. Google asks for more than one per item and prefers a mix of
+   * shapes, which is what the shop page already sends.
+   */
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "VisualArtwork",
     name: art.title,
     description: art.description,
-    image: art.detailImage || art.previewImage,
-    brand: {
-      "@type": "Brand",
-      name: "The Pixel Prince"
-    },
-    offers: {
-      "@type": "Offer",
-      price: "0.00",
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-      url: `https://www.thepixelprince.com/art/${art.id}`
-    }
+    image: [art.detailImage, art.previewImage, ...(art.galleryImages ?? []).map((g) => g.url)].filter(
+      (url, i, all): url is string => !!url && all.indexOf(url) === i
+    ),
+    creator: { "@type": "Organization", name: art.artist || "The Pixel Prince" },
+    isAccessibleForFree: true,
+    url: `https://www.thepixelprince.com/art/${art.id}`,
+    ...(art.category ? { genre: art.category } : {}),
   };
 
   return (

@@ -1,17 +1,19 @@
 import type {StructureResolver} from 'sanity/structure'
-import { Gift, FileText, Users, Images, ShoppingBag, Receipt } from 'lucide-react'
+import { Gift, FileText, Users, Images, ShoppingBag, Receipt, LayoutGrid } from 'lucide-react'
 
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
 export const structure: StructureResolver = (S) =>
   S.list()
     .title('The Pixel Prince')
     .items([
+      // The superset of the two lists below it. It was called "Artworks" and carried the same gift
+      // icon as "Free prints", so it read as a third category rather than as everything.
       S.listItem()
-        .title('Artworks')
-        .icon(Gift)
+        .title('All artwork')
+        .icon(LayoutGrid)
         .child(
           S.documentTypeList('product')
-            .title('Artworks')
+            .title('All artwork (free and shop)')
             .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
         ),
       S.listItem()

@@ -97,7 +97,7 @@ describe("auditPrint", () => {
     expect(r.ready).toBe(true);
   });
 
-  it("blocks a draft, a missing category and missing artwork", () => {
+  it("blocks a draft, a missing category and an offer with nothing to show", () => {
     const r = auditPrint("Sweden Map", [fw()], studio({
       isDraft: true,
       category: undefined,
@@ -108,9 +108,26 @@ describe("auditPrint", () => {
     expect(msgs).toContain("still a draft in Studio");
     expect(msgs).toContain("no category, so it is missing from every collection page");
     expect(msgs).toContain("no card image");
-    expect(msgs.some((m) => /without the flat artwork/.test(m))).toBe(true);
-    expect(msgs.some((m) => /with no photo/.test(m))).toBe(true);
+    expect(msgs.some((m) => /nothing to show/.test(m))).toBe(true);
     expect(r.ready).toBe(false);
+  });
+
+  it("does not call an unframed offer broken for having no mockup", () => {
+    // This is the normal shape: the poster shows the flat artwork, and offerImage falls back to
+    // it. Treating a missing mockup as "no photo" flagged every print in the shop.
+    const r = auditPrint("Sweden Map", [fw()], studio({
+      offers: [{ version: null, finish: "unframed", hasMockup: false, hasArt: true, providerProductId: "p1" }],
+    }));
+    expect(r.ready).toBe(true);
+    expect(r.findings).toEqual([]);
+  });
+
+  it("mentions, without blocking, a poster falling back to a mockup of itself", () => {
+    const r = auditPrint("Sweden Map", [fw()], studio({
+      offers: [{ version: null, finish: "unframed", hasMockup: true, hasArt: false, providerProductId: "p1" }],
+    }));
+    expect(r.ready).toBe(true);
+    expect(r.findings.map((f) => f.message)).toContain("1 unframed offer showing a mockup rather than the artwork");
   });
 
   it("notices a public product that never reached Studio", () => {

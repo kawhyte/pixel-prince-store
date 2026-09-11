@@ -215,17 +215,27 @@ export function auditPrint(title: string, fw: FwSnapshot[], studio: StudioSnapsh
   if (!studio.hasPreviewImage) {
     findings.push({ severity: "blocker", message: "no card image", fix: "npm run shop:art -- --apply" });
   }
-  const noArt = studio.offers.filter((o) => !o.hasArt).length;
-  if (noArt > 0) {
+  // What the page actually shows is `offerImage`: the mockup if there is one, else the flat art.
+  // So an offer is only photoless when it has neither. Checking for a missing mockup alone called
+  // every unframed offer broken, which is the normal, intended shape: no room photo, art instead.
+  const noPhoto = studio.offers.filter((o) => !o.hasMockup && !o.hasArt).length;
+  if (noPhoto > 0) {
     findings.push({
       severity: "blocker",
-      message: `${plural(noArt, "offer")} without the flat artwork, so the page shows a mockup instead of the art`,
-      fix: "npm run shop:art -- --apply",
+      message: `${plural(noPhoto, "offer")} with nothing to show, neither a photo nor the artwork`,
+      fix: "npm run shop:sync, then npm run shop:art -- --apply",
     });
   }
-  const noMockup = studio.offers.filter((o) => !o.hasMockup).length;
-  if (noMockup > 0) {
-    findings.push({ severity: "blocker", message: `${plural(noMockup, "offer")} with no photo`, fix: "npm run shop:sync" });
+
+  // A poster with no flat art falls back to a mockup of itself, which is worse than the art but
+  // is not broken, so it is worth saying and not worth blocking a launch over.
+  const posterWithoutArt = studio.offers.filter((o) => o.finish === "unframed" && !o.hasArt).length;
+  if (posterWithoutArt > 0) {
+    findings.push({
+      severity: "warning",
+      message: `${plural(posterWithoutArt, "unframed offer")} showing a mockup rather than the artwork`,
+      fix: "npm run shop:art -- --apply",
+    });
   }
   if (!studio.category) {
     findings.push({ severity: "blocker", message: "no category, so it is missing from every collection page", fix: "set it in Studio" });

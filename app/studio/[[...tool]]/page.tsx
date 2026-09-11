@@ -10,9 +10,27 @@
 'use client'
 
 import { useState } from 'react'
-import { NextStudio } from 'next-sanity/studio'
+import dynamic from 'next/dynamic'
 import type { StudioThemeColorSchemeKey } from 'sanity'
 import config from '../../../sanity.config'
+
+/**
+ * Studio does not server-render. It is an authenticated single-page app, so SSR buys it nothing
+ * and costs a hydration mismatch on every load: Sanity is built on styled-components, whose class
+ * names are generated from a counter as modules evaluate, and the server and the browser do not
+ * evaluate the same set in the same order. React reported that on Sanity's own loading spinner:
+ *
+ *   + className="sc-fujAOF fPgbiH"     (client)
+ *   - className="sc-dGzUtw dYuLtJ"     (server)
+ *
+ * next.config's `compiler.styledComponents` is the usual cure and cannot work here, because it
+ * transforms our source and Sanity ships prebuilt in node_modules. Sending no markup at all
+ * leaves nothing to disagree about.
+ */
+const NextStudio = dynamic(() => import('next-sanity/studio').then((m) => m.NextStudio), {
+  ssr: false,
+  loading: () => null,
+})
 
 const STORAGE_KEY = 'pp_studio_scheme'
 
@@ -23,9 +41,8 @@ function readStoredScheme(): StudioThemeColorSchemeKey {
 }
 
 export default function StudioPage() {
-  // NextStudio renders behind `<Suspense fallback={null}>` internally, so the SSR
-  // output is always null regardless of `scheme` — reading localStorage here can't
-  // cause a hydration mismatch.
+  // Safe to read storage in the initializer: with Studio client-only, the server renders nothing
+  // here, so this value never appears in HTML for hydration to disagree with.
   const [scheme, setScheme] = useState<StudioThemeColorSchemeKey>(readStoredScheme)
 
   const handleSchemeChange = (next: StudioThemeColorSchemeKey) => {

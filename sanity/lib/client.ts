@@ -115,6 +115,12 @@ export interface FreeArt {
   description: string
   longDescription?: string
   previewImage: string
+  /**
+   * The card image cropped to the hero wall's own 4:5, so every print is the same shape there and
+   * nothing is cut at render time. Honours the hotspot set in Studio, which is the control for what
+   * survives the crop on a landscape artwork.
+   */
+  heroImage?: string
   previewImageOrientation?: ImageOrientation
   detailImage?: string
   galleryImages?: GalleryImage[]
@@ -140,6 +146,7 @@ const PRODUCT_PROJECTION = `
   description,
   longDescription,
   previewImage {
+    ...,
     asset->{
       _id,
       url,
@@ -204,6 +211,9 @@ function toFreeArt(product: SanityProduct): FreeArt {
     description: product.description,
     longDescription: product.longDescription,
     previewImage: previewImageUrl,
+    heroImage: product.previewImage
+      ? urlFor(product.previewImage).width(800).height(1000).fit("crop").url()
+      : undefined,
     previewImageOrientation,
     detailImage: product.detailImage
       ? urlFor(product.detailImage).width(1200).height(1600).url()

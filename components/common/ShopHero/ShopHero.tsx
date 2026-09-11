@@ -38,22 +38,21 @@ export default function ShopHero({ items }: ShopHeroProps) {
                       !single && i % 2 === 1 ? "mt-6 sm:mt-10" : ""
                     }`}
                   >
-                    {/* A mat around the print, and object-contain inside it. These previews are not
-                        one shape: the shop print is 3:4 and the free ones are square, and cover was
-                        cutting 20% off both sides of every square one. Contain shows the whole
-                        image, the padding keeps it off the edges, and `fill` ignores padding, so
-                        the mat has to be the outer element. */}
-                    <div className="bg-card p-3 sm:p-4">
-                      <div className="relative aspect-[4/5] overflow-hidden">
-                        <Image
-                          src={item.previewImage}
-                          alt={item.title}
-                          fill
-                          priority={i < 2}
-                          sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
-                          className="object-contain"
-                        />
-                      </div>
+                    {/* heroImage is already cropped to this box's 4:5 by Sanity, honouring the
+                        hotspot set in Studio, so every print is the same shape and cover cuts
+                        nothing. The previews themselves are a mix of square, portrait and landscape;
+                        cropping them here rather than at render is what Juniqe does and is the only
+                        thing that makes a row of them look deliberate. Falls back to the raw preview
+                        for anything that has not been through the pipeline. */}
+                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                      <Image
+                        src={item.heroImage || item.previewImage}
+                        alt={item.title}
+                        fill
+                        priority={i < 2}
+                        sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
+                        className="object-cover"
+                      />
                     </div>
                   </Link>
                 );

@@ -44,7 +44,7 @@ export interface ArtCardProps {
    * a clickable swatch inside it would be an anchor inside an anchor.
    */
   versions?: { label: string; imageUrl?: string }[];
-  /** what a version is called in the shop's own words, e.g. "Version" -> "2 versions". */
+  /** what a version is called in the shop's own words, e.g. "Version" -> "2 versions available". */
   versionNoun?: string;
 }
 
@@ -124,7 +124,7 @@ export default function ArtCard({
                 ))}
               </span>
               <span className="text-xs text-muted-foreground">
-                {swatches.length} {versionNoun.toLowerCase()}s
+                {swatches.length} {versionNoun.toLowerCase()}s available
               </span>
             </div>
           )}

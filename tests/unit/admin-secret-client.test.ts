@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
  * The module reads `window` at call time, so a small fake browser is enough; the vitest
  * environment is node.
  */
-function fakeBrowser(prompts: (string | null)[]) {
+function fakeBrowser(prompts: (string | null)[], hostname = "www.thepixelprince.com") {
   const store = new Map<string, string>();
   const asked: string[] = [];
   const sessionStorage = {
@@ -16,14 +16,21 @@ function fakeBrowser(prompts: (string | null)[]) {
     asked.push(message);
     return prompts.length ? prompts.shift()! : null;
   };
-  vi.stubGlobal("window", { prompt });
+  vi.stubGlobal("window", { prompt, location: { hostname } });
   vi.stubGlobal("sessionStorage", sessionStorage);
   return { store, asked };
 }
 
 describe("admin secret", () => {
-  beforeEach(() => vi.resetModules());
-  afterEach(() => vi.unstubAllGlobals());
+  // these cover the path where the gate is up; the dev bypass has its own case at the end
+  beforeEach(() => {
+    vi.resetModules();
+    vi.stubEnv("NODE_ENV", "production");
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
 
   it("asks once and reuses the answer", async () => {
     const { asked, store } = fakeBrowser(["s3cret"]);
@@ -85,6 +92,39 @@ describe("admin secret", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     // and the bad secret is gone, so the next attempt starts clean
     expect(getAdminSecret()).toBe("never used");
+  });
+
+  it("asks for nothing on a dev server at localhost, where the route lets it through", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { asked } = fakeBrowser(["never asked"], "localhost");
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_u: unknown, init: RequestInit) => {
+      sent.push((init.headers as Record<string, string>)["x-admin-secret"]);
+      return new Response("{}", { status: 200 });
+    }));
+    const { adminFetch } = await import("@/lib/admin-secret-client");
+    expect((await adminFetch("/api/x")).status).toBe(200);
+    expect(asked).toHaveLength(0);
+    expect(sent).toEqual([""]);
+  });
+
+  it("does not re-prompt on a dev server when the route rejects anyway", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { asked } = fakeBrowser(["x"], "127.0.0.1");
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { adminFetch } = await import("@/lib/admin-secret-client");
+    expect((await adminFetch("/api/x")).status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(asked).toHaveLength(0);
+  });
+
+  it("still asks on a dev build reached on a LAN address, matching the route", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { asked } = fakeBrowser(["s3cret"], "192.168.1.24");
+    const { getAdminSecret } = await import("@/lib/admin-secret-client");
+    expect(getAdminSecret()).toBe("s3cret");
+    expect(asked).toHaveLength(1);
   });
 
   it("treats a 403 the same as a 401", async () => {

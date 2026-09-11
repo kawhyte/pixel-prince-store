@@ -10,8 +10,23 @@
 
 const KEY = "pp_admin_secret";
 
+/**
+ * True on a dev server, where lib/admin-auth.ts lets local requests through and there is nothing
+ * to type. Kept in step with that file: if one side changes, so must the other.
+ */
+function gateIsDown(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  // optional: a window without a location is not a real browser, and crashing here would take the
+  // whole helper down rather than just falling back to asking for the secret
+  const hostname = typeof window === "undefined" ? undefined : window.location?.hostname;
+  return hostname !== undefined && LOCAL_HOSTS.has(hostname);
+}
+
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1", "0.0.0.0"]);
+
 export function getAdminSecret(): string | null {
   if (typeof window === "undefined") return null;
+  if (gateIsDown()) return "";
   let secret = sessionStorage.getItem(KEY);
   if (!secret) {
     secret = window.prompt("Enter admin secret to use this tool:");
@@ -37,6 +52,7 @@ export async function adminFetch(input: RequestInfo | URL, init: RequestInit = {
 
   const first = await send(getAdminSecret());
   if (first.status !== 401 && first.status !== 403) return first;
+  if (gateIsDown()) return first;
 
   clearAdminSecret();
   const retrySecret = getAdminSecret();

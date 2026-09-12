@@ -28,7 +28,10 @@ export const SHOP_SHIPPING_FAQ = [
     q: "Is a frame included?",
     a: "That depends on the finish you pick. Unframed is the poster on its own, and the sizes match standard off-the-shelf frames if you want to frame it yourself. Framed arrives in a black alder wood frame three quarters of an inch deep, with the hanging hardware already attached. Every size can be framed except 20 by 30.",
   },
-  { q: "What if it arrives damaged?", a: `Email a photo within ${DAMAGE_CLAIM_DAYS} days and we reprint and reship it free.` },
+  {
+    q: "What if it arrives damaged?",
+    a: `Email a photo within ${DAMAGE_CLAIM_DAYS} days of delivery and we reprint and reship it free.`,
+  },
   {
     q: "Can I return it?",
     a: "Prints are made to order, so we cannot take returns for a change of mind. Damaged or misprinted orders are always replaced.",

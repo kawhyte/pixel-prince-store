@@ -2,6 +2,16 @@
 
 export const SUPPORT_EMAIL = "hello@thepixelprince.com";
 export const SUPPORT_RESPONSE = "within 1 business day";
+/**
+ * How long a damaged or misprinted print can be reported, counted **from delivery**, not from the
+ * order (Kenny, 2026-09-11). With a 5 to 11 business day window those are a fortnight apart, and
+ * the difference is only ever noticed during an argument, so every line that quotes this says
+ * "of delivery" out loud.
+ *
+ * 30 matches Fourthwall's own claim window, which is what actually decides the outcome: the
+ * production partner covers the replacement and refuses claims past it. Do not raise this number
+ * without checking theirs first, or the site promises a reprint we would have to fund ourselves.
+ */
 export const DAMAGE_CLAIM_DAYS = 30;
 
 /**

@@ -56,3 +56,25 @@ describe("the size-count sentence tracks the ladder", () => {
     }
   });
 });
+
+describe("the damage claim says what the clock runs from", () => {
+  it("counts from delivery everywhere it is quoted", async () => {
+    const { SHOP_SHIPPING_FAQ } = await import("@/config/shop-copy");
+    const { shopPrintSchema } = await import("@/lib/product-schema");
+    const damage = SHOP_SHIPPING_FAQ.find((f) => /damaged/i.test(f.q))!;
+    // "within 30 days" alone is ambiguous: with a 5 to 11 business day window, delivery and order
+    // date are a fortnight apart, and the gap only ever comes up during an argument.
+    expect(damage.a).toMatch(/\d+ days of delivery/);
+
+    const art = { _id: "a", id: "x", title: "X", artist: "A", description: "d", previewImage: "p", listing: "shop", kind: "single", offers: [], tags: [] };
+    const policy = (shopPrintSchema(art as never).offers as Record<string, Record<string, unknown>> | undefined)?.hasMerchantReturnPolicy;
+    if (policy) expect(String(policy.description)).toMatch(/\d+ days of delivery/);
+  });
+
+  it("keeps the window at what Fourthwall actually honours", async () => {
+    const { DAMAGE_CLAIM_DAYS } = await import("@/config/support");
+    // Fourthwall's own claim window is 30 days from delivery and the production partner funds the
+    // replacement. Promising longer would mean funding it ourselves.
+    expect(DAMAGE_CLAIM_DAYS).toBeLessThanOrEqual(30);
+  });
+});

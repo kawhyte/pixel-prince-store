@@ -46,7 +46,16 @@ export default async function Home() {
     const match = candidates.find((c) => c.previewImage && !usedTileImages.has(c.previewImage));
     if (!match?.previewImage) return [];
     usedTileImages.add(match.previewImage);
-    return [{ slug: collection.slug, label: collection.title, tagline: collection.tagline, image: match.previewImage }];
+    return [{
+      slug: collection.slug,
+      label: collection.title,
+      tagline: collection.tagline,
+      // heroImage, not previewImage: Sanity has already cropped it to this box's 4:5, honouring the
+      // hotspot. The raw previews are a mix of 3:4, 4:5 and square, and `contain` shrank whichever
+      // did not match until it fitted, so one tile's print sat noticeably smaller than its
+      // neighbour's for no reason a visitor could see.
+      image: match.heroImage || match.previewImage,
+    }];
   });
 
   /**
@@ -182,13 +191,16 @@ export default async function Home() {
               href={`/collections/${tile.slug}`}
               className="group relative block w-[270px] shrink-0 snap-start overflow-hidden rounded-md shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:w-[300px]"
             >
-              <div className="relative aspect-[4/5] bg-muted p-5">
+              <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                 <Image
                   src={tile.image}
                   alt={tile.label}
                   fill
                   sizes="300px"
-                  className="object-contain p-1 transition-transform duration-300 group-hover:scale-[1.03]"
+                  // cover, not contain: the source is already cut to this shape, so nothing is
+                  // cropped, and anything that slips through the fallback fills the tile rather
+                  // than floating in it.
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </div>
               <div className="bg-card px-4 py-3">

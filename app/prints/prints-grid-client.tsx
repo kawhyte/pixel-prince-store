@@ -6,6 +6,7 @@ import type { FreeArt } from "@/sanity/lib/client";
 import { cardCommerce } from "@/lib/commerce";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import { cn } from "@/lib/utils";
+import { gridClass, gridSizes } from "@/lib/grid";
 
 interface PrintsGridClientProps {
   prints: FreeArt[];
@@ -71,7 +72,7 @@ export default function PrintsGridClient({ prints, newIds }: PrintsGridClientPro
         </div>
       )}
 
-      <div className="mt-8 grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
+      <div className={`mt-8 ${gridClass(shown.length)}`}>
         {shown.map((art) => {
           const card = cardCommerce(art);
           return (
@@ -85,15 +86,28 @@ export default function PrintsGridClient({ prints, newIds }: PrintsGridClientPro
               badge={isNew.has(art.id) ? "New" : undefined}
               versions={card.versions}
               versionNoun={card.versionNoun}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+              sizes={gridSizes(shown.length)}
             />
           );
         })}
       </div>
 
-      <p className="mt-10 text-center text-sm text-muted-foreground">
-        Showing {shown.length} of {prints.length}
-      </p>
+      {/* Only while a filter is on, and worded as a filter result. "Showing 1 of 4" reads as
+          pagination, as though three more prints were a click away, when it meant one print
+          matched out of four. The way out of the filter belongs here too, next to the count that
+          tells you that you are in one. */}
+      {active !== ALL && (
+        <p className="mt-10 text-center text-sm text-muted-foreground">
+          {shown.length === 1 ? "1 print" : `${shown.length} prints`} in {active}.{" "}
+          <button
+            type="button"
+            onClick={() => setActive(ALL)}
+            className="font-semibold text-sage-500 underline underline-offset-2 hover:text-sage-400"
+          >
+            Show all {prints.length}
+          </button>
+        </p>
+      )}
     </div>
   );
 }

@@ -13,11 +13,44 @@ interface ShopHeroProps {
 }
 
 /**
- * Shop-first hero (PLAN-44): a wall of four framed prints on the left, the offer and one
- * primary CTA on the right. Free prints are the secondary link by decision.
+ * How many prints the hero wall shows. Exported so the page feeding it cannot pick a different
+ * number: it used to slice to four in two files, and the wall silently followed whichever was
+ * smaller.
+ */
+export const HERO_WALL_COUNT = 2;
+
+/**
+ * The prints to hang, preferring one per category.
+ *
+ * Straight "newest first" put the retro controllers next to the retro consoles: same palette,
+ * same grid, same beige, and side by side they read as one picture cut in half. Two prints have
+ * to carry the whole hero, so they need to look like two things. Falls back to plain order once
+ * the categories run out, and never drops an item to satisfy the rule.
+ */
+export function pickHeroWall<T extends { category?: string }>(items: T[], count = HERO_WALL_COUNT): T[] {
+  const picked: T[] = [];
+  const used = new Set<string>();
+  const remaining = [...items];
+  while (picked.length < count && remaining.length > 0) {
+    const i = remaining.findIndex((x) => !used.has((x.category ?? "").toLowerCase()));
+    const take = i >= 0 ? i : 0;
+    const [item] = remaining.splice(take, 1);
+    picked.push(item);
+    used.add((item.category ?? "").toLowerCase());
+  }
+  return picked;
+}
+
+/**
+ * Shop-first hero (PLAN-44): a wall of prints on the left, the offer and one primary CTA on the
+ * right. Free prints are the secondary link by decision.
+ *
+ * Two prints, not four (Kenny, 2026-09-15). The grid is two columns either way, so this is one
+ * row rather than two and the images are the same width; what changes is that the hero stops
+ * competing with the best-sellers grid directly under it.
  */
 export default function ShopHero({ items }: ShopHeroProps) {
-  const wall = items.slice(0, 4);
+  const wall = pickHeroWall(items, HERO_WALL_COUNT);
   // one print fills the panel rather than sitting in half an empty grid
   const single = wall.length === 1;
 
@@ -53,7 +86,7 @@ export default function ShopHero({ items }: ShopHeroProps) {
                         src={item.heroImage || item.previewImage}
                         alt={item.title}
                         fill
-                        priority={i < 2}
+                        priority
                         sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
                         className="object-cover"
                       />

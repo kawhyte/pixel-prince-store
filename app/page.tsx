@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ChevronRight, Truck, Clock, ShieldCheck, Star, PenTool, Layers, Heart } from "lucide-react";
 
-import ShopHero from "@/components/common/ShopHero/ShopHero";
+import ShopHero, { HERO_WALL_COUNT } from "@/components/common/ShopHero/ShopHero";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import Testimonials from "@/components/common/Testimonials/Testimonials";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
@@ -30,8 +30,12 @@ export default async function Home() {
   const bestSellers = [...shopPrints]
     .sort((a, b) => (b.sales ?? 0) - (a.sales ?? 0) || (b.createdAt > a.createdAt ? 1 : -1))
     .slice(0, 8);
-  // The wall holds four. Shop prints lead and free prints top it up, so it never shows gaps.
-  const heroItems = [...shopPrints, ...freePrints.filter((f) => !shopPrints.some((s) => s.id === f.id))].slice(0, 4);
+  // Shop prints lead and free prints top the wall up, so it never shows gaps. The count lives in
+  // the hero itself; a couple of spares here cover a print being unpublished between the two.
+  const heroItems = [...shopPrints, ...freePrints.filter((f) => !shopPrints.some((s) => s.id === f.id))].slice(
+    0,
+    HERO_WALL_COUNT + 2,
+  );
   const freeRow = freePrints.slice(0, 12);
 
   // A tile shows a print from its own collection or nothing: borrowing an unrelated print

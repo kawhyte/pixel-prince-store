@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
 import { cardCommerce } from "@/lib/commerce";
+import { gridClass, gridSizes } from "@/lib/grid";
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { COLLECTIONS, getCollection, matchProductsToCollection } from "@/config/collections";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
@@ -37,11 +38,21 @@ export default async function CollectionPage({ params }: PageProps) {
   if (!collection) notFound();
 
   const [products, shopPrints] = await Promise.all([getAllProducts(), getShopPrints()]);
-  // Shop prints first, then the free library.
-  const matchedProducts = [
-    ...matchProductsToCollection(shopPrints, collection),
-    ...matchProductsToCollection(products, collection),
-  ];
+  /**
+   * Two grids, not one (Kenny, 2026-09-15).
+   *
+   * Mixed together, three cards reading FREE sat beside one reading "From $23.99" and got identical
+   * treatment, which is the shop competing with itself at the moment someone is deciding to buy.
+   * The free prints are lead magnets: they belong on the page, below, framed as a bonus rather than
+   * as a cheaper alternative to the thing being sold.
+   *
+   * It also settles the ragged rows. Shop previews are portrait room photos and the free library is
+   * square flat art, and no single grid shape suits both; split, each grid is uniform and nothing
+   * has to be cropped to make it so.
+   */
+  const paidPrints = matchProductsToCollection(shopPrints, collection);
+  const freePrints = matchProductsToCollection(products, collection);
+  const matchedProducts = [...paidPrints, ...freePrints];
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -61,7 +72,9 @@ export default async function CollectionPage({ params }: PageProps) {
       />
 
       <main className="container mx-auto px-4 py-12 sm:py-16">
-        <div className="max-w-3xl">
+        {/* Wider than the 3xl the body copy below uses: the lead sits alone under the h1 with the
+            whole page width beside it, so a narrow measure left it looking like a stray column. */}
+        <div className="max-w-5xl">
           <h1 className="text-4xl font-bold text-charcoal lg:text-5xl">
             {collection.title}
           </h1>
@@ -103,29 +116,68 @@ export default async function CollectionPage({ params }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
-              {matchedProducts.map((art) => {
-                const card = cardCommerce(art);
-                return (
-                  <ArtCard
-                    key={art.id}
-                    art={art}
-                    href={card.href}
-                    subtitle={art.category}
-                    meta={card.meta}
-                    value={card.value}
-                    versions={card.versions}
-                    versionNoun={card.versionNoun}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                  />
-                );
-              })}
-            </div>
+            <>
+              {paidPrints.length > 0 && (
+                <div className={gridClass(paidPrints.length)}>
+                  {paidPrints.map((art) => {
+                    const card = cardCommerce(art);
+                    return (
+                      <ArtCard
+                        key={art.id}
+                        art={art}
+                        href={card.href}
+                        subtitle={art.category}
+                        meta={card.meta}
+                        value={card.value}
+                        versions={card.versions}
+                        versionNoun={card.versionNoun}
+                        aspect="aspect-[4/5]"
+                        sizes={gridSizes(paidPrints.length)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              {freePrints.length > 0 && (
+                <section className={paidPrints.length > 0 ? "mt-16 border-t border-border pt-12" : ""}>
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-sage-500">
+                    Also free to download
+                  </h2>
+                  <p className="mt-2 text-soft-charcoal">
+                    Print these at home, no charge. A new one lands every month.
+                  </p>
+                  {/* Square: the free library is flat artwork on a square canvas, and a 4:5 grid
+                      would crop the art itself rather than a photo's background. */}
+                  <div className={`mt-8 ${gridClass(freePrints.length)}`}>
+                    {freePrints.map((art) => {
+                      const card = cardCommerce(art);
+                      return (
+                        <ArtCard
+                          key={art.id}
+                          art={art}
+                          href={card.href}
+                          subtitle={art.category}
+                          meta={card.meta}
+                          value={card.value}
+                          versions={card.versions}
+                          versionNoun={card.versionNoun}
+                          aspect="aspect-square"
+                          sizes={gridSizes(freePrints.length)}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </>
           )}
         </div>
 
         {collection.intro.length > 1 && (
-          <section className="mt-20 max-w-3xl">
+          // Same width as the lead above: these are the same voice continuing, and a narrower
+          // measure here made the page look like it changed its mind halfway down.
+          <section className="mt-20 max-w-5xl">
             <h2 className="text-2xl font-semibold text-charcoal">About {collection.title.toLowerCase()}</h2>
             <div className="mt-6 space-y-4">
               {collection.intro.slice(1).map((paragraph, i) => (

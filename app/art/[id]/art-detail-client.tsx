@@ -205,6 +205,7 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
             <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-14">
               {relatedArt.slice(0, 3).map((relatedItem) => (
                 <ArtCard
+                  aspect="aspect-square"
                   key={relatedItem.id}
                   art={relatedItem}
                   href={`/art/${relatedItem.id}`}

@@ -90,6 +90,7 @@ export default function FreeDownloadsClient({ products }: FreeDownloadsClientPro
           <div className="grid gap-y-8 gap-x-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-10 lg:gap-x-14 xl:grid-cols-4">
             {products.map((art) => (
               <ArtCard
+                aspect="aspect-square"
                 key={art.id}
                 art={art}
                 href={`/art/${art.id}`}

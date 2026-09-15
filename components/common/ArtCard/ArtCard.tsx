@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { getGridCardAspectClass } from "@/lib/image-utils";
 import type { ImageOrientation } from "@/lib/image-utils";
 
 /**
@@ -18,6 +17,8 @@ import type { ImageOrientation } from "@/lib/image-utils";
 export interface ArtCardArt {
   title: string;
   previewImage: string;
+  /** the preview already cut to 4:5 by Sanity, honouring the hotspot. Preferred when present. */
+  heroImage?: string;
   previewImageOrientation?: ImageOrientation;
   /** the single schema-enforced hero print: draws a notched "Featured" tab. */
   featured?: boolean;
@@ -28,6 +29,15 @@ export interface ArtCardProps {
   href: string;
   /** next/image sizes attr: required; callers pass values matching their grid. */
   sizes: string;
+  /**
+   * The shape every card in this grid takes, as a Tailwind aspect class.
+   *
+   * One shape per grid, not one per card. The card used to read its own image's orientation, so a
+   * row holding a portrait room photo and a square flat artwork stepped, and the taller card
+   * dragged its neighbours' titles out of line. Grids pass the shape that suits what they hold:
+   * 4:5 for shop photos, square for the free library's flat art.
+   */
+  aspect?: string;
   /** quiet subtitle line under the title (e.g. category). */
   subtitle?: string;
   /** small chip over the image's top-left (Juniqe-style). */
@@ -59,11 +69,12 @@ export default function ArtCard({
   footer,
   versions,
   versionNoun = "version",
+  aspect = "aspect-[4/5]",
 }: ArtCardProps) {
   const swatches = versions && versions.length > 1 ? versions : undefined;
-  const aspectClass = art.previewImageOrientation
-    ? getGridCardAspectClass(art.previewImageOrientation.orientation)
-    : "aspect-[2/3]";
+  // heroImage is already cut to 4:5 by Sanity, honouring the hotspot set in Studio, so a 4:5 grid
+  // crops nothing at render. The raw preview is the fallback for anything not through that pipeline.
+  const imageUrl = (aspect === "aspect-[4/5]" && art.heroImage) || art.previewImage;
 
   return (
     <div className="group min-w-0">
@@ -72,10 +83,10 @@ export default function ArtCard({
         className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sage-500 focus-visible:ring-offset-2"
       >
         <div
-          className={`relative ${aspectClass} overflow-hidden rounded-md bg-muted shadow-card transition-shadow duration-200 group-hover:shadow-card-hover`}
+          className={`relative ${aspect} overflow-hidden rounded-md bg-muted shadow-card transition-shadow duration-200 group-hover:shadow-card-hover`}
         >
           <Image
-            src={art.previewImage}
+            src={imageUrl}
             alt={art.title}
             fill
             className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"

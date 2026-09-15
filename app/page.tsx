@@ -9,6 +9,7 @@ import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm
 import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
 import { COLLECTIONS, matchProductsToCollection } from "@/config/collections";
 import { cardCommerce, isNewPrint } from "@/lib/commerce";
+import { gridClass, gridSizes } from "@/lib/grid";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
 import { SHOP_PROMO } from "@/config/shop-copy";
 
@@ -58,29 +59,6 @@ export default async function Home() {
     }];
   });
 
-  /**
-   * The `sizes` hint has to follow rowClass below, or the browser asks for the wrong width. With one
-   * or two cards the row is a fixed max-width, not a fraction of the viewport, and calling it 25vw
-   * under-states it and fetches an image too small for the box.
-   */
-  const rowSizes = (count: number) =>
-    count >= 4
-      ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-      : count === 3
-        ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        : count === 2
-          ? "(max-width: 640px) 100vw, 384px"
-          : "(max-width: 640px) 100vw, 384px";
-
-  // Rows are built for four cards. With fewer, widen them instead of leaving holes.
-  const rowClass = (count: number) =>
-    count >= 4
-      ? "mt-8 grid gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12 lg:grid-cols-4"
-      : count === 3
-        ? "mt-8 grid gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12 lg:grid-cols-3"
-        : count === 2
-          ? "mt-8 grid max-w-3xl gap-y-6 gap-x-8 sm:grid-cols-2 md:gap-y-8 md:gap-x-12"
-          : "mt-8 grid max-w-sm gap-6";
 
   return (
     <main className="min-h-screen">
@@ -129,7 +107,7 @@ export default async function Home() {
             <p className="mt-2 text-sm text-soft-charcoal">Until then, every print in the free library costs nothing.</p>
           </div>
         ) : (
-          <div className={rowClass(bestSellers.length)}>
+          <div className={`mt-8 ${gridClass(bestSellers.length)}`}>
             {bestSellers.map((art) => {
               const card = cardCommerce(art);
               return (
@@ -143,7 +121,7 @@ export default async function Home() {
                   badge={isNewPrint(art.createdAt) ? "New" : undefined}
                   versions={card.versions}
                   versionNoun={card.versionNoun}
-                  sizes={rowSizes(bestSellers.length)}
+                  sizes={gridSizes(bestSellers.length)}
                 />
               );
             })}
@@ -239,7 +217,7 @@ export default async function Home() {
           <div className="-mx-4 mt-8 flex snap-x gap-5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {freeRow.map((art) => (
               <div key={art.id} className="w-[250px] shrink-0 snap-start sm:w-[270px]">
-                <ArtCard art={art} href={`/art/${art.id}`} subtitle={art.category} sizes="270px" />
+                <ArtCard art={art} href={`/art/${art.id}`} subtitle={art.category} aspect="aspect-square" sizes="270px" />
               </div>
             ))}
           </div>

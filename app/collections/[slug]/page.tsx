@@ -65,13 +65,13 @@ export default async function CollectionPage({ params }: PageProps) {
           <h1 className="text-4xl font-bold text-charcoal lg:text-5xl">
             {collection.title}
           </h1>
-          <div className="mt-6 space-y-4">
-            {collection.intro.map((paragraph, i) => (
-              <p key={i} className="leading-relaxed text-soft-charcoal">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          {/* The lead only. Four paragraphs pushed every product below the fold, and the reader
+              who wanted to see the art had to scroll past 200 words to reach it. The rest is still
+              on the page, under the grid, where it does the same job for search without standing
+              between a shopper and the thing they came for. */}
+          {collection.intro[0] && (
+            <p className="mt-6 text-lg leading-relaxed text-soft-charcoal">{collection.intro[0]}</p>
+          )}
         </div>
 
         <div className="mt-12">
@@ -123,6 +123,19 @@ export default async function CollectionPage({ params }: PageProps) {
             </div>
           )}
         </div>
+
+        {collection.intro.length > 1 && (
+          <section className="mt-20 max-w-3xl">
+            <h2 className="text-2xl font-semibold text-charcoal">About {collection.title.toLowerCase()}</h2>
+            <div className="mt-6 space-y-4">
+              {collection.intro.slice(1).map((paragraph, i) => (
+                <p key={i} className="leading-relaxed text-soft-charcoal">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-20 rounded-md bg-sage-50 p-8">
           <h2 className="text-2xl font-semibold text-charcoal">

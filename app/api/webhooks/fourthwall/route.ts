@@ -29,15 +29,23 @@ export const runtime = "nodejs";
 const LOG = "[FW-WEBHOOK]";
 
 export async function POST(request: NextRequest) {
-  const secret = process.env.FOURTHWALL_WEBHOOK_SECRET;
+  // Trimmed: a secret pasted into a dashboard field arrives with a trailing newline often enough
+  // that it is worth ruling out, and a real secret never has surrounding whitespace.
+  const secret = process.env.FOURTHWALL_WEBHOOK_SECRET?.trim();
   if (!secret) {
     console.error(`${LOG} FOURTHWALL_WEBHOOK_SECRET not configured`);
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
 
   const rawBody = await request.text();
-  if (!verifyFourthwallSignature(rawBody, request.headers.get(FOURTHWALL_SIGNATURE_HEADER), secret)) {
-    console.warn(`${LOG} invalid signature`);
+  const signature = request.headers.get(FOURTHWALL_SIGNATURE_HEADER);
+  if (!verifyFourthwallSignature(rawBody, signature, secret)) {
+    // Lengths and shape only, never the values: enough to tell a wrong secret (both look like
+    // signatures, neither matches) from a missing header or a body read the wrong way.
+    console.warn(
+      `${LOG} invalid signature: header=${signature ? `${signature.trim().length}ch` : "absent"}` +
+        ` secret=${secret.length}ch body=${rawBody.length}b`,
+    );
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

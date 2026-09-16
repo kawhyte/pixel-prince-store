@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { generateMetadata as buildMetadata } from "@/lib/seo";
 import { LICENSE_SUMMARY } from "@/config/license";
-import { ORDER_PROCESSOR, ORDER_PROCESSOR_TERMS_URL } from "@/config/support";
+import { ORDER_PROCESSOR, ORDER_PROCESSOR_TERMS_URL, SUPPORT_EMAIL } from "@/config/support";
 
 export const metadata = buildMetadata({
   title: "Terms of Use",
@@ -117,8 +117,8 @@ export default function TermsPage() {
         </h2>
         <p className="text-soft-charcoal">
           Questions? Email{" "}
-          <a href="mailto:hello@thepixelprince.com" className="underline hover:text-sage-500">
-            hello@thepixelprince.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline hover:text-sage-500">
+            {SUPPORT_EMAIL}
           </a>
           . See also our{" "}
           <Link href="/privacy" className="underline hover:text-sage-500">

@@ -1,5 +1,8 @@
 import { Resend } from "resend";
 import { renderBrandedEmail, escapeHtml } from "./email-template";
+// Replies go to an inbox that exists. The From address has to stay on the verified domain, and
+// hitting Reply on it used to bounce, which is both a lost customer and a deliverability signal.
+import { SUPPORT_EMAIL } from "@/config/support";
 
 export interface EmailProvider {
   addToAudience(email: string): Promise<void>;
@@ -39,6 +42,7 @@ export const emailProvider: EmailProvider = {
     });
     await resendClient().emails.send({
       from: FROM,
+      replyTo: SUPPORT_EMAIL,
       to,
       subject: `Your free print: ${artTitle}`,
       html,
@@ -58,6 +62,7 @@ export const emailProvider: EmailProvider = {
     });
     await resendClient().emails.send({
       from: FROM,
+      replyTo: SUPPORT_EMAIL,
       to,
       subject: "Welcome: here's how the free prints work",
       html,

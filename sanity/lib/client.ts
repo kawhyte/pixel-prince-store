@@ -304,7 +304,15 @@ export async function getAllProducts(): Promise<FreeArt[]> {
  * worse than no link: someone clicked it wanting to buy.
  */
 export async function getShopSetCount(): Promise<number> {
-  return client.fetch<number>(`count(*[${SHOP_FILTER} && kind == "set"])`)
+  // Never throws. This runs in the root layout, so an unreachable Sanity took the whole site down
+  // with it: a connect timeout here 500'd every page, /privacy and /terms included, for the sake
+  // of one optional nav link. Nothing here is worth an outage, so a failure just hides the link.
+  try {
+    return await client.fetch<number>(`count(*[${SHOP_FILTER} && kind == "set"])`)
+  } catch (error) {
+    console.error('[SANITY] getShopSetCount failed, hiding the Sets link:', error)
+    return 0
+  }
 }
 
 export async function getShopPrints(): Promise<FreeArt[]> {

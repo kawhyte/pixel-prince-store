@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ETSY_MAIN_SHOP, etsyUrl } from "@/config/links";
+import { SUPPORT_EMAIL } from "@/config/support";
 import EtsyLink from "@/components/common/EtsyLink/EtsyLink";
 import Wordmark from "@/components/common/Wordmark/Wordmark";
 
@@ -112,7 +113,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:hello@thepixelprince.com" className={linkClass}>
+                <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>
                   Contact
                 </a>
               </li>

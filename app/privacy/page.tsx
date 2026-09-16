@@ -1,5 +1,5 @@
 import { generateMetadata as buildMetadata } from "@/lib/seo";
-import { ORDER_PROCESSOR, ORDER_PROCESSOR_PRIVACY_URL } from "@/config/support";
+import { ORDER_PROCESSOR, ORDER_PROCESSOR_PRIVACY_URL, SUPPORT_EMAIL } from "@/config/support";
 
 export const metadata = buildMetadata({
   title: "Privacy Policy",
@@ -74,8 +74,8 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-soft-charcoal">
           Every marketing email includes an unsubscribe link. You can also email{" "}
-          <a href="mailto:hello@thepixelprince.com" className="underline hover:text-sage-500">
-            hello@thepixelprince.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline hover:text-sage-500">
+            {SUPPORT_EMAIL}
           </a>{" "}
           at any time to request that your data be deleted, in line with GDPR and CCPA.
         </p>
@@ -97,8 +97,8 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-soft-charcoal">
           Questions about this policy? Email{" "}
-          <a href="mailto:hello@thepixelprince.com" className="underline hover:text-sage-500">
-            hello@thepixelprince.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline hover:text-sage-500">
+            {SUPPORT_EMAIL}
           </a>
           .
         </p>

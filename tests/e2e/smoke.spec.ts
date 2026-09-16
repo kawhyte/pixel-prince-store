@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { SUPPORT_EMAIL } from "../../config/support";
 
 test("home page renders nav and free-downloads link", async ({ page }) => {
   await page.goto("/");
@@ -86,7 +87,9 @@ test("basketball hub renders waitlist and faq", async ({ page }) => {
 test("shipping and returns page renders", async ({ page }) => {
   await page.goto("/shipping-returns");
   await expect(page.locator("main, body").getByRole("heading", { level: 1, name: /Shipping and returns/i })).toBeVisible();
-  await expect(page.locator('a[href="mailto:hello@thepixelprince.com"]').first()).toBeVisible();
+  // From the config, not typed here: the address was hardcoded in five places and every one of
+  // them kept pointing at a mailbox that hard-bounced after the config was fixed.
+  await expect(page.locator(`a[href="mailto:${SUPPORT_EMAIL}"]`).first()).toBeVisible();
   await expect(page.locator("details").first()).toBeVisible();
 });
 

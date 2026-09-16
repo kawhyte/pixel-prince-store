@@ -1,6 +1,17 @@
 /** Support and order-handling facts used by the shop pages, policy page, terms and privacy (PLAN-39). */
 
-export const SUPPORT_EMAIL = "hello@thepixelprince.com";
+/**
+ * Where a customer reaches Kenny. It must be an address that actually receives.
+ *
+ * hello@thepixelprince.com was here and **did not exist**: a test send on 2026-09-16 came back
+ * "554 5.7.1 Recipient address rejected: user hello@thepixelprince.com does not exist". Every
+ * mailto on the site pointed at a black hole, damage claims included. The Gmail address is the
+ * one Fourthwall already forwards to, so it works today with nothing to set up.
+ *
+ * [KENNY: create hello@ as a forward in Hover when you want the branded address back. Put it here
+ * only after a test send to it lands, not before.]
+ */
+export const SUPPORT_EMAIL = "pixelprince87@gmail.com";
 export const SUPPORT_RESPONSE = "within 1 business day";
 /**
  * How long a damaged or misprinted print can be reported, counted **from delivery**, not from the

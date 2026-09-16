@@ -142,6 +142,7 @@ export interface SanityProduct {
   members?: SetMember[]
   tags?: string[]
   rooms?: string[]
+  roomTile?: boolean
   category?: string
   downloads?: number
   sales?: number
@@ -177,6 +178,8 @@ export interface FreeArt {
   tags: string[]
   /** rooms picked in Studio; empty means "place me by my tags" (config/collections.ts) */
   rooms?: string[]
+  /** pinned in Studio as the photo for its room tiles, ahead of whatever is newest */
+  roomTile?: boolean
   category?: string
   downloads?: number
   sales?: number
@@ -228,6 +231,7 @@ const PRODUCT_PROJECTION = `
   },
   tags,
   rooms,
+  roomTile,
   category,
   downloads,
   sales,
@@ -283,6 +287,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     ...(product.members?.length ? { members: product.members } : {}),
     tags: product.tags || [],
     ...(product.rooms?.length ? { rooms: product.rooms } : {}),
+    ...(product.roomTile ? { roomTile: true } : {}),
     category: product.category,
     downloads: product.downloads || 0,
     sales: product.sales || 0,

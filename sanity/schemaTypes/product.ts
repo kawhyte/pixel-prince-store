@@ -304,6 +304,16 @@ export const product = defineType({
       },
     }),
     defineField({
+      name: 'roomTile',
+      title: 'Use as the room tile',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'Keep this print as the photo on its room tiles on the homepage. Without it the newest print in a room wins, so every new listing takes the tile over. Only the rooms ticked above are affected, and if two pinned prints share a room the newer one shows.',
+      group: 'shop',
+      hidden: ({ document }) => !isShop(document),
+    }),
+    defineField({
       name: 'featured',
       title: 'Featured Free Print of the Month',
       type: 'boolean',

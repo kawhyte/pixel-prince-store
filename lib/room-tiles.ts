@@ -11,6 +11,7 @@ type Tileable = {
   tags?: string[];
   category?: string;
   rooms?: string[];
+  roomTile?: boolean;
   heroImage?: string;
   previewImage?: string;
 };
@@ -24,6 +25,10 @@ type Tileable = {
  * reappears on its own the moment a print that suits it is published, with nothing to change in code.
  * Its page stays live and in the sitemap either way.
  *
+ * Which print faces a room: one pinned in Studio ("Use as the room tile"), else the newest, since
+ * shopPrints arrives newest first. Without the pin every new listing takes over the tile of every
+ * room it lands in, which is fine until a print with a weak room photo grabs one.
+ *
  * heroImage, not previewImage: Sanity has already cropped it to this box's 4:5, honouring the
  * hotspot. It is also what the dedupe has to compare, since two prints can differ by preview and
  * still render the same hero here.
@@ -32,7 +37,8 @@ export function roomTiles<T extends Tileable>(shopPrints: T[]): RoomTile[] {
   const used = new Set<string>();
 
   return COLLECTIONS.filter((c) => c.room).flatMap((collection) => {
-    const match = matchProductsToCollection(shopPrints, collection).find((p) => {
+    const matches = matchProductsToCollection(shopPrints, collection);
+    const match = [...matches.filter((p) => p.roomTile), ...matches.filter((p) => !p.roomTile)].find((p) => {
       const image = p.heroImage || p.previewImage;
       return image ? !used.has(image) : false;
     });

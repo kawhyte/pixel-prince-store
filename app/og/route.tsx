@@ -11,7 +11,9 @@ import { ImageResponse } from "next/og";
  * without art of its own falls back to, and a fallback that can fail is not one. Pages that do have
  * art (a print, a free download) keep their own opengraph-image route and never reach this.
  */
-export const runtime = "edge";
+// Nodejs, not edge: the edge runtime is deprecated in Next 16 and it also opts the route out of
+// static generation. This image never changes, so it should be built once and cached.
+export const dynamic = "force-static";
 
 const SIZE = { width: 1200, height: 630 };
 

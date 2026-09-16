@@ -43,23 +43,27 @@ export default async function Home() {
   );
   const freeRow = freePrints.slice(0, 12);
 
-  // A tile shows a print from its own collection or nothing: borrowing an unrelated print
-  // put the same image on all three tiles while the shop held one print.
+  // Rooms only. The band says "browse by the room it is going in", so the theme collections
+  // (retro gaming, maps, printable) no longer sit in it; they keep their pages and their sitemap
+  // entries. A tile shows a print from its own collection or nothing: borrowing an unrelated
+  // print put the same image on several tiles while the shop held one print.
   const usedTileImages = new Set<string>();
-  const tiles = COLLECTIONS.flatMap((collection) => {
+  const tiles = COLLECTIONS.filter((c) => c.room).flatMap((collection) => {
     const candidates = [...matchProductsToCollection(shopPrints, collection), ...matchProductsToCollection(freePrints, collection)];
-    const match = candidates.find((c) => c.previewImage && !usedTileImages.has(c.previewImage));
-    if (!match?.previewImage) return [];
-    usedTileImages.add(match.previewImage);
+    // heroImage, not previewImage: Sanity has already cropped it to this box's 4:5, honouring the
+    // hotspot. The raw previews are a mix of 3:4, 4:5 and square, and `contain` shrank whichever
+    // did not match until it fitted, so one tile's print sat noticeably smaller than its
+    // neighbour's for no reason a visitor could see. It is also what the dedupe has to compare:
+    // two prints can differ by preview and still render the same hero here.
+    const match = candidates.find((c) => (c.heroImage || c.previewImage) && !usedTileImages.has(c.heroImage || c.previewImage!));
+    const image = match?.heroImage || match?.previewImage;
+    if (!image) return [];
+    usedTileImages.add(image);
     return [{
       slug: collection.slug,
-      label: collection.title,
+      label: collection.room!,
       tagline: collection.tagline,
-      // heroImage, not previewImage: Sanity has already cropped it to this box's 4:5, honouring the
-      // hotspot. The raw previews are a mix of 3:4, 4:5 and square, and `contain` shrank whichever
-      // did not match until it fitted, so one tile's print sat noticeably smaller than its
-      // neighbour's for no reason a visitor could see.
-      image: match.heroImage || match.previewImage,
+      image,
     }];
   });
 
@@ -164,7 +168,7 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <Eyebrow>Explore</Eyebrow>
           <h2 className="mt-2 text-[28px] font-semibold tracking-tight text-charcoal">Find your wall</h2>
-          <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in, or the thing you love.</p>
+          <p className="mt-2 max-w-2xl text-soft-charcoal">Browse by the room it is going in.</p>
         </div>
         <div className="mt-8 flex snap-x gap-5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:container lg:mx-auto [&::-webkit-scrollbar]:hidden">
           {tiles.map((tile) => (

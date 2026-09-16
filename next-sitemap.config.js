@@ -22,6 +22,9 @@ module.exports = {
     // Keep in sync with config/collections.ts COLLECTIONS slugs.
     const collectionSlugs = [
       'game-room-wall-art',
+      'entryway-wall-art',
+      'office-wall-art',
+      'bedroom-wall-art',
       'retro-gaming-prints',
       'map-prints',
       'printable-wall-art',

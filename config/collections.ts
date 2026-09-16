@@ -7,12 +7,18 @@ export interface CollectionDef {
   matchTags: string[]; // product matches if any tag or category (lowercased) includes one of these
   faq: { q: string; a: string }[]; // 3–5 entries
   comingSoon?: boolean; // when true and no products match, render the waitlist empty state
+  // Set only on the collections that name a room. The homepage "Find your wall" band is built
+  // from these and shows this label, so it reads as a room ("Game room") while the page keeps
+  // the searchable title ("Game Room Wall Art"). Theme collections leave it unset: they keep
+  // their pages and their place in the sitemap, they just do not sit in that band.
+  room?: string;
 }
 
 export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "game-room-wall-art",
     title: "Game Room Wall Art",
+    room: "Game room",
     tagline: "Art that belongs over the setup",
     metaDescription:
       "Free printable game room wall art plus printed retro gaming posters. Download, print, and level up your setup.",
@@ -35,6 +41,93 @@ export const COLLECTIONS: CollectionDef[] = [
       {
         q: "Is the free game room art really free?",
         a: "Yes. Every size of every piece in this collection is free to download for personal use. You'll be asked for an email address so the file can be sent directly (this also keeps the download link from getting abused), and you'll get one email a month about new free prints. No purchase, no trial, no catch.",
+      },
+    ],
+  },
+  {
+    slug: "entryway-wall-art",
+    title: "Entryway Wall Art",
+    room: "Entryway",
+    tagline: "The first wall anyone sees",
+    metaDescription:
+      "Entryway wall art: city and world map prints for the hallway wall. Free downloads plus printed art shipped free in the US.",
+    intro: [
+      "An entryway is a wall you walk past, not one you sit and look at, and that changes what works on it. There is rarely much light, almost never much space, and whatever hangs there gets seen for about three seconds at a time. Art that rewards a long stare is wasted here. Art with one clear shape, read from six feet away in a hurry, is not.",
+      "Maps are the reliable answer. A city map says where you are from or where you have been without a caption, and the shape does the work before anyone reads a street name. A world map does the same job on a bigger wall. Both hold up in the low, side-on light most hallways get, because the design is line and block rather than fine tonal shading that muddies in shadow.",
+      "Scale is where entryways go wrong most often. A narrow hall wall takes a single 11x14 or 16x20 better than a cluster of small frames, which reads as clutter in a space people move through. If the wall is wide (behind a console table, or opposite the door), one 16x20 or a pair at the same size beats a stepped gallery arrangement. Hang the centre at eye level for someone standing, not sitting, which is usually a few inches higher than you would hang art in a living room.",
+      "Frames near a door take knocks, so a simple black or dark wood frame with glass survives better than an open-face or clip frame. Everything in this collection is free to download and print, and the printed versions ship free in the US if you would rather not deal with a print shop.",
+    ],
+    matchTags: ["map", "maps", "city", "world"],
+    faq: [
+      {
+        q: "What size art works in an entryway?",
+        a: "One 11x14 or 16x20 is usually right. Entryways are narrow and people move through them, so a single clear piece reads better than a cluster of small frames, which looks like clutter at walking speed. If the wall is wide enough for two, hang them at matching sizes rather than stepping them.",
+      },
+      {
+        q: "How high should I hang art in a hallway?",
+        a: "Centre the piece at about 60 to 63 inches from the floor, which is eye level for someone standing. That is a few inches higher than you would hang the same print in a living room, where people are usually seated. If it is going above a console table, leave 6 to 8 inches between the table top and the bottom of the frame.",
+      },
+      {
+        q: "Why do maps work so well by the front door?",
+        a: "They read instantly. The outline of a city or a coastline registers before anyone processes a single word, which suits a wall people pass in a few seconds. They are also personal without being a photograph, so they say something about the house without putting your family on display in the first room a guest walks into.",
+      },
+    ],
+  },
+  {
+    slug: "office-wall-art",
+    title: "Office Wall Art",
+    room: "Office",
+    tagline: "Something to look at between meetings",
+    metaDescription:
+      "Office wall art for a home desk or a video-call background: map prints, quotes and minimalist pieces. Free downloads plus printed art.",
+    intro: [
+      "Office art has a job most wall art does not: it sits behind you on video calls, and it sits in front of you all day. Those two things pull in different directions. The camera flattens everything and compresses colour, so busy pieces turn to noise on a call. Meanwhile anything too loud in your eyeline gets tiring by the third hour. What survives both is art with a simple structure and a limited palette.",
+      "Maps, quiet quote prints, and minimalist pieces all fit that description, which is why this collection leans on them. A city map behind a desk gives a call something to land on without competing with your face. A short quote in clean type reads as intentional rather than motivational-poster, as long as the typography does the work instead of a script font. A single minimalist piece, one subject and a lot of empty space, is the most forgiving of all under a webcam.",
+      "For placement, the wall behind a desk usually wants one 16x20 or a pair of 11x14s hung at the same height. Anything smaller disappears on camera. If the art is for your own eyeline instead (the wall you face), you can go smaller and busier, since you are looking at it from three feet rather than through a lens. Avoid glass on the wall directly opposite a window: on calls it turns into a mirror of your monitor.",
+      "Everything here is free to download and print at home. If you want something with more presence for a wall people actually see, the printed versions in this collection ship free in the US.",
+    ],
+    matchTags: ["map", "maps", "city", "world", "quote", "quotes", "minimalist"],
+    faq: [
+      {
+        q: "What art looks good on video calls?",
+        a: "Simple shapes and few colours. Webcams compress detail and flatten contrast, so a busy print turns into visual noise and a subtle one disappears entirely. One 16x20 with a clear subject sits better behind you than three small frames. Skip glass if there is a window opposite your desk, since it will reflect your monitor straight into the call.",
+      },
+      {
+        q: "Where should art go in a home office?",
+        a: "Decide which wall you are decorating first. The wall behind you is for the camera and wants one larger piece hung so the top of the frame sits above your shoulders when seated. The wall you face is for you and can take smaller, more detailed work, since you are viewing it from a few feet away rather than through a lens.",
+      },
+      {
+        q: "Do quote prints look unprofessional?",
+        a: "It depends entirely on the typography. Clean type with generous spacing reads as design. A script font on a distressed background reads as a gift shop. The quote prints here are set as type-led pieces rather than slogans, which is why they hold up on a wall you have to look at every working day.",
+      },
+    ],
+  },
+  {
+    slug: "bedroom-wall-art",
+    title: "Bedroom Wall Art",
+    room: "Bedroom",
+    tagline: "Quiet art above the bed",
+    metaDescription:
+      "Bedroom wall art that stays calm: minimalist prints and quiet quote pieces to download free or order printed, shipped free in the US.",
+    intro: [
+      "A bedroom is the one room where art should not demand attention. It is the first thing you see at 6am and the last thing you see at night, and anything with a strong colour or a busy composition wears out fast in that position. The pieces that last are the quiet ones: a single subject, a soft palette, and enough empty space that your eye can rest rather than work.",
+      "That is why this collection sits on minimalist and type-led pieces instead of bold graphics. A moon, a short line of text, a shape and a lot of room around it. They also happen to survive changing light better than most, since there is no fine detail to be lost when the room is half dark and nothing that turns garish under a warm bedside lamp.",
+      "Above a bed, scale matters more than anywhere else in the house. A single piece should span roughly two thirds of the headboard width, which for a queen means 16x20 or larger. A pair of 11x14s works too, hung with a small, even gap so they read as one block rather than two separate decisions. Leave 6 to 10 inches between the top of the headboard and the bottom of the frame. Hung higher than that, the art floats and stops belonging to the bed.",
+      "One practical note: if anything heavier than a light poster frame is going directly above a pillow, anchor it properly rather than trusting a picture hook. Everything in this collection is free to download and print, and the printed versions ship free in the US.",
+    ],
+    matchTags: ["minimalist", "quote", "quotes", "botanical"],
+    faq: [
+      {
+        q: "What size art goes above a bed?",
+        a: "Aim for the art to span about two thirds of the headboard. Over a queen that means one 16x20 or larger, or a pair of 11x14s hung close together so they read as a single block. Leave 6 to 10 inches between the headboard and the bottom of the frame: any higher and the piece stops looking connected to the bed.",
+      },
+      {
+        q: "What colours work best in a bedroom?",
+        a: "Muted ones. Bedroom art is seen in low light at both ends of the day, so high-saturation colour reads as harsh at night and flat in the morning. Soft neutrals, single accent colours, and plenty of empty space hold up across the full range of light a bedroom actually gets.",
+      },
+      {
+        q: "Is it safe to hang a framed print above the bed?",
+        a: "With the right fixing, yes. Use a wall anchor rated well above the frame's weight rather than a picture hook in plasterboard, and hang from two points instead of one so the frame cannot swing. If you would rather not think about it at all, an unframed print or a lightweight poster frame removes the question entirely.",
       },
     ],
   },

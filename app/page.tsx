@@ -13,6 +13,10 @@ import { gridClass, gridSizes } from "@/lib/grid";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
 import { SHOP_PROMO } from "@/config/shop-copy";
 
+// The homepage reads the catalogue, so it cannot be frozen at build time: without this a print
+// unpublished in Studio kept showing here long after it had gone from every other page.
+export const revalidate = 60;
+
 // Index-aligned with HOME_TRUST and HOME_CALLOUTS (config/home-copy.ts).
 const TRUST_ICONS = [Truck, Clock, ShieldCheck, Star];
 const CALLOUT_ICONS = [PenTool, Layers, Heart];

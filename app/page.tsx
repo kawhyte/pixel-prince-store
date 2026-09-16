@@ -7,9 +7,9 @@ import ArtCard from "@/components/common/ArtCard/ArtCard";
 import Testimonials from "@/components/common/Testimonials/Testimonials";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
-import { COLLECTIONS, matchProductsToCollection, roomLabel } from "@/config/collections";
 import { cardCommerce, isNewPrint } from "@/lib/commerce";
 import { gridClass, gridSizes } from "@/lib/grid";
+import { roomTiles } from "@/lib/room-tiles";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
 import { SHOP_PROMO } from "@/config/shop-copy";
 
@@ -43,29 +43,7 @@ export default async function Home() {
   );
   const freeRow = freePrints.slice(0, 12);
 
-  // Rooms only. The band says "browse by the room it is going in", so the theme collections
-  // (retro gaming, maps, printable) no longer sit in it; they keep their pages and their sitemap
-  // entries. A tile shows a print from its own collection or nothing: borrowing an unrelated
-  // print put the same image on several tiles while the shop held one print.
-  const usedTileImages = new Set<string>();
-  const tiles = COLLECTIONS.filter((c) => c.room).flatMap((collection) => {
-    const candidates = [...matchProductsToCollection(shopPrints, collection), ...matchProductsToCollection(freePrints, collection)];
-    // heroImage, not previewImage: Sanity has already cropped it to this box's 4:5, honouring the
-    // hotspot. The raw previews are a mix of 3:4, 4:5 and square, and `contain` shrank whichever
-    // did not match until it fitted, so one tile's print sat noticeably smaller than its
-    // neighbour's for no reason a visitor could see. It is also what the dedupe has to compare:
-    // two prints can differ by preview and still render the same hero here.
-    const match = candidates.find((c) => (c.heroImage || c.previewImage) && !usedTileImages.has(c.heroImage || c.previewImage!));
-    const image = match?.heroImage || match?.previewImage;
-    if (!image) return [];
-    usedTileImages.add(image);
-    return [{
-      slug: collection.slug,
-      label: roomLabel(collection.room!),
-      tagline: collection.tagline,
-      image,
-    }];
-  });
+  const tiles = roomTiles(shopPrints);
 
 
   return (

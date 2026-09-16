@@ -14,7 +14,20 @@ export interface EmailProvider {
   sendWelcomeEmail(to: string): Promise<void>;
 }
 
-const FROM = process.env.EMAIL_FROM || "The Pixel Prince <hello@thepixelprince.com>";
+/**
+ * Unwrapped: in .env.local this value is quoted, dotenv strips those quotes, and a dashboard that
+ * stores the literal characters does not. A from address carrying quotes is refused by Resend, and
+ * before the wrapper below that refusal was invisible.
+ */
+export function normalizeFrom(value: string | undefined): string {
+  const v = (value ?? "").trim();
+  const unquoted = v.length > 1 && ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+    ? v.slice(1, -1).trim()
+    : v;
+  return unquoted || "The Pixel Prince <hello@thepixelprince.com>";
+}
+
+const FROM = normalizeFrom(process.env.EMAIL_FROM);
 
 function resendClient(): Resend {
   const key = process.env.RESEND_API_KEY;
@@ -22,11 +35,25 @@ function resendClient(): Resend {
   return new Resend(key);
 }
 
+/**
+ * The Resend SDK resolves with `{ data, error }` rather than rejecting, so an awaited send that
+ * failed looks exactly like one that worked. Every call goes through here: a refused send now
+ * throws, the route returns 500 instead of a cheerful ok, and the reason reaches the log.
+ */
+async function sent<T>(what: string, call: Promise<{ data: T | null; error: unknown }>): Promise<T> {
+  const { data, error } = await call;
+  if (error) {
+    const detail = typeof error === "object" && error && "message" in error ? String((error as { message: unknown }).message) : JSON.stringify(error);
+    throw new Error(`Resend refused ${what}: ${detail}`);
+  }
+  return data as T;
+}
+
 export const emailProvider: EmailProvider = {
   async addToAudience(email) {
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) throw new Error("RESEND_AUDIENCE_ID not configured");
-    await resendClient().contacts.create({ email, audienceId, unsubscribed: false });
+    await sent("the audience add", resendClient().contacts.create({ email, audienceId, unsubscribed: false }));
   },
 
   async sendDownloadEmail({ to, artTitle, downloadUrl }) {
@@ -40,13 +67,16 @@ export const emailProvider: EmailProvider = {
         <p style="margin:0;font-size:13px;color:#6b6b6b;"><a href="https://www.thepixelprince.com/prints?utm_source=pixelprince&utm_medium=email&utm_campaign=download" style="color:#c2521f;">Printed prints, shipped free in the US</a></p>`,
       cta: { label: "Download your print", url: downloadUrl },
     });
-    await resendClient().emails.send({
-      from: FROM,
-      replyTo: SUPPORT_EMAIL,
-      to,
-      subject: `Your free print: ${artTitle}`,
-      html,
-    });
+    await sent(
+      `the download email to ${to}`,
+      resendClient().emails.send({
+        from: FROM,
+        replyTo: SUPPORT_EMAIL,
+        to,
+        subject: `Your free print: ${artTitle}`,
+        html,
+      }),
+    );
   },
 
   async sendWelcomeEmail(to) {
@@ -60,12 +90,15 @@ export const emailProvider: EmailProvider = {
           <a href="https://www.thepixelprince.com/prints?utm_source=pixelprince&utm_medium=email&utm_campaign=welcome" style="color:#c2521f;">Browse the prints</a>
         </p>`,
     });
-    await resendClient().emails.send({
-      from: FROM,
-      replyTo: SUPPORT_EMAIL,
-      to,
-      subject: "Welcome: here's how the free prints work",
-      html,
-    });
+    await sent(
+      `the welcome email to ${to}`,
+      resendClient().emails.send({
+        from: FROM,
+        replyTo: SUPPORT_EMAIL,
+        to,
+        subject: "Welcome: here's how the free prints work",
+        html,
+      }),
+    );
   },
 };

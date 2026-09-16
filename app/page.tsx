@@ -7,7 +7,7 @@ import ArtCard from "@/components/common/ArtCard/ArtCard";
 import Testimonials from "@/components/common/Testimonials/Testimonials";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
-import { COLLECTIONS, matchProductsToCollection } from "@/config/collections";
+import { COLLECTIONS, matchProductsToCollection, roomLabel } from "@/config/collections";
 import { cardCommerce, isNewPrint } from "@/lib/commerce";
 import { gridClass, gridSizes } from "@/lib/grid";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
@@ -61,7 +61,7 @@ export default async function Home() {
     usedTileImages.add(image);
     return [{
       slug: collection.slug,
-      label: collection.room!,
+      label: roomLabel(collection.room!),
       tagline: collection.tagline,
       image,
     }];

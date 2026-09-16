@@ -5,6 +5,7 @@ import { HighResAssetInput } from '../components/HighResAssetInput'
 import { DefaultVersionInput } from '../components/DefaultVersionInput'
 import { deriveRatio } from '@/config/print-sizes'
 import { FINISHES } from '@/config/commerce'
+import { ROOMS } from '@/config/collections'
 import { minImageWidth, SHOP_IMAGE_HINT } from '../lib/image-rules'
 import { ImageWithDetails } from '../components/ImageWithDetails'
 
@@ -287,6 +288,19 @@ export const product = defineType({
       group: 'shop',
       options: {
         layout: 'tags',
+      },
+    }),
+    defineField({
+      name: 'rooms',
+      title: 'Rooms',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description:
+        'Which rooms this print belongs in. These are the tiles in "Find your wall" on the homepage, and each one is its own page. Tick every room it genuinely suits — a print can be in several. Leave it empty and the print falls back to being placed by its tags, which is how every print worked before this field existed.',
+      group: 'shop',
+      options: {
+        list: ROOMS.map((r) => ({ title: r.label, value: r.id })),
+        layout: 'grid',
       },
     }),
     defineField({

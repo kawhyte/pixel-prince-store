@@ -25,6 +25,7 @@ module.exports = {
       'entryway-wall-art',
       'office-wall-art',
       'bedroom-wall-art',
+      'dorm-wall-art',
       'retro-gaming-prints',
       'map-prints',
       'printable-wall-art',

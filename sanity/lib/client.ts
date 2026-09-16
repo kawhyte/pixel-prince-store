@@ -141,6 +141,7 @@ export interface SanityProduct {
   offers?: PrintOffer[]
   members?: SetMember[]
   tags?: string[]
+  rooms?: string[]
   category?: string
   downloads?: number
   sales?: number
@@ -174,6 +175,8 @@ export interface FreeArt {
   /** only on `kind: "set"`: the prints sold together here (PLAN-54) */
   members?: SetMember[]
   tags: string[]
+  /** rooms picked in Studio; empty means "place me by my tags" (config/collections.ts) */
+  rooms?: string[]
   category?: string
   downloads?: number
   sales?: number
@@ -224,6 +227,7 @@ const PRODUCT_PROJECTION = `
     }
   },
   tags,
+  rooms,
   category,
   downloads,
   sales,
@@ -278,6 +282,7 @@ function toFreeArt(product: SanityProduct): FreeArt {
     offers: product.offers ?? [],
     ...(product.members?.length ? { members: product.members } : {}),
     tags: product.tags || [],
+    ...(product.rooms?.length ? { rooms: product.rooms } : {}),
     category: product.category,
     downloads: product.downloads || 0,
     sales: product.sales || 0,

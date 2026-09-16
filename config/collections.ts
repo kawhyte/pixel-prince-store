@@ -1,3 +1,22 @@
+/**
+ * The rooms the homepage "Find your wall" band offers, and the list Studio shows on every artwork.
+ * One source so a room cannot exist in Studio without a page behind it, or the other way round.
+ * Adding one here means adding a collection below with the matching `room` id.
+ */
+export const ROOMS = [
+  { id: "game-room", label: "Game room" },
+  { id: "entryway", label: "Entryway" },
+  { id: "office", label: "Office" },
+  { id: "bedroom", label: "Bedroom" },
+  { id: "dorm", label: "Dorm" },
+] as const;
+
+export type RoomId = (typeof ROOMS)[number]["id"];
+
+export function roomLabel(id: RoomId): string {
+  return ROOMS.find((r) => r.id === id)?.label ?? id;
+}
+
 export interface CollectionDef {
   slug: string;
   title: string; // H1 + meta title base
@@ -8,17 +27,17 @@ export interface CollectionDef {
   faq: { q: string; a: string }[]; // 3–5 entries
   comingSoon?: boolean; // when true and no products match, render the waitlist empty state
   // Set only on the collections that name a room. The homepage "Find your wall" band is built
-  // from these and shows this label, so it reads as a room ("Game room") while the page keeps
-  // the searchable title ("Game Room Wall Art"). Theme collections leave it unset: they keep
-  // their pages and their place in the sitemap, they just do not sit in that band.
-  room?: string;
+  // from these and shows the room's label, so it reads as a room ("Game room") while the page
+  // keeps the searchable title ("Game Room Wall Art"). Theme collections leave it unset: they
+  // keep their pages and their place in the sitemap, they just do not sit in that band.
+  room?: RoomId;
 }
 
 export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "game-room-wall-art",
     title: "Game Room Wall Art",
-    room: "Game room",
+    room: "game-room",
     tagline: "Art that belongs over the setup",
     metaDescription:
       "Free printable game room wall art plus printed retro gaming posters. Download, print, and level up your setup.",
@@ -47,7 +66,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "entryway-wall-art",
     title: "Entryway Wall Art",
-    room: "Entryway",
+    room: "entryway",
     tagline: "The first wall anyone sees",
     metaDescription:
       "Entryway wall art: city and world map prints for the hallway wall. Free downloads plus printed art shipped free in the US.",
@@ -76,7 +95,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "office-wall-art",
     title: "Office Wall Art",
-    room: "Office",
+    room: "office",
     tagline: "Something to look at between meetings",
     metaDescription:
       "Office wall art for a home desk or a video-call background: map prints, quotes and minimalist pieces. Free downloads plus printed art.",
@@ -105,7 +124,7 @@ export const COLLECTIONS: CollectionDef[] = [
   {
     slug: "bedroom-wall-art",
     title: "Bedroom Wall Art",
-    room: "Bedroom",
+    room: "bedroom",
     tagline: "Quiet art above the bed",
     metaDescription:
       "Bedroom wall art that stays calm: minimalist prints and quiet quote pieces to download free or order printed, shipped free in the US.",
@@ -128,6 +147,35 @@ export const COLLECTIONS: CollectionDef[] = [
       {
         q: "Is it safe to hang a framed print above the bed?",
         a: "With the right fixing, yes. Use a wall anchor rated well above the frame's weight rather than a picture hook in plasterboard, and hang from two points instead of one so the frame cannot swing. If you would rather not think about it at all, an unframed print or a lightweight poster frame removes the question entirely.",
+      },
+    ],
+  },
+  {
+    slug: "dorm-wall-art",
+    title: "Dorm Wall Art",
+    room: "dorm",
+    tagline: "Nothing that needs a nail",
+    metaDescription:
+      "Dorm wall art you can print at the campus library and hang without nails: gaming prints, quotes and maps. Free downloads plus printed art.",
+    intro: [
+      "Dorm walls come with rules. Most housing contracts ban nails and screws outright, the walls themselves are often cinderblock or freshly patched drywall, and anything you put up has to come down in May without leaving a mark or costing you a deposit. That rules out heavy frames and anything you would want to hang properly, which is exactly why printable art suits a dorm better than almost any other room.",
+      "The practical setup is a file, a campus print shop, and removable strips. Printing an 11x14 at the library costs a few dollars, and a light poster frame or a clean bulldog-clip hanger holds it with two adhesive strips rated well above its weight. If you want the look of a gallery wall without the commitment, print four at 8x10 and grid them; the whole wall comes down in five minutes at move-out.",
+      "For what to put up: a dorm room is small, shared, and already busy with furniture, so one or two clear pieces beat a wall of posters. Gaming prints work over a desk setup, a quote print reads as intentional rather than dorm-standard, and a map of home does a lot of quiet work in a room a long way from it. Avoid anything you will be sick of in a semester, because you will be looking at it from four feet away every day.",
+      "Everything in this collection is free to download in print-resolution files, with the pixel dimensions listed so you know what size you can print before you pay for paper. If you would rather have something that arrives ready to hang, the printed versions ship free in the US.",
+    ],
+    matchTags: ["gaming", "game", "retro", "arcade", "quote", "quotes", "minimalist"],
+    faq: [
+      {
+        q: "How do I hang posters in a dorm without nails?",
+        a: "Removable adhesive strips are the standard answer, and the only rule that matters is to buy a weight rating well above what you are hanging and to press them for the full 30 seconds the packet asks for. Painters tape works for a bare print but yellows and lets go in a warm room. Avoid poster putty on painted drywall: it leaves an oil mark that shows up at inspection.",
+      },
+      {
+        q: "What size art fits a dorm wall?",
+        a: "8x10 or 11x14. Dorm walls are short, often interrupted by a bed frame or a wardrobe, and anything 16x20 or bigger usually cannot be centred on the space that is actually free. If you want more presence, print two or four at 8x10 and hang them as a block rather than going up a size.",
+      },
+      {
+        q: "Where can I print these on campus?",
+        a: "Most campus libraries and print shops handle up to 11x17 on decent stock, which covers every size that suits a dorm wall. Take the file on a drive or email it to yourself, ask for matte cardstock rather than standard paper, and check the print is set to actual size so the aspect ratio does not get squeezed to fit letter paper.",
       },
     ],
   },
@@ -250,14 +298,29 @@ export function getCollection(slug: string): CollectionDef | undefined {
   return COLLECTIONS.find((c) => c.slug === slug);
 }
 
-export function matchProductsToCollection<T extends { tags?: string[]; category?: string }>(
+type Matchable = { tags?: string[]; category?: string; rooms?: string[] };
+
+function matchesTags(art: Matchable, matchTags: string[]): boolean {
+  const haystack = [...(art.tags || []), art.category || ""].map((t) => t.toLowerCase());
+  return matchTags.some((tag) => haystack.some((h) => h.includes(tag)));
+}
+
+export function matchProductsToCollection<T extends Matchable>(
   products: T[],
   collection: CollectionDef
 ): T[] {
   const matchTags = collection.matchTags.map((t) => t.toLowerCase());
+
+  // A room collection: Studio wins. A print that names its rooms goes exactly where it is told,
+  // and one that names none falls back to its tags, so adding a room never empties a tile and
+  // nothing has to be re-tagged before the room works.
+  if (collection.room) {
+    const room: string = collection.room;
+    return products.filter((art) =>
+      art.rooms?.length ? art.rooms.includes(room) : matchesTags(art, matchTags)
+    );
+  }
+
   if (matchTags.length === 0) return products;
-  return products.filter((art) => {
-    const haystack = [...(art.tags || []), art.category || ""].map((t) => t.toLowerCase());
-    return matchTags.some((tag) => haystack.some((h) => h.includes(tag)));
-  });
+  return products.filter((art) => matchesTags(art, matchTags));
 }

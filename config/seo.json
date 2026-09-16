@@ -34,7 +34,7 @@
     "description": "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
     "images": [
       {
-        "url": "/og-image.jpg",
+        "url": "/og",
         "width": 1200,
         "height": 630,
         "alt": "The Pixel Prince | Free retro gaming and map wall art"
@@ -47,7 +47,9 @@
     "creator": "@thepixelprince",
     "title": "The Pixel Prince | Free retro gaming and map wall art",
     "description": "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
-    "images": ["/twitter-image.jpg"]
+    "images": [
+      "/og"
+    ]
   },
   "robots": {
     "index": true,

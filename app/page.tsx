@@ -10,8 +10,16 @@ import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
 import { cardCommerce, isNewPrint } from "@/lib/commerce";
 import { gridClass, gridSizes } from "@/lib/grid";
 import { roomTiles } from "@/lib/room-tiles";
+import { generateMetadata as seoMeta } from "@/lib/seo";
 import { HOME_BAND, HOME_CALLOUTS, HOME_FREE, HOME_SEO, HOME_TRUST } from "@/config/home-copy";
 import { SHOP_PROMO } from "@/config/shop-copy";
+
+// The most shared URL on the site had no Open Graph tags at all, so it was the one page that
+// previewed as a bare link anywhere it was posted. It also left metadataBase unset, which is what
+// the build kept warning about.
+export const metadata = seoMeta({
+  canonical: "https://www.thepixelprince.com",
+});
 
 // The homepage reads the catalogue, so it cannot be frozen at build time: without this a print
 // unpublished in Studio kept showing here long after it had gone from every other page.

@@ -1,3 +1,4 @@
+import seoConfig from "@/config/seo.json";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
@@ -18,6 +19,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // Set here so every page inherits it, including the handful that declare no metadata of their
+  // own. Without it Next resolves a relative og:image against http://localhost:3000, which is both
+  // the build warning and a preview image no crawler outside this laptop can fetch.
+  metadataBase: new URL(seoConfig.metadataBase),
   title: "The Pixel Prince | Retro gaming and map art prints",
   description: "Retro gaming and map art prints, designed by humans, printed to order and shipped free in the US. Plus a free printable every month.",
  icons: {

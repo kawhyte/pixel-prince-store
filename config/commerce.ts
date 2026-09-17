@@ -45,6 +45,70 @@ export const SHOP_SIZE_LADDER: readonly ShopSize[] = [
   { id: "24x36", label: "24×36″", cm: "61×91 cm", ratio: "2:3" },
 ];
 
+/**
+ * The aspect ratios the ladder needs, and which sizes each one covers.
+ *
+ * Fourthwall fits artwork to the sheet rather than cropping it, so a master whose shape does not
+ * match the paper prints with blank paper on two edges. That is invisible on white artwork and
+ * obvious on anything else, which is most of the catalogue: measured 2026-09-17, every live master
+ * has a coloured ground (beige rgb(249,242,223), cream, blue), so every non-matching size shows a
+ * seam. One master per ratio is the only way to reach the edge, because a Fourthwall product takes
+ * exactly one image and placementStrategy has no fill option.
+ *
+ * Derived from the ladder rather than typed, so a size added or removed carries its family with it.
+ */
+export type RatioId = ShopSize["ratio"];
+
+export interface RatioFamily {
+  ratio: RatioId;
+  sizeIds: string[];
+  /** the size that needs the most pixels, and so sets the master's minimum */
+  largest: ShopSize;
+}
+
+export const RATIO_FAMILIES: RatioFamily[] = (() => {
+  const byRatio = new Map<RatioId, ShopSize[]>();
+  for (const s of SHOP_SIZE_LADDER) {
+    const list = byRatio.get(s.ratio) ?? [];
+    list.push(s);
+    byRatio.set(s.ratio, list);
+  }
+  const area = (s: ShopSize) => {
+    const [a, b] = s.id.split("x").map(Number);
+    return a * b;
+  };
+  return [...byRatio.entries()].map(([ratio, sizes]) => ({
+    ratio,
+    sizeIds: sizes.map((s) => s.id),
+    largest: [...sizes].sort((a, b) => area(a) - area(b))[sizes.length - 1],
+  }));
+})();
+
+/**
+ * The ratio that carries no tag, in a file name or a product name.
+ *
+ * It has to be one of them: every product created before 2026-09-17 is named "Title" and
+ * "Title | Framed" with a 4:5 master behind it, and tagging 4:5 now would orphan every one of
+ * them. So 4:5 is the default and stays bare; the others announce themselves.
+ */
+export const DEFAULT_RATIO: RatioId = "4:5";
+
+/** "4:5" -> "4x5", the form used in a master's file name and a Fourthwall product name. */
+export function ratioTag(ratio: RatioId): string {
+  return ratio.replace(":", "x");
+}
+
+/** "4x5" -> "4:5". Null when the tag is not a ratio the ladder uses. */
+export function ratioFromTag(tag: string): RatioId | null {
+  const want = tag.trim().toLowerCase().replace("x", ":");
+  return RATIO_FAMILIES.find((f) => f.ratio === want)?.ratio ?? null;
+}
+
+/** The family a size belongs to, or null if the size is not on the ladder. */
+export function familyForSize(sizeId: string): RatioFamily | null {
+  return RATIO_FAMILIES.find((f) => f.sizeIds.includes(sizeId)) ?? null;
+}
+
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
 
 /**

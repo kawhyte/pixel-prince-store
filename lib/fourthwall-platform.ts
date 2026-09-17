@@ -4,6 +4,8 @@
  * client wraps fetch with Basic auth (Node's fetch decodes gzip on its own).
  */
 
+import { DEFAULT_RATIO, RATIO_FAMILIES, ratioTag, type RatioId } from "@/config/commerce";
+
 export const PLATFORM_BASE = "https://api.fourthwall.com/open-api/v1.0";
 
 /**
@@ -38,16 +40,82 @@ export const SIZE_NAMES = {
 
 export const FRAME_COLORS = ["Black", "Red Oak", "White"] as const;
 
-/** Product names the PLAN-46 import groups into one artwork. */
-export function productName(title: string, finish: "poster" | "framed" | "canvas"): string {
-  const t = title.trim();
-  if (finish === "poster") return t;
-  return `${t} | ${finish === "framed" ? "Framed" : "Canvas"}`;
+/** '8x10' -> '8" x 10"', the string the templates expect. */
+export function sizeNameForId(sizeId: string): string {
+  const [w, h] = sizeId.split("x");
+  return `${w}" x ${h}"`;
 }
 
-/** "Sweden Map.png" -> "Sweden Map". Pipes are stripped so titles never collide with a finish suffix. */
+/**
+ * The size strings one product should carry, for one ratio and one finish.
+ *
+ * A product per ratio is the whole point: it holds only the sizes whose paper matches its master,
+ * so every print reaches the edge of the sheet. Sizes the template does not stock are dropped, and
+ * a family with none left produces no product at all.
+ */
+export function sizeNamesFor(ratio: RatioId, finish: ApiFinish): string[] {
+  const family = RATIO_FAMILIES.find((f) => f.ratio === ratio);
+  if (!family) return [];
+  const stocked = new Set<string>(SIZE_NAMES[finish]);
+  return family.sizeIds.map(sizeNameForId).filter((n) => stocked.has(n));
+}
+
+/** "World Map with Flags [3x4].png" -> "3x4", or null when the name carries no tag. */
+export function ratioTagFromFilename(filename: string): string | null {
+  const m = filename.replace(/\.[^.]+$/, "").match(/\[([0-9]+x[0-9]+)\]\s*$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+/**
+ * The ratio a master really is, from its pixels rather than its name.
+ *
+ * The tag is a hint for the human reading the folder; the pixels are the truth. A file saved under
+ * the wrong tag would otherwise create a product whose sizes do not match its artwork, and the
+ * mistake would only show up on printed paper.
+ */
+export function detectRatio(d: ImageDims, tolerance = 0.015): RatioId | null {
+  const r = Math.min(d.width, d.height) / Math.max(d.width, d.height);
+  let best: { ratio: RatioId; off: number } | null = null;
+  for (const f of RATIO_FAMILIES) {
+    const [a, b] = f.ratio.split(":").map(Number);
+    const want = Math.min(a, b) / Math.max(a, b);
+    const off = Math.abs(want - r) / want;
+    if (!best || off < best.off) best = { ratio: f.ratio, off };
+  }
+  return best && best.off <= tolerance ? best.ratio : null;
+}
+
+/**
+ * Product names the PLAN-46 import groups into one artwork.
+ *
+ * One artwork can now be several products per finish, one per aspect ratio, so the ratio goes in
+ * the name. 4:5 stays bare: every product made before 2026-09-17 is named this way with a 4:5
+ * master behind it, and tagging it now would orphan all of them.
+ *
+ *   Retro Consoles (Beige)                  4:5 poster
+ *   Retro Consoles (Beige) | Framed         4:5 framed
+ *   Retro Consoles (Beige) [2x3]            2:3 poster
+ *   Retro Consoles (Beige) [2x3] | Framed   2:3 framed
+ */
+export function productName(title: string, finish: "poster" | "framed" | "canvas", ratio: RatioId = DEFAULT_RATIO): string {
+  const t = title.trim();
+  const tagged = ratio === DEFAULT_RATIO ? t : `${t} [${ratioTag(ratio)}]`;
+  if (finish === "poster") return tagged;
+  return `${tagged} | ${finish === "framed" ? "Framed" : "Canvas"}`;
+}
+
+/**
+ * "Sweden Map [3x4].png" -> "Sweden Map". Pipes are stripped so titles never collide with a finish
+ * suffix, and the ratio tag comes off so every ratio of one artwork shares a title and lands on one
+ * Sanity artwork.
+ */
 export function titleFromFilename(filename: string): string {
-  return filename.replace(/\.[^.]+$/, "").replace(/\s*\|\s*/g, " ").replace(/\s+/g, " ").trim();
+  return filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/\s*\[[0-9]+x[0-9]+\]\s*$/i, "")
+    .replace(/\s*\|\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export interface ImageDims {

@@ -20,7 +20,8 @@ import {
   createDesignProduct,
   createPlatformClient,
   listMasterFiles,
-  dimsWarning,
+  masterQuality,
+  ratioWarning,
   listAllProducts,
   productName,
   readImageDims,
@@ -85,8 +86,19 @@ async function main() {
       summary.failed++;
       continue;
     }
-    const warn = dimsWarning(dims);
-    if (warn) console.warn(`warn   ${title}: ${warn}`);
+    // Resolution is a refusal, not a warning: a soft print is a refund and a bad review, and it
+    // cannot be fixed after creation because the Platform API has no endpoint to replace artwork.
+    const quality = masterQuality(dims, SIZE_NAMES.poster);
+    if (!quality.ok) {
+      console.error(`refuse ${title}: ${quality.message}`);
+      console.error(`       Re-export the master at ${Math.ceil(7200)}×${Math.ceil(10800)} px or larger, or drop the big sizes from the ladder.`);
+      summary.failed++;
+      continue;
+    }
+    if (quality.message) console.warn(`warn   ${title}: ${quality.message}`);
+
+    const ratio = ratioWarning(dims);
+    if (ratio) console.warn(`warn   ${title}: ${ratio}`);
 
     const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f)));
     for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f)))) {

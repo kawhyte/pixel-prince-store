@@ -85,12 +85,98 @@ export function readImageDims(buf: Uint8Array): ImageDims | null {
   return null;
 }
 
-/** Warn below 300 dpi at 8x10 (2400x3000); the ladder tops out at 24x36 which wants 7200x10800 for 300 dpi. */
-export function dimsWarning(d: ImageDims): string | null {
-  if (d.width < 2400 || d.height < 3000) return `only ${d.width}×${d.height} px, soft above 8x10`;
+/** What a print shop calls full resolution, and the lowest a paying customer should ever receive. */
+export const PRINT_DPI_TARGET = 300;
+export const PRINT_DPI_FLOOR = 150;
+
+/** '24" x 36"' -> [24, 36]. The size strings are the one source of truth for the ladder. */
+export function inchesFromSizeName(name: string): [number, number] | null {
+  const m = name.match(/(\d+(?:\.\d+)?)\s*"?\s*[x×]\s*(\d+(?:\.\d+)?)/i);
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+/**
+ * The dpi a master delivers at one print size, whichever way up it is. A landscape master printed
+ * at "16x20" is being printed 20 wide by 16 tall, so the short side of the paper is matched to the
+ * short side of the file.
+ */
+export function dpiAtSize(d: ImageDims, inches: [number, number]): number {
+  const [a, b] = inches;
+  const long = Math.max(a, b);
+  const short = Math.min(a, b);
+  const [pw, ph] = d.width >= d.height ? [long, short] : [short, long];
+  return Math.min(d.width / pw, d.height / ph);
+}
+
+export interface MasterQuality {
+  /** false blocks creation: the biggest size the shop sells would print below the floor */
+  ok: boolean;
+  dpiAtLargest: number;
+  largestSize: string;
+  /** the biggest size this master still prints at 300 dpi, or null if none do */
+  largestAt300: string | null;
+  message: string | null;
+}
+
+/**
+ * Whether a master can carry the whole ladder.
+ *
+ * The old check only looked for 2400x3000, which is 300 dpi at 8x10 and says nothing about the
+ * 24x36 the shop actually sells: a file printing at 100 dpi on the largest size passed it without
+ * a word. This measures the size that is hardest to satisfy, refuses below the floor rather than
+ * warning, and names the largest size the file is genuinely good for so the answer is actionable.
+ */
+export function masterQuality(d: ImageDims, sizeNames: readonly string[]): MasterQuality {
+  const sizes = sizeNames
+    .map((n) => ({ name: n, inches: inchesFromSizeName(n) }))
+    .filter((s): s is { name: string; inches: [number, number] } => s.inches !== null)
+    .sort((a, b) => a.inches[0] * a.inches[1] - b.inches[0] * b.inches[1]);
+
+  if (sizes.length === 0) return { ok: true, dpiAtLargest: 0, largestSize: "", largestAt300: null, message: null };
+
+  const largest = sizes[sizes.length - 1];
+  const dpiAtLargest = dpiAtSize(d, largest.inches);
+  const at300 = sizes.filter((s) => dpiAtSize(d, s.inches) >= PRINT_DPI_TARGET);
+  const largestAt300 = at300.length > 0 ? at300[at300.length - 1].name : null;
+
+  const px = `${d.width}×${d.height} px`;
+  if (dpiAtLargest < PRINT_DPI_FLOOR) {
+    return {
+      ok: false,
+      dpiAtLargest,
+      largestSize: largest.name,
+      largestAt300,
+      message:
+        `${px} prints at ${Math.round(dpiAtLargest)} dpi on ${largest.name}, below the ${PRINT_DPI_FLOOR} dpi floor. ` +
+        (largestAt300 ? `Good to ${largestAt300} at ${PRINT_DPI_TARGET} dpi.` : `Not ${PRINT_DPI_TARGET} dpi at any size in the ladder.`),
+    };
+  }
+  if (dpiAtLargest < PRINT_DPI_TARGET) {
+    return {
+      ok: true,
+      dpiAtLargest,
+      largestSize: largest.name,
+      largestAt300,
+      message:
+        `${px} prints at ${Math.round(dpiAtLargest)} dpi on ${largest.name}, under ${PRINT_DPI_TARGET}. ` +
+        (largestAt300 ? `Full resolution only to ${largestAt300}.` : ""),
+    };
+  }
+  return { ok: true, dpiAtLargest, largestSize: largest.name, largestAt300, message: null };
+}
+
+/** The aspect the poster template expects. A master outside it is letterboxed, not cropped. */
+export function ratioWarning(d: ImageDims): string | null {
   const ratio = d.width / d.height;
-  if (ratio < 0.76 || ratio > 0.84) return `ratio ${ratio.toFixed(2)} is not 4:5, the poster will crop`;
+  if (ratio < 0.76 || ratio > 0.84) {
+    return `ratio ${ratio.toFixed(2)} is not 4:5. Fourthwall's poster template has a portrait print area, so this is letterboxed onto the sheet with blank paper above and below, not cropped (verified against a real mockup 2026-09-17).`;
+  }
   return null;
+}
+
+/** @deprecated kept so older callers still compile; prefer masterQuality + ratioWarning. */
+export function dimsWarning(d: ImageDims): string | null {
+  return ratioWarning(d) ?? masterQuality(d, SIZE_NAMES.poster).message;
 }
 
 export interface MasterDirEntry {

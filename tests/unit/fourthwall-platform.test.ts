@@ -43,12 +43,14 @@ describe("fourthwall platform helpers", () => {
     expect(titleFromFilename("Old | Trafford.jpeg")).toBe("Old Trafford");
   });
 
-  it("reads PNG and JPEG dimensions and warns on small or off-ratio masters", () => {
+  it("reads PNG and JPEG dimensions and reports what a master can actually print", () => {
     expect(readImageDims(png(4800, 6000))).toEqual({ width: 4800, height: 6000, contentType: "image/png" });
     expect(readImageDims(jpeg(2400, 3000))).toEqual({ width: 2400, height: 3000, contentType: "image/jpeg" });
     expect(readImageDims(new Uint8Array([1, 2, 3]))).toBeNull();
-    expect(dimsWarning({ width: 4800, height: 6000, contentType: "image/png" })).toBeNull();
-    expect(dimsWarning({ width: 1200, height: 1500, contentType: "image/png" })).toMatch(/soft/);
+    // 4800x6000 used to pass silently. It is 300 dpi at 16x20 and 167 at the 24x36 the shop
+    // actually sells, so it now says so: the old rule only ever measured 8x10.
+    expect(dimsWarning({ width: 4800, height: 6000, contentType: "image/png" })).toMatch(/167 dpi/);
+    expect(dimsWarning({ width: 1200, height: 1500, contentType: "image/png" })).toMatch(/below/);
     expect(dimsWarning({ width: 3000, height: 3000, contentType: "image/png" })).toMatch(/4:5/);
   });
 

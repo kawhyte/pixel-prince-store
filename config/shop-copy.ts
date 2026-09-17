@@ -81,13 +81,11 @@ export interface ShopImage {
  *
  * Known and accepted (Kenny, 2026-09-17): the frames are generated rather than measured, and the
  * two smallest are drawn slightly large. Measured off the mouldings, against the true ratios:
- * 18x24 79.5% of the 24x36 width where it should be 75, 16x20 69.6 where it should be 66.7,
- * 11x14 52.7 where it should be 45.8, and 8x10 38.4 where it should be 33.3. So an 8x10 reads as
+ * 18x24 80.5% of the 24x36 width where it should be 75, 16x20 69.0 where it should be 66.7,
+ * 11x14 52.2 where it should be 45.8, and 8x10 38.1 where it should be 33.3. So an 8x10 reads as
  * about 12% of the largest frame's area rather than 9%. The picture it replaced was twice that
  * wrong, and an exact composite exists if this is ever judged too loose -- the frames can be
  * computed from the sofa's real 90 inch width instead of drawn.
- *
- * The caption also reads "228,6 cm" with a comma rather than a point.
  */
 export const SIZE_GUIDE_IMAGE: ShopImage = {
   url: "/shop/size-guide.webp",

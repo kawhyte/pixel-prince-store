@@ -9,8 +9,12 @@
  *   Fourthwall's storefront publishes a dashboard change a minute or two late, so a sync run
  *   immediately after editing prices reads the old ones. Wait, then run it.
  *
+ *   add --photos to also bring Fourthwall's room renders over as galleryImages. Off by default:
+ *     Kenny shoots his own and deletes theirs, so importing three per artwork only cost storage.
+ *     One mockup per offer always comes over, or a new listing would arrive with no photo at all.
  *   add --reset-images to throw away the photos in Studio and take Fourthwall's again.
- *     Photos are seeded on the first import and are yours after that (PLAN-52).
+ *     Photos are seeded on the first import and are yours after that (PLAN-52). Needs --photos
+ *     too if you want the room shots back, not just the per-offer mockups.
  *   add --no-trim to keep Fourthwall's wide dead margin around each mockup
  *
  * Naming convention: "Title", "Title | Framed", "Title | Canvas" are one artwork with three
@@ -54,6 +58,11 @@ const syncOnly = process.argv.includes("--sync");
 const includeTest = process.argv.includes("--include-test");
 // --remockup was the old name, kept working so a memorised command does not fail
 const resetImages = process.argv.includes("--reset-images") || process.argv.includes("--remockup");
+// Kenny shoots his own room photos and deletes Fourthwall's, so importing three renders per
+// artwork only ever cost Sanity storage. They are opt-in now: --photos brings them, nothing else
+// does. One mockup per offer still comes over, because an offer with no photo shows the flat
+// artwork and a brand new listing would otherwise arrive blank.
+const wantPhotos = process.argv.includes("--photos");
 const trim = !process.argv.includes("--no-trim");
 
 const sanity = createClient({
@@ -339,7 +348,7 @@ async function main() {
         // version the page opens on, so a --reset-images matches what a visitor first sees.
         const preferred = finishProducts.find((f) => f.version && f.version === doc.defaultVersion);
         const primary = (preferred ?? finishProducts[0]).product;
-        if (shouldReplaceGallery({ resetImages, incomingPhotos: pickGalleryImages(primary).length })) {
+        if (wantPhotos && shouldReplaceGallery({ resetImages, incomingPhotos: pickGalleryImages(primary).length })) {
           const gallery = await uploadGallery(primary);
           await sanity.patch(doc._id).set({ galleryImages: gallery }).commit();
           console.log(`photos ${doc._id}: ${gallery.length} room photo(s) replaced`);
@@ -359,7 +368,7 @@ async function main() {
     if (!apply) continue;
 
     const assetId = await uploadFirstImage(primary, imageFileName({ title, version: finishProducts[0].version, finish: finishProducts[0].finish, kind: "main" }));
-    const gallery = await uploadGallery(primary);
+    const gallery = wantPhotos ? await uploadGallery(primary) : [];
     const offers = [];
     for (const fp of finishProducts) offers.push(await buildOffer(fp, title));
     const versions = [...new Set(finishProducts.map((f) => f.version).filter((v): v is string => !!v))];

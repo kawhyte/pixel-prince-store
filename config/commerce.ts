@@ -23,14 +23,25 @@ export interface ShopSize {
 }
 
 /** The size ladder every physical offer picks from. Order = display order. */
+/**
+ * Five sizes, trimmed from eight on 2026-09-17.
+ *
+ * The masters are 4:5 and Fourthwall fits rather than crops, so a size whose paper is not 4:5
+ * prints with blank paper on two edges (measured off Fourthwall's own 24x36 mockup: the artwork
+ * keeps its 0.80 ratio on 0.667 paper). The band each size costs, from a 4:5 master:
+ *
+ *   8x10   0%     11x14  1.8%    16x20  0%     18x24  6.3%    24x36  16.7%
+ *
+ * The three that went: 12x16 sat between 11x14 and 16x20 and nobody picked it; 12x18 cost the full
+ * 16.7% and duplicated 11x14 and 18x24; 20x30 cost 16.7% and was the one size Fourthwall's framed
+ * template does not carry, so it was also the only size where the finish picker came up short.
+ * Every size here offers every finish.
+ */
 export const SHOP_SIZE_LADDER: readonly ShopSize[] = [
   { id: "8x10", label: "8×10″", cm: "20×25 cm", ratio: "4:5" },
   { id: "11x14", label: "11×14″", cm: "28×36 cm", ratio: "11:14" },
-  { id: "12x16", label: "12×16″", cm: "30×40 cm", ratio: "3:4" },
-  { id: "12x18", label: "12×18″", cm: "30×46 cm", ratio: "2:3" },
   { id: "16x20", label: "16×20″", cm: "40×50 cm", ratio: "4:5" },
   { id: "18x24", label: "18×24″", cm: "46×61 cm", ratio: "3:4" },
-  { id: "20x30", label: "20×30″", cm: "50×76 cm", ratio: "2:3" },
   { id: "24x36", label: "24×36″", cm: "61×91 cm", ratio: "2:3" },
 ];
 
@@ -106,12 +117,11 @@ export type FinishId = (typeof FINISHES)[number]["id"];
  * names the products that drifted. A size left out is not checked, which is how canvas skips 8x10.
  */
 export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = {
-  unframed: { "8x10": 2399, "11x14": 2700, "12x16": 2900, "12x18": 3000, "16x20": 3400, "18x24": 3700, "20x30": 3800, "24x36": 4500 },
-  // Fourthwall's framed template has no 20x30, so that size is unframed and canvas only.
-  framed: { "8x10": 5800, "11x14": 6500, "12x16": 7500, "12x18": 7900, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
+  unframed: { "8x10": 2399, "11x14": 2700, "16x20": 3400, "18x24": 3700, "24x36": 4500 },
+  framed: { "8x10": 5800, "11x14": 6500, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
   // Canvas is on hold (2026-09-10). Kept so the ladder is ready if it returns; with no canvas
-  // products in Fourthwall nothing is checked against it. Starts at 11x14, matching Etsy.
-  canvas: { "11x14": 5500, "12x16": 9500, "16x20": 11000, "18x24": 13000, "20x30": 14500, "24x36": 19500 },
+  // products in Fourthwall nothing is checked against it.
+  canvas: { "11x14": 5500, "16x20": 11000, "18x24": 13000, "24x36": 19500 },
 };
 
 /** What the version picker is called on the page (PLAN-48). "Style" and "Colour" also read well. */

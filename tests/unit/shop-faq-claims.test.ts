@@ -18,9 +18,11 @@ describe("shop FAQ claims match the price list", () => {
     const unframedOnly = SHOP_SIZE_LADDER.filter(
       (s) => TARGET_PRICES.unframed[s.id] !== undefined && TARGET_PRICES.framed[s.id] === undefined,
     );
-    // today that is 20x30 alone; if the ladder changes, this fails and the sentence needs rewriting
-    expect(unframedOnly.map((s) => s.id)).toEqual(["20x30"]);
-    expect(a).toMatch(/20 by 30/);
+    // Since the ladder was trimmed to five (2026-09-17) there is no exception: 20x30 was the only
+    // size Fourthwall's framed template did not carry, and dropping it was half the reason it went.
+    // If a size without a framed price ever returns, this fails and the sentence needs the caveat back.
+    expect(unframedOnly.map((s) => s.id)).toEqual([]);
+    expect(a).not.toMatch(/except/i);
   });
 
   it("describes both finishes wherever it describes packaging or framing", () => {
@@ -41,8 +43,8 @@ describe("shop FAQ claims match the price list", () => {
 describe("the size-count sentence tracks the ladder", () => {
   it("counts what is actually sold, in words", async () => {
     const { SIZE_RANGE_SENTENCE, SHOP_SIZE_LADDER } = await import("@/config/commerce");
-    expect(SHOP_SIZE_LADDER).toHaveLength(8);
-    expect(SIZE_RANGE_SENTENCE).toBe("Eight sizes, from 8×10 to 24×36");
+    expect(SHOP_SIZE_LADDER).toHaveLength(5);
+    expect(SIZE_RANGE_SENTENCE).toBe("Five sizes, from 8×10 to 24×36");
     // the endpoints come from the ladder, not from the sentence
     expect(SIZE_RANGE_SENTENCE).toContain(SHOP_SIZE_LADDER[0].label.replace("″", ""));
     expect(SIZE_RANGE_SENTENCE).toContain(SHOP_SIZE_LADDER[SHOP_SIZE_LADDER.length - 1].label.replace("″", ""));
@@ -78,3 +80,24 @@ describe("the damage claim says what the clock runs from", () => {
     expect(DAMAGE_CLAIM_DAYS).toBeLessThanOrEqual(30);
   });
 });
+
+describe("the size guide does not claim a count of its own", () => {
+  it("builds its alt text from the ladder", async () => {
+    const { SIZE_GUIDE_IMAGE } = await import("@/config/shop-copy");
+    const { SIZE_RANGE_SENTENCE, SHOP_SIZE_LADDER } = await import("@/config/commerce");
+    // It read "seven print sizes" while the ladder held eight, and nothing caught it.
+    expect(SIZE_GUIDE_IMAGE.alt).toContain(SIZE_RANGE_SENTENCE.slice(1));
+    expect(SIZE_GUIDE_IMAGE.alt).not.toMatch(/\bseven\b/i);
+    expect(SHOP_SIZE_LADDER.length).toBeGreaterThan(0);
+  });
+
+  it("every size the shop sells has guide text and both prices", async () => {
+    const { SHOP_SIZE_LADDER, TARGET_PRICES } = await import("@/config/commerce");
+    const { SHOP_SIZE_GUIDE } = await import("@/config/shop-copy");
+    for (const s of SHOP_SIZE_LADDER) {
+      expect(SHOP_SIZE_GUIDE[s.id], `${s.id} has no guide text`).toBeTruthy();
+      expect(TARGET_PRICES.unframed[s.id], `${s.id} has no unframed price`).toBeGreaterThan(0);
+      expect(TARGET_PRICES.framed[s.id], `${s.id} has no framed price`).toBeGreaterThan(0);
+    }
+  });
+})

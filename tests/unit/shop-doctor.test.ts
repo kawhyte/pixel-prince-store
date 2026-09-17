@@ -49,7 +49,7 @@ describe("comparePrices", () => {
     // Sizes the product does not sell are rows too, and sort into their ladder position, so
     // compare only the three that were given.
     expect(rows.filter((r) => r.now !== null).map((r) => r.sizeId)).toEqual(["8x10", "16x20", "24x36"]);
-    expect(rows.map((r) => r.sizeId)).toEqual(["8x10", "11x14", "12x16", "12x18", "16x20", "18x24", "20x30", "24x36"]);
+    expect(rows.map((r) => r.sizeId)).toEqual(["8x10", "11x14", "16x20", "18x24", "24x36"]);
   });
 });
 

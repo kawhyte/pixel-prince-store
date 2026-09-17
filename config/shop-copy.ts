@@ -4,6 +4,7 @@
  * guarantee wording against Printful before launch. PLAN-39 turns the shipping
  * and returns answers into standalone pages.
  */
+import { SIZE_RANGE_SENTENCE } from "@/config/commerce";
 import { DAMAGE_CLAIM_DAYS, DELIVERY_WINDOW } from "@/config/support";
 
 export const SHOP_FEATURES = [
@@ -26,7 +27,7 @@ export const SHOP_SHIPPING_FAQ = [
   },
   {
     q: "Is a frame included?",
-    a: "That depends on the finish you pick. Unframed is the poster on its own, and the sizes match standard off-the-shelf frames if you want to frame it yourself. Framed arrives in a black alder wood frame three quarters of an inch deep, with the hanging hardware already attached. Every size can be framed except 20 by 30.",
+    a: "That depends on the finish you pick. Unframed is the poster on its own, and the sizes match standard off-the-shelf frames if you want to frame it yourself. Framed arrives in a black alder wood frame three quarters of an inch deep, with the hanging hardware already attached. Every size can be framed.",
   },
   {
     q: "What if it arrives damaged?",
@@ -69,10 +70,19 @@ export interface ShopImage {
   alt: string;
 }
 
-/** Also the photo in the "Pick the right size" section, which imports it by name. */
+/**
+ * Also the photo in the "Pick the right size" section, which imports it by name.
+ *
+ * The alt is built from the ladder rather than typed: it read "seven print sizes" while the ladder
+ * held eight, and nothing caught it.
+ *
+ * [KENNY] The photo itself is not generated and IS stale: it shows seven frames including 20x30
+ * and 12x16, which are no longer sold (ladder trimmed to five on 2026-09-17). It needs redrawing
+ * with the five sizes before this section can honestly call itself a size guide.
+ */
 export const SIZE_GUIDE_IMAGE: ShopImage = {
   url: "/shop/size-guide.webp",
-  alt: "Size guide: seven print sizes from 8 by 10 to 24 by 36 inches, shown to scale on a wall above a 90 inch sofa",
+  alt: `Size guide: ${SIZE_RANGE_SENTENCE.charAt(0).toLowerCase()}${SIZE_RANGE_SENTENCE.slice(1)} inches, shown to scale on a wall above a 90 inch sofa`,
 };
 
 export const FRAMED_FEATURES_IMAGE: ShopImage = {

@@ -21,7 +21,8 @@
     "shop:sync": "npx tsx scripts/import-fourthwall-products.ts --apply",
     "shop:prices": "npx tsx scripts/check-prices.ts",
     "shop:photo": "npx tsx scripts/attach-photo.ts",
-    "shop:doctor": "npx tsx scripts/shop-doctor.ts"
+    "shop:doctor": "npx tsx scripts/shop-doctor.ts",
+    "seo:audit": "npx tsx scripts/seo-audit.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint"

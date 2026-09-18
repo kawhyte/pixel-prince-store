@@ -80,15 +80,47 @@ const sanity = createClient({
 const FW_BASE = "https://storefront-api.fourthwall.com/v1";
 const FINISH_ORDER: ImportFinish[] = ["unframed", "framed", "canvas"];
 
+/**
+ * Every product in the shop, following the pages.
+ *
+ * The page size parameter is `size`; this asked for `pageSize`, which the API ignores, so it always
+ * read the default ten. That was invisible while the shop held exactly ten products and would have
+ * silently dropped the eleventh -- and did drop six the moment one artwork grew a product per
+ * aspect ratio. It pages now rather than warning, because a warning that scrolls past is not a
+ * safeguard.
+ *
+ * The listing is CDN-cached for about a minute, which serves a stale catalogue right after a
+ * publish; the unused parameter makes each URL unique so the import always reads Fourthwall as it
+ * is now.
+ */
 async function fetchProducts(): Promise<FwProduct[]> {
-  // the listing is CDN-cached for ~60s, which serves a stale catalogue right after a publish;
-  // an unused parameter makes the URL unique so the import always reads Fourthwall as it is now
-  const url = `${FW_BASE}/collections/all/products?pageSize=100&storefront_token=${encodeURIComponent(storefrontToken!)}&_=${Date.now()}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fourthwall ${res.status} ${res.statusText}`);
-  const data = (await res.json()) as { results?: FwProduct[]; paging?: { hasNextPage?: boolean } };
-  if (data.paging?.hasNextPage) console.warn("warn   more than one page of products; only the first page is processed");
-  return data.results ?? [];
+  const all: FwProduct[] = [];
+  const seen = new Set<string>();
+  for (let page = 0; page < 50; page++) {
+    const url =
+      `${FW_BASE}/collections/all/products?size=100&page=${page}` +
+      `&storefront_token=${encodeURIComponent(storefrontToken!)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Fourthwall ${res.status} ${res.statusText}`);
+    const data = (await res.json()) as {
+      results?: FwProduct[];
+      paging?: { hasNextPage?: boolean; elementsTotal?: number };
+    };
+    for (const p of data.results ?? []) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        all.push(p);
+      }
+    }
+    if (!data.paging?.hasNextPage) {
+      const total = data.paging?.elementsTotal;
+      if (typeof total === "number" && all.length !== total) {
+        console.warn(`warn   Fourthwall reports ${total} products, read ${all.length}`);
+      }
+      break;
+    }
+  }
+  return all;
 }
 
 interface ExistingOffer {

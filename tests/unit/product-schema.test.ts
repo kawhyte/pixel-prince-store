@@ -124,3 +124,67 @@ describe("shop print structured data", () => {
     ]);
   });
 });
+
+// A shopper increasingly asks an assistant "do you do 16x20, and what's the framed one?" rather
+// than scrolling a size picker. The aggregate answers with a range; only the rows answer that.
+describe('per-size offers inside the aggregate', () => {
+  const art = {
+    id: 'brooklyn-neighborhood-map',
+    title: 'Brooklyn Neighborhood Map',
+    description: 'A map of every Brooklyn neighborhood.',
+    kind: 'single',
+    offers: [
+      {
+        provider: 'fourthwall', finish: 'unframed', version: 'Earth',
+        sizes: [
+          { sizeId: '8x10', priceCents: 2399, providerVariantId: 'v-earth-un-8x10' },
+          { sizeId: '24x36', priceCents: 4500, providerVariantId: 'v-earth-un-24x36' },
+        ],
+      },
+      {
+        provider: 'fourthwall', finish: 'framed', version: 'Earth',
+        sizes: [{ sizeId: '8x10', priceCents: 5800, providerVariantId: 'v-earth-fr-8x10' }],
+      },
+    ],
+  } as never
+
+  it('lists one offer per buyable row, with the size and finish in the name', () => {
+    const schema = shopPrintSchema(art) as never as { offers: { offers: { name: string; price: string; sku: string }[] } }
+    const rows = schema.offers.offers
+    expect(rows).toHaveLength(3)
+    const byPrice = Object.fromEntries(rows.map((r) => [r.sku, r]))
+    expect(byPrice['v-earth-un-8x10'].price).toBe('23.99')
+    expect(byPrice['v-earth-un-8x10'].name).toContain('unframed')
+    expect(byPrice['v-earth-fr-8x10'].price).toBe('58.00')
+    expect(byPrice['v-earth-fr-8x10'].name).toContain('framed')
+    expect(byPrice['v-earth-un-24x36'].name).toContain('Earth')
+  })
+
+  it('keeps the price range Google reads for merchant listings', () => {
+    const schema = shopPrintSchema(art) as never as { offers: { lowPrice: string; highPrice: string; offerCount: number } }
+    expect(schema.offers.lowPrice).toBe('23.99')
+    expect(schema.offers.highPrice).toBe('58.00')
+    expect(schema.offers.offerCount).toBe(3)
+  })
+
+  it('never invents a row the page cannot sell', () => {
+    const rows = (shopPrintSchema(art) as never as { offers: { offers: { price: string }[] } }).offers.offers
+    for (const r of rows) expect(Number(r.price)).toBeGreaterThan(0)
+  })
+})
+
+describe('the FAQ the page already shows', () => {
+  it('is published as FAQPage, question and answer both', async () => {
+    const { shopPrintFaqSchema } = await import('@/lib/product-schema')
+    const { SHOP_SHIPPING_FAQ } = await import('@/config/shop-copy')
+    const schema = shopPrintFaqSchema() as { '@type': string; mainEntity: { name: string; acceptedAnswer: { text: string } }[] }
+    expect(schema['@type']).toBe('FAQPage')
+    expect(schema.mainEntity).toHaveLength(SHOP_SHIPPING_FAQ.length)
+    // every marked-up answer is one the accordion renders; schema must never outrun the page
+    for (const q of schema.mainEntity) {
+      const source = SHOP_SHIPPING_FAQ.find((f) => f.q === q.name)
+      expect(source, `"${q.name}" is not a question the page shows`).toBeTruthy()
+      expect(q.acceptedAnswer.text).toBe(source!.a)
+    }
+  })
+})

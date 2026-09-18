@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { getShopPrints, getShopPrintBySlug, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { deliveryWindow } from "@/lib/delivery";
-import { shopPrintBreadcrumb, shopPrintSchema } from "@/lib/product-schema";
+import { shopPrintBreadcrumb, shopPrintFaqSchema, shopPrintSchema } from "@/lib/product-schema";
 import ShopPrintClient from "./shop-print-client";
 
 interface PageProps {
@@ -46,6 +46,12 @@ export default async function ShopPrintPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(shopPrintBreadcrumb(art)) }}
+      />
+      {/* The same questions the accordion renders further down the page, so the answers are
+          readable by a crawler and an assistant, not only by someone who clicks. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shopPrintFaqSchema()) }}
       />
       <ShopPrintClient art={art} related={related} deliveryBy={deliveryWindow(new Date()).label} />
     </>

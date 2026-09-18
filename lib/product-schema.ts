@@ -15,7 +15,8 @@
  *   - `priceValidUntil`. The page is served from a 60-second cache, so a date computed at render
  *     would be the cached date, not today's. See `lib/delivery.ts` for the same trade-off.
  */
-import { CURRENCY } from "@/config/commerce";
+import { CURRENCY, SHOP_SIZE_LADDER } from "@/config/commerce";
+import { SHOP_SHIPPING_FAQ } from "@/config/shop-copy";
 import { DAMAGE_CLAIM_DAYS, DELIVERY_DAYS_MAX, DELIVERY_DAYS_MIN } from "@/config/support";
 import { getOffersByFinish, getVersions, offerImage } from "@/lib/commerce";
 import { isSet, sellableSet, setFinishes, setSizeRows } from "@/lib/sets";
@@ -130,6 +131,75 @@ function returnPolicy() {
   };
 }
 
+/** "16x20" -> "16x20 in". The ladder owns the label, so a size renamed there is renamed here. */
+const SIZE_LABEL = new Map(SHOP_SIZE_LADDER.map((s) => [s.id, s.label]));
+
+/**
+ * One Offer per buyable row, nested inside the AggregateOffer.
+ *
+ * The aggregate alone answers "how much is this print?" with a range. It cannot answer "do you do
+ * 16x20, and what does the framed one cost?", which is the shape of the question a shopper now
+ * puts to an assistant rather than to a search box. schema.org allows AggregateOffer.offers, so
+ * this adds the detail without giving up the price range Google reads for merchant listings.
+ *
+ * Sets are left on the aggregate: they have no offers of their own, and their price is their
+ * members added up, which `priceSpanAcrossOffers` already handles.
+ */
+function sizeOffers(art: FreeArt, url: string): Record<string, unknown>[] {
+  if (isSet(art)) return [];
+  const versions = getVersions(art).map((v) => v.version);
+  const keys = versions.length > 0 ? versions : [null];
+  const out: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  for (const version of keys) {
+    for (const { finish, offer } of getOffersByFinish(art, version)) {
+      for (const size of offer.sizes ?? []) {
+        if (!Number.isFinite(size.priceCents)) continue;
+        // one row per variant; a size shared by two versions is two buyable things, not one
+        const sku = size.providerVariantId ?? `${art.id}-${version ?? ""}-${finish}-${size.sizeId}`;
+        if (seen.has(sku)) continue;
+        seen.add(sku);
+        const label = SIZE_LABEL.get(size.sizeId) ?? size.sizeId;
+        const name = [label, finish === "framed" ? "framed" : "unframed", version].filter(Boolean).join(", ");
+        out.push({
+          "@type": "Offer",
+          name,
+          sku,
+          price: (size.priceCents / 100).toFixed(2),
+          priceCurrency: CURRENCY,
+          availability: "https://schema.org/InStock",
+          itemCondition: "https://schema.org/NewCondition",
+          url,
+          seller: { "@type": "Organization", name: BRAND_NAME },
+          shippingDetails: shippingDetails(),
+          hasMerchantReturnPolicy: returnPolicy(),
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The shipping and returns questions the page already answers in the accordion, as FAQPage.
+ *
+ * The answers are rendered on the page, which is the condition for marking them up at all. The
+ * blog and the collection pages have done this since they were built; the print pages showed the
+ * same accordion and declared nothing, so the one page a buyer actually asks questions about was
+ * the one page no crawler could read the answers off.
+ */
+export function shopPrintFaqSchema(): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: SHOP_SHIPPING_FAQ.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+}
+
 export function shopPrintSchema(art: FreeArt): Record<string, unknown> {
   const url = `${SITE_URL}/prints/${art.id}`;
   const span = priceSpanAcrossOffers(art);
@@ -155,6 +225,7 @@ export function shopPrintSchema(art: FreeArt): Record<string, unknown> {
             highPrice: (span.max / 100).toFixed(2),
             priceCurrency: CURRENCY,
             offerCount: span.count,
+            ...(sizeOffers(art, url).length > 0 ? { offers: sizeOffers(art, url) } : {}),
             availability: "https://schema.org/InStock",
             itemCondition: "https://schema.org/NewCondition",
             url,

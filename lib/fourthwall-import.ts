@@ -7,6 +7,7 @@ import {
   FULL_LADDER,
   SHOP_SIZE_LADDER,
   scopeFromTag,
+  sizeIdsForScope,
   type LadderScope,
   type RatioId,
 } from "@/config/commerce";
@@ -282,6 +283,34 @@ export function splitProductName(name: string): {
   const { baseTitle, finish } = splitFinish(name);
   const { baseTitle: untagged, ratio } = splitRatio(baseTitle);
   return { ...splitVersion(untagged), ratio, finish };
+}
+
+/**
+ * Products for one artwork that carry a ratio rather than the whole ladder, and the sizes those
+ * products would keep.
+ *
+ * A ratio owns its own sizes, so an [all] master does not take them back by existing. Creating one
+ * beside a bare-named legacy product leaves the print selling 8x10 and 16x20 off the old 4:5 master
+ * and the rest off the new one: two different pieces of artwork under one listing, which nobody
+ * sees until a customer holds both. Named here so `shop:new` can say it before it happens.
+ *
+ * Titles are compared after the finish and the scope tag come off, so every finish of a version
+ * counts once for what it is.
+ */
+export function scopeRivals(names: readonly string[], title: string): { names: string[]; sizeIds: string[] } {
+  const rivals: string[] = [];
+  const sizeIds = new Set<string>();
+  for (const name of names) {
+    const { baseTitle } = splitFinish(name);
+    const { baseTitle: untagged, ratio } = splitRatio(baseTitle);
+    if (untagged !== title || ratio === FULL_LADDER) continue;
+    rivals.push(name);
+    for (const id of sizeIdsForScope(ratio)) sizeIds.add(id);
+  }
+  return {
+    names: rivals,
+    sizeIds: SHOP_SIZE_LADDER.map((s) => s.id).filter((id) => sizeIds.has(id)),
+  };
 }
 
 /**

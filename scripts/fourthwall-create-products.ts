@@ -17,6 +17,7 @@ import { config } from "dotenv";
 import { readdirSync, readFileSync } from "fs";
 import { resolve, join } from "path";
 import { DEFAULT_RATIO, FULL_LADDER, RATIO_FAMILIES, ratioTag, scopeFromTag, type LadderScope } from "../config/commerce";
+import { scopeRivals } from "../lib/fourthwall-import";
 import {
   createDesignProduct,
   createPlatformClient,
@@ -159,6 +160,14 @@ async function main() {
         console.error(`refuse ${master.path}: named [all] but ${verdict.message}`);
         summary.failed++;
         continue;
+      }
+      // A ratio owns its own sizes, so an [all] master does not take them back by existing. Say so
+      // now: the alternative is a listing quietly selling two different pieces of artwork.
+      const rivals = scopeRivals([...existing], title);
+      if (rivals.names.length > 0) {
+        console.warn(`warn   ${title}: ${rivals.names.length} product(s) here already carry a ratio, and a ratio owns its own sizes.`);
+        console.warn(`       ${rivals.sizeIds.join(", ")} would still be sold from ${rivals.names[0]}, not from this [all] master.`);
+        console.warn(`       Archive them in the dashboard before the next shop:sync, or the listing mixes two masters.`);
       }
       scope = FULL_LADDER;
     } else {

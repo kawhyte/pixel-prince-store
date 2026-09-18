@@ -18,7 +18,7 @@ import {
   whiteGroundVerdict,
   type EdgePixel,
 } from '@/lib/fourthwall-platform'
-import { splitProductName, splitRatio } from '@/lib/fourthwall-import'
+import { scopeRivals, splitProductName, splitRatio } from '@/lib/fourthwall-import'
 
 const ALL_IDS = SHOP_SIZE_LADDER.map((s) => s.id)
 const px = (r: number, g: number, b: number): EdgePixel => ({ r, g, b })
@@ -109,5 +109,32 @@ describe('the white-ground check', () => {
     const v = whiteGroundVerdict([])
     expect(v.ok).toBe(false)
     expect(v.message).toContain('never checked')
+  })
+})
+
+// A ratio owns its own sizes, so adding an [all] master beside a legacy product does not take them
+// back. The listing would then sell two different pieces of artwork, which only shows up on paper.
+describe('rival scopes', () => {
+  it('names the legacy products and the sizes they would keep', () => {
+    const got = scopeRivals(
+      [
+        'Brooklyn Neighborhood Map (Earth)',
+        'Brooklyn Neighborhood Map (Earth) | Framed',
+        'Brooklyn Neighborhood Map (Bright)',
+      ],
+      'Brooklyn Neighborhood Map (Earth)',
+    )
+    expect(got.names).toEqual(['Brooklyn Neighborhood Map (Earth)', 'Brooklyn Neighborhood Map (Earth) | Framed'])
+    expect(got.sizeIds).toEqual(['8x10', '16x20'])
+  })
+
+  it('counts a tagged ratio too, and reports its sizes in ladder order', () => {
+    const got = scopeRivals(['Sweden Map [2x3]', 'Sweden Map [11x14] | Framed'], 'Sweden Map')
+    expect(got.sizeIds).toEqual(['11x14', '24x36'])
+  })
+
+  it('is quiet when nothing else carries the artwork', () => {
+    expect(scopeRivals(['Some Other Print', 'Brooklyn Neighborhood Map (Earth) [all]'], 'Brooklyn Neighborhood Map (Earth)'))
+      .toEqual({ names: [], sizeIds: [] })
   })
 })

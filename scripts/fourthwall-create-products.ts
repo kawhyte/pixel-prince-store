@@ -16,7 +16,7 @@
 import { config } from "dotenv";
 import { readdirSync, readFileSync } from "fs";
 import { resolve, join } from "path";
-import { DEFAULT_RATIO, RATIO_FAMILIES, ratioFromTag, ratioTag } from "../config/commerce";
+import { DEFAULT_RATIO, FULL_LADDER, RATIO_FAMILIES, ratioTag, scopeFromTag, type LadderScope } from "../config/commerce";
 import {
   createDesignProduct,
   createPlatformClient,
@@ -26,6 +26,9 @@ import {
   orientationRefusal,
   ratioTagFromFilename,
   sizeNamesFor,
+  whiteGroundVerdict,
+  type EdgePixel,
+  type ImageDims,
   listAllProducts,
   productName,
   readImageDims,
@@ -69,6 +72,46 @@ if (!user || !password) throw new Error("FOURTHWALL_API_USER / FOURTHWALL_API_PA
 const client = createPlatformClient(user, password);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * The darkest pixel along each of the master's four edges.
+ *
+ * Only the outer ring matters: Fourthwall leaves the rest of the sheet as bare paper, and the band
+ * meets the artwork along its edge. A strip rather than a single row because an exported edge can
+ * carry a row or two of antialiasing, and the darkest pixel rather than the mean because a mean
+ * hides a thin dark rule in a field of white, which is exactly what would print as a line.
+ */
+async function sampleEdgeRing(path: string, dims: ImageDims, thickness = 8): Promise<EdgePixel[]> {
+  const sharp = (await import("sharp")).default;
+  const { width: w, height: h } = dims;
+  const t = Math.max(1, Math.min(thickness, Math.floor(Math.min(w, h) / 2)));
+  const strips = [
+    { left: 0, top: 0, width: w, height: t },
+    { left: 0, top: h - t, width: w, height: t },
+    { left: 0, top: 0, width: t, height: h },
+    { left: w - t, top: 0, width: t, height: h },
+  ];
+  const ring: EdgePixel[] = [];
+  for (const strip of strips) {
+    const { data, info } = await sharp(path, { limitInputPixels: false })
+      .extract(strip)
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    let worst: EdgePixel | null = null;
+    let off = -1;
+    for (let i = 0; i + 2 < data.length; i += info.channels) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const d = Math.max(255 - r, 255 - g, 255 - b);
+      if (d > off) {
+        off = d;
+        worst = { r, g, b };
+      }
+    }
+    if (worst) ring.push(worst);
+  }
+  return ring;
+}
+
 async function main() {
   const root = resolve(dir!);
   const masters = listMasterFiles(root, (d) => readdirSync(d, { withFileTypes: true }));
@@ -103,37 +146,55 @@ async function main() {
     // surfaces on printed paper.
     const actual = detectRatio(dims);
     const tag = ratioTagFromFilename(file);
-    const claimed = tag ? ratioFromTag(tag) : null;
-    if (!actual) {
-      console.error(`refuse ${title}: ${dims.width}×${dims.height} px is not one of ${RATIO_FAMILIES.map((f) => f.ratio).join(", ")}.`);
-      console.error(`       Fourthwall fits art to the sheet rather than cropping, so a shape off the ladder prints with blank paper on two edges.`);
-      summary.failed++;
-      continue;
-    }
-    if (claimed && claimed !== actual) {
-      console.error(`refuse ${master.path}: named [${tag}] but the pixels are ${actual} (${dims.width}×${dims.height}).`);
-      console.error(`       Rename it or re-export it; the tag is a label, the pixels are the truth.`);
-      summary.failed++;
-      continue;
-    }
-    if (!tag && actual !== DEFAULT_RATIO) {
-      console.warn(`warn   ${master.path}: no tag in the name but the pixels are ${actual}. Rename it [${ratioTag(actual)}] so the folder reads true.`);
+    const claimed = tag ? scopeFromTag(tag) : null;
+
+    let scope: LadderScope;
+    if (claimed === FULL_LADDER) {
+      // [all] sells every size from one master, which is only invisible while the ground is white.
+      // Shape is deliberately not checked here: letterboxing is the point, and on white it costs
+      // nothing. The ground is checked instead, and it is a refusal: a cream master looks perfect
+      // on screen and prints a line across the sheet, and artwork cannot be replaced after creation.
+      const verdict = whiteGroundVerdict(await sampleEdgeRing(join(root, master.path), dims));
+      if (!verdict.ok) {
+        console.error(`refuse ${master.path}: named [all] but ${verdict.message}`);
+        summary.failed++;
+        continue;
+      }
+      scope = FULL_LADDER;
+    } else {
+      if (!actual) {
+        console.error(`refuse ${title}: ${dims.width}×${dims.height} px is not one of ${RATIO_FAMILIES.map((f) => f.ratio).join(", ")}.`);
+        console.error(`       Fourthwall fits art to the sheet rather than cropping, so a shape off the ladder prints with blank paper on two edges.`);
+        console.error(`       A white-ground master can carry the whole ladder whatever its shape: name it [all].`);
+        summary.failed++;
+        continue;
+      }
+      if (claimed && claimed !== actual) {
+        console.error(`refuse ${master.path}: named [${tag}] but the pixels are ${actual} (${dims.width}×${dims.height}).`);
+        console.error(`       Rename it or re-export it; the tag is a label, the pixels are the truth.`);
+        summary.failed++;
+        continue;
+      }
+      if (!tag && actual !== DEFAULT_RATIO) {
+        console.warn(`warn   ${master.path}: no tag in the name but the pixels are ${actual}. Rename it [${ratioTag(actual)}] so the folder reads true.`);
+      }
+      scope = actual;
     }
 
     // Resolution is a refusal, not a warning: a soft print is a refund and a bad review, and it
     // cannot be fixed after creation because the Platform API has no endpoint to replace artwork.
-    const ladder = sizeNamesFor(actual, "poster");
+    const ladder = sizeNamesFor(scope, "poster");
     const quality = masterQuality(dims, ladder);
     if (!quality.ok) {
-      console.error(`refuse ${title} [${ratioTag(actual)}]: ${quality.message}`);
+      console.error(`refuse ${title} [${ratioTag(scope)}]: ${quality.message}`);
       summary.failed++;
       continue;
     }
-    if (quality.message) console.warn(`warn   ${title} [${ratioTag(actual)}]: ${quality.message}`);
+    if (quality.message) console.warn(`warn   ${title} [${ratioTag(scope)}]: ${quality.message}`);
 
-    const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f, actual)));
-    for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f, actual)))) {
-      console.log(`skip   ${productName(title, f, actual)} (exists)`);
+    const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f, scope)));
+    for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f, scope)))) {
+      console.log(`skip   ${productName(title, f, scope)} (exists)`);
       summary.skipped++;
     }
     if (todo.length === 0) {
@@ -142,9 +203,9 @@ async function main() {
     }
 
     console.log(
-      `${apply ? "create" : "would create"} ${title} [${ratioTag(actual)}] (${dims.width}×${dims.height}): ` +
-        `${todo.map((f) => productName(title, f, actual)).join(", ")}` +
-        ` | sizes ${sizeNamesFor(actual, "poster").join(", ")}` +
+      `${apply ? "create" : "would create"} ${title} [${ratioTag(scope)}] (${dims.width}×${dims.height}): ` +
+        `${todo.map((f) => productName(title, f, scope)).join(", ")}` +
+        ` | sizes ${ladder.join(", ")}` +
         ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
@@ -159,18 +220,18 @@ async function main() {
           const created = await createDesignProduct(client, {
             finish,
             title,
-            ratio: actual,
+            ratio: scope,
             imageId,
             marginUsd: finish === "poster" ? marginPoster : marginFramed,
             frameColors,
             publish,
           });
-          console.log(`ok     ${productName(title, finish, actual)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
+          console.log(`ok     ${productName(title, finish, scope)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
           summary.created++;
-          existing.add(productName(title, finish, actual));
+          existing.add(productName(title, finish, scope));
         } catch (e) {
           const msg = e instanceof PlatformError ? `${e.status} ${e.body}` : String(e);
-          console.error(`fail   ${productName(title, finish, actual)}: ${msg}`);
+          console.error(`fail   ${productName(title, finish, scope)}: ${msg}`);
           summary.failed++;
         }
         await sleep(500);

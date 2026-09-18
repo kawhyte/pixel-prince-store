@@ -93,15 +93,44 @@ export const RATIO_FAMILIES: RatioFamily[] = (() => {
  */
 export const DEFAULT_RATIO: RatioId = "4:5";
 
-/** "4:5" -> "4x5", the form used in a master's file name and a Fourthwall product name. */
-export function ratioTag(ratio: RatioId): string {
-  return ratio.replace(":", "x");
+/**
+ * One master, the whole ladder.
+ *
+ * A product per ratio is what reaches the edge of the sheet, and it is only needed because the art
+ * has a coloured ground. White art does not: the paper Fourthwall leaves blank is the same white as
+ * the ground, so the seam has nothing to show. A master tagged [all] therefore sells every size
+ * from one product, which keeps one composition across the whole range instead of a different crop
+ * per size, and leaves one product to price instead of four.
+ *
+ * It is only safe while the ground really is white, so `whiteGroundVerdict` measures the master's
+ * outer ring at creation and refuses anything off white. That check is the reason this is a tag and
+ * not a default: cream and white are indistinguishable on screen and a finger apart on paper.
+ */
+export const FULL_LADDER = "all" as const;
+
+/** What one Fourthwall product covers: a single ratio family, or every size on the ladder. */
+export type LadderScope = RatioId | typeof FULL_LADDER;
+
+/** "4:5" -> "4x5", and the full ladder -> "all". The form used in file and product names. */
+export function ratioTag(scope: LadderScope): string {
+  return scope === FULL_LADDER ? FULL_LADDER : scope.replace(":", "x");
 }
 
-/** "4x5" -> "4:5". Null when the tag is not a ratio the ladder uses. */
+/** "4x5" -> "4:5". Null when the tag is not a ratio the ladder uses; "all" is not a ratio. */
 export function ratioFromTag(tag: string): RatioId | null {
   const want = tag.trim().toLowerCase().replace("x", ":");
   return RATIO_FAMILIES.find((f) => f.ratio === want)?.ratio ?? null;
+}
+
+/** "4x5" -> "4:5", "all" -> the full ladder. Null when the tag means nothing to the ladder. */
+export function scopeFromTag(tag: string): LadderScope | null {
+  return tag.trim().toLowerCase() === FULL_LADDER ? FULL_LADDER : ratioFromTag(tag);
+}
+
+/** The ladder sizes one scope sells: its own family's, or all of them, in ladder order. */
+export function sizeIdsForScope(scope: LadderScope): string[] {
+  if (scope === FULL_LADDER) return SHOP_SIZE_LADDER.map((s) => s.id);
+  return RATIO_FAMILIES.find((f) => f.ratio === scope)?.sizeIds ?? [];
 }
 
 /** The family a size belongs to, or null if the size is not on the ladder. */

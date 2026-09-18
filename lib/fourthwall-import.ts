@@ -2,7 +2,14 @@
  * Pure helpers for importing Fourthwall products into Sanity shop prints (PLAN-40).
  * No I/O here; scripts/import-fourthwall-products.ts does the fetching and writing.
  */
-import { DEFAULT_RATIO, SHOP_SIZE_LADDER, ratioFromTag, type RatioId } from "@/config/commerce";
+import {
+  DEFAULT_RATIO,
+  FULL_LADDER,
+  SHOP_SIZE_LADDER,
+  scopeFromTag,
+  type LadderScope,
+  type RatioId,
+} from "@/config/commerce";
 
 export interface FwImage {
   id?: string;
@@ -150,11 +157,12 @@ export function pickGalleryImages(p: FwProduct, max = 3): FwImage[] {
 }
 
 /**
- * One Fourthwall product's contribution to an offer: which ratio it carries and which ladder sizes
- * its variants provide.
+ * One Fourthwall product's contribution to an offer: what it carries (a single ratio family, or
+ * FULL_LADDER for a white-ground master that sells the whole range) and which ladder sizes its
+ * variants provide.
  */
 export interface RatioSource<T> {
-  ratio: RatioId;
+  ratio: LadderScope;
   product: T;
   sizes: MappedSize[];
 }
@@ -168,30 +176,45 @@ export interface MergedSizes<T> {
 }
 
 /**
- * Merge several ratio products into the one set of sizes an offer sells.
+ * Merge several products into the one set of sizes an offer sells.
  *
- * A size is claimed by the product whose ratio owns it, so 24x36 comes from the [2x3] master and
- * prints to the edge. When no product carries the owning ratio the size falls back to whichever
- * product offers it, and is reported as letterboxed rather than dropped: that is the state every
- * print is in today, with a single 4:5 master covering the whole ladder, and quietly deleting
- * three sizes from a live print would be a far worse answer than selling them with a seam.
+ * Three claims on a size, strongest first:
+ *
+ *  1. the product whose ratio family owns it, so 24x36 comes from the [2x3] master and the artwork
+ *     itself reaches the edge of the sheet;
+ *  2. a FULL_LADDER product, which prints every size on purpose from a ground measured white when
+ *     it was created. Blank paper against white art leaves nothing to see, so these are not
+ *     reported as letterboxed;
+ *  3. whichever product happens to offer it, reported as letterboxed rather than dropped. That is
+ *     the state every pre-2026-09-17 print is in, one 4:5 master covering the whole ladder, and
+ *     quietly deleting three sizes from a live print would be a far worse answer than a seam.
+ *
+ * A ratio owner still beats a FULL_LADDER product for its own size: white letterboxing is
+ * invisible, but a master cut for the paper puts artwork where the other leaves margin.
  *
  * Ladder order, so the picker reads small to large whichever order Fourthwall returned.
  */
 export function mergeSizesByRatio<T>(sources: RatioSource<T>[]): MergedSizes<T> {
-  const byRatio = new Map<RatioId, RatioSource<T>>();
-  for (const src of sources) if (!byRatio.has(src.ratio)) byRatio.set(src.ratio, src);
+  const byScope = new Map<LadderScope, RatioSource<T>>();
+  for (const src of sources) if (!byScope.has(src.ratio)) byScope.set(src.ratio, src);
+  const full = byScope.get(FULL_LADDER);
 
   const sizes: MappedSize[] = [];
   const from = new Map<string, T>();
   const letterboxed: string[] = [];
 
   for (const ladderSize of SHOP_SIZE_LADDER) {
-    const owner = byRatio.get(ladderSize.ratio as RatioId);
+    const owner = byScope.get(ladderSize.ratio as RatioId);
     const ownerRow = owner?.sizes.find((s) => s.sizeId === ladderSize.id);
-    if (ownerRow) {
+    if (ownerRow && owner) {
       sizes.push(ownerRow);
-      from.set(ladderSize.id, owner!.product);
+      from.set(ladderSize.id, owner.product);
+      continue;
+    }
+    const fullRow = full?.sizes.find((s) => s.sizeId === ladderSize.id);
+    if (fullRow && full) {
+      sizes.push(fullRow);
+      from.set(ladderSize.id, full.product);
       continue;
     }
     const fallback = sources.find((s) => s.sizes.some((r) => r.sizeId === ladderSize.id));
@@ -230,17 +253,18 @@ export function splitVersion(baseTitle: string): { title: string; version: strin
 }
 
 /**
- * The aspect-ratio tag, which sits after the version and before the finish:
- * "Brooklyn Neighborhood Map (Earth) [2x3] | Framed". An untagged name is the default ratio,
- * because every product made before 2026-09-17 is named that way with a 4:5 master behind it.
+ * The scope tag, which sits after the version and before the finish:
+ * "Brooklyn Neighborhood Map (Earth) [2x3] | Framed", or [all] for a white-ground master that
+ * carries every size. An untagged name is the default ratio, because every product made before
+ * 2026-09-17 is named that way with a 4:5 master behind it.
  */
-export function splitRatio(baseTitle: string): { baseTitle: string; ratio: RatioId } {
-  const m = baseTitle.match(/^(.*\S)\s*\[([0-9]+x[0-9]+)\]\s*$/i);
+export function splitRatio(baseTitle: string): { baseTitle: string; ratio: LadderScope } {
+  const m = baseTitle.match(/^(.*\S)\s*\[([0-9]+x[0-9]+|all)\]\s*$/i);
   if (!m) return { baseTitle: baseTitle.trim(), ratio: DEFAULT_RATIO };
-  const ratio = ratioFromTag(m[2]);
+  const scope = scopeFromTag(m[2]);
   // An unrecognised tag is left in the title on purpose: silently dropping it would merge a
   // product into an artwork it does not belong to, and a visibly odd title is easier to notice.
-  return ratio ? { baseTitle: m[1].trim(), ratio } : { baseTitle: baseTitle.trim(), ratio: DEFAULT_RATIO };
+  return scope ? { baseTitle: m[1].trim(), ratio: scope } : { baseTitle: baseTitle.trim(), ratio: DEFAULT_RATIO };
 }
 
 /**
@@ -252,7 +276,7 @@ export function splitRatio(baseTitle: string): { baseTitle: string; ratio: Ratio
 export function splitProductName(name: string): {
   title: string;
   version: string | null;
-  ratio: RatioId;
+  ratio: LadderScope;
   finish: ImportFinish;
 } {
   const { baseTitle, finish } = splitFinish(name);

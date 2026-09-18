@@ -4,7 +4,15 @@
  * client wraps fetch with Basic auth (Node's fetch decodes gzip on its own).
  */
 
-import { DEFAULT_RATIO, RATIO_FAMILIES, ratioTag, type RatioId } from "@/config/commerce";
+import {
+  DEFAULT_RATIO,
+  FULL_LADDER,
+  RATIO_FAMILIES,
+  ratioTag,
+  sizeIdsForScope,
+  type LadderScope,
+  type RatioId,
+} from "@/config/commerce";
 
 export const PLATFORM_BASE = "https://api.fourthwall.com/open-api/v1.0";
 
@@ -47,22 +55,21 @@ export function sizeNameForId(sizeId: string): string {
 }
 
 /**
- * The size strings one product should carry, for one ratio and one finish.
+ * The size strings one product should carry, for one scope and one finish.
  *
- * A product per ratio is the whole point: it holds only the sizes whose paper matches its master,
- * so every print reaches the edge of the sheet. Sizes the template does not stock are dropped, and
- * a family with none left produces no product at all.
+ * A product per ratio holds only the sizes whose paper matches its master, so every print reaches
+ * the edge of the sheet. A FULL_LADDER product holds all of them, which is the right answer only
+ * once the ground has been measured white. Sizes the template does not stock are dropped, and a
+ * scope with none left produces no product at all.
  */
-export function sizeNamesFor(ratio: RatioId, finish: ApiFinish): string[] {
-  const family = RATIO_FAMILIES.find((f) => f.ratio === ratio);
-  if (!family) return [];
+export function sizeNamesFor(scope: LadderScope, finish: ApiFinish): string[] {
   const stocked = new Set<string>(SIZE_NAMES[finish]);
-  return family.sizeIds.map(sizeNameForId).filter((n) => stocked.has(n));
+  return sizeIdsForScope(scope).map(sizeNameForId).filter((n) => stocked.has(n));
 }
 
-/** "World Map with Flags [3x4].png" -> "3x4", or null when the name carries no tag. */
+/** "World Map with Flags [3x4].png" -> "3x4", "Brooklyn [all].png" -> "all", else null. */
 export function ratioTagFromFilename(filename: string): string | null {
-  const m = filename.replace(/\.[^.]+$/, "").match(/\[([0-9]+x[0-9]+)\]\s*$/i);
+  const m = filename.replace(/\.[^.]+$/, "").match(/\[([0-9]+x[0-9]+|all)\]\s*$/i);
   return m ? m[1].toLowerCase() : null;
 }
 
@@ -97,9 +104,9 @@ export function detectRatio(d: ImageDims, tolerance = 0.015): RatioId | null {
  *   Retro Consoles (Beige) [2x3]            2:3 poster
  *   Retro Consoles (Beige) [2x3] | Framed   2:3 framed
  */
-export function productName(title: string, finish: "poster" | "framed" | "canvas", ratio: RatioId = DEFAULT_RATIO): string {
+export function productName(title: string, finish: "poster" | "framed" | "canvas", scope: LadderScope = DEFAULT_RATIO): string {
   const t = title.trim();
-  const tagged = ratio === DEFAULT_RATIO ? t : `${t} [${ratioTag(ratio)}]`;
+  const tagged = scope === DEFAULT_RATIO ? t : `${t} [${ratioTag(scope)}]`;
   if (finish === "poster") return tagged;
   return `${tagged} | ${finish === "framed" ? "Framed" : "Canvas"}`;
 }
@@ -112,7 +119,7 @@ export function productName(title: string, finish: "poster" | "framed" | "canvas
 export function titleFromFilename(filename: string): string {
   return filename
     .replace(/\.[^.]+$/, "")
-    .replace(/\s*\[[0-9]+x[0-9]+\]\s*$/i, "")
+    .replace(/\s*\[(?:[0-9]+x[0-9]+|all)\]\s*$/i, "")
     .replace(/\s*\|\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -250,6 +257,68 @@ export function orientationRefusal(d: ImageDims): string | null {
     `It would print centred on portrait paper with blank bands above and below. Rotate it, or extend the ` +
     `background vertically so the master itself is portrait.`
   );
+}
+
+/**
+ * How far off white a master's outer ring may be before the letterbox shows.
+ *
+ * Fourthwall does not print the paper it has no artwork for, so the band is the bare sheet: pure
+ * white. Brooklyn's ground before it was redrawn measured rgb(245,240,232), 23 off on blue, and
+ * drew a visible line three inches in from the top and bottom of a 24x36. Four leaves room for
+ * JPEG ringing and for nothing else.
+ */
+export const WHITE_GROUND_TOLERANCE = 4;
+
+export interface EdgePixel {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export interface WhiteGroundVerdict {
+  /** false blocks a FULL_LADDER creation: the band would be visible on every mismatched size */
+  ok: boolean;
+  /** the sampled pixel furthest from white: the one that would show */
+  worst: EdgePixel | null;
+  /** that pixel's largest single-channel shortfall from 255 */
+  offBy: number;
+  message: string | null;
+}
+
+/**
+ * Is this master's ground white enough to letterbox invisibly?
+ *
+ * The outer ring is the right thing to measure, not the average and not the corners: the bare paper
+ * meets the artwork along its edge, so only the edge has to match. Art with a white border and a
+ * coloured middle passes and reads as a deliberate mount rather than a mistake, which is exactly
+ * right, because the seam it would otherwise show is the one place the eye looks.
+ *
+ * Worst pixel rather than mean, because a mean hides a dark rule along one edge in a field of
+ * white, and that rule is precisely what a band would turn into a line across the sheet.
+ */
+export function whiteGroundVerdict(ring: readonly EdgePixel[], tolerance = WHITE_GROUND_TOLERANCE): WhiteGroundVerdict {
+  if (ring.length === 0) {
+    return { ok: false, worst: null, offBy: 0, message: "no pixels were sampled, so the ground was never checked." };
+  }
+  let worst: EdgePixel = ring[0];
+  let offBy = -1;
+  for (const p of ring) {
+    const d = Math.max(255 - p.r, 255 - p.g, 255 - p.b);
+    if (d > offBy) {
+      offBy = d;
+      worst = p;
+    }
+  }
+  if (offBy <= tolerance) return { ok: true, worst, offBy, message: null };
+  return {
+    ok: false,
+    worst,
+    offBy,
+    message:
+      `its outer edge is rgb(${worst.r},${worst.g},${worst.b}), ${offBy} off white. Fourthwall fills ` +
+      `the rest of the sheet with bare paper, so every size whose shape does not match this master ` +
+      `would print with a visible band. Make the ground #FFFFFF, or drop [all] and give one master per ratio.`,
+  };
 }
 
 /** @deprecated kept so older callers still compile; prefer masterQuality + orientationRefusal. */
@@ -392,8 +461,8 @@ export async function uploadMedia(
 export interface CreateDesignOptions {
   finish: ApiFinish;
   title: string;
-  /** which aspect ratio this product carries; decides its name and which sizes it sells */
-  ratio?: RatioId;
+  /** what this product carries: one ratio family, or FULL_LADDER; decides its name and sizes */
+  ratio?: LadderScope;
   imageId: string;
   marginUsd: number;
   /** framed only; defaults to every frame color (one variant per color and size) */
@@ -409,8 +478,9 @@ export function designProductBody(o: CreateDesignOptions) {
     name: productName(o.title, o.finish, o.ratio ?? DEFAULT_RATIO),
     ...(o.description ? { description: o.description } : {}),
     regions: [{ region: "default", imageId: o.imageId, placementStrategy: "FULL_REGION" }],
-    // Only this ratio's sizes: that is the whole point of a product per ratio, so every size it
-    // sells is printed from a master shaped for the paper and reaches the edge of the sheet.
+    // Only this scope's sizes. For a ratio that is the point of a product per ratio: every size it
+    // sells is printed from a master shaped for the paper. For FULL_LADDER it is every size, which
+    // the white-ground check has already earned.
     sizes: sizeNamesFor(o.ratio ?? DEFAULT_RATIO, o.finish),
     ...(o.finish === "framed" ? { colors: [...(o.frameColors ?? FRAME_COLORS)] } : {}),
     profitMargin: o.marginUsd,

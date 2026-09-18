@@ -14,6 +14,32 @@ export const SHOP_FEATURES = [
   { title: "Damage guarantee", body: "Arrives bent or damaged? Send a photo, we reprint it free." },
 ] as const;
 
+/**
+ * What a print's meta title calls it, per category.
+ *
+ * Every print page used to end "| Art print", which spends the one slot Google shows on a phrase
+ * nobody searches: "wall art" outdraws "art print" by an order of magnitude, and a category word
+ * in front of it is the part that matches intent. The product name itself is left alone because it
+ * is also the page's heading and the name on the Fourthwall products.
+ *
+ * Kept short on purpose. "Brooklyn Neighborhood Map | Map wall art | The Pixel Prince" is 58
+ * characters; Google truncates around 60, and the brand is the part worth losing last.
+ */
+const META_TITLE_SUFFIX: Record<string, string> = {
+  "Video Games": "Gaming wall art",
+  Maps: "Map wall art",
+  Quotes: "Quote wall art",
+  Funny: "Funny wall art",
+  Minimalist: "Minimalist wall art",
+  Botanical: "Botanical wall art",
+};
+
+/** "Retro Consoles" + "Video Games" -> "Retro Consoles | Gaming wall art". */
+export function shopPrintMetaTitle(title: string, category?: string): string {
+  const suffix = (category && META_TITLE_SUFFIX[category]) || "Wall art print";
+  return `${title} | ${suffix}`;
+}
+
 export const SHOP_SHIPPING_FAQ = [
   {
     q: "How long does delivery take?",

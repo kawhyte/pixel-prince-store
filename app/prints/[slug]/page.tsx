@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getShopPrints, getShopPrintBySlug, getRelatedShopPrints } from "@/sanity/lib/client";
 import { generateMetadata as seoMeta } from "@/lib/seo";
 import { deliveryWindow } from "@/lib/delivery";
+import { shopPrintMetaTitle } from "@/config/shop-copy";
 import { shopPrintBreadcrumb, shopPrintFaqSchema, shopPrintSchema } from "@/lib/product-schema";
 import ShopPrintClient from "./shop-print-client";
 
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const art = await getShopPrintBySlug(slug);
   if (!art) return { title: "Print not found" };
   return seoMeta({
-    title: `${art.title} | Art print`,
+    title: shopPrintMetaTitle(art.title, art.category),
     description: art.description,
     canonical: `https://www.thepixelprince.com/prints/${art.id}`,
     image: art.detailImage || art.previewImage,

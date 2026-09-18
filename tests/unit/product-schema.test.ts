@@ -188,3 +188,26 @@ describe('the FAQ the page already shows', () => {
     }
   })
 })
+
+// The one slot Google shows used to end "| Art print", a phrase nobody searches. "Wall art"
+// outdraws it heavily and the category word in front is what matches intent.
+describe('the print meta title', () => {
+  it('names the category rather than saying "art print"', async () => {
+    const { shopPrintMetaTitle } = await import('@/config/shop-copy')
+    expect(shopPrintMetaTitle('Retro Consoles', 'Video Games')).toBe('Retro Consoles | Gaming wall art')
+    expect(shopPrintMetaTitle('Brooklyn Neighborhood Map', 'Maps')).toBe('Brooklyn Neighborhood Map | Map wall art')
+  })
+
+  it('still says something useful when the category is missing or unknown', async () => {
+    const { shopPrintMetaTitle } = await import('@/config/shop-copy')
+    expect(shopPrintMetaTitle('Some Print')).toBe('Some Print | Wall art print')
+    expect(shopPrintMetaTitle('Some Print', 'Sculpture')).toBe('Some Print | Wall art print')
+  })
+
+  it('leaves room for the brand inside what Google shows', async () => {
+    const { shopPrintMetaTitle } = await import('@/config/shop-copy')
+    // the longest title in the shop today, plus the suffix seoMeta appends
+    const full = `${shopPrintMetaTitle('Brooklyn Neighborhood Map', 'Maps')} | The Pixel Prince`
+    expect(full.length).toBeLessThanOrEqual(60)
+  })
+})

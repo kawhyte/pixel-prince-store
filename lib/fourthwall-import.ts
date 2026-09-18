@@ -2,7 +2,7 @@
  * Pure helpers for importing Fourthwall products into Sanity shop prints (PLAN-40).
  * No I/O here; scripts/import-fourthwall-products.ts does the fetching and writing.
  */
-import { SHOP_SIZE_LADDER } from "@/config/commerce";
+import { DEFAULT_RATIO, SHOP_SIZE_LADDER, ratioFromTag, type RatioId } from "@/config/commerce";
 
 export interface FwImage {
   id?: string;
@@ -149,6 +149,62 @@ export function pickGalleryImages(p: FwProduct, max = 3): FwImage[] {
   return out;
 }
 
+/**
+ * One Fourthwall product's contribution to an offer: which ratio it carries and which ladder sizes
+ * its variants provide.
+ */
+export interface RatioSource<T> {
+  ratio: RatioId;
+  product: T;
+  sizes: MappedSize[];
+}
+
+export interface MergedSizes<T> {
+  sizes: MappedSize[];
+  /** the product each size was taken from, for the log */
+  from: Map<string, T>;
+  /** sizes served by a product whose shape does not match the paper, so they letterbox */
+  letterboxed: string[];
+}
+
+/**
+ * Merge several ratio products into the one set of sizes an offer sells.
+ *
+ * A size is claimed by the product whose ratio owns it, so 24x36 comes from the [2x3] master and
+ * prints to the edge. When no product carries the owning ratio the size falls back to whichever
+ * product offers it, and is reported as letterboxed rather than dropped: that is the state every
+ * print is in today, with a single 4:5 master covering the whole ladder, and quietly deleting
+ * three sizes from a live print would be a far worse answer than selling them with a seam.
+ *
+ * Ladder order, so the picker reads small to large whichever order Fourthwall returned.
+ */
+export function mergeSizesByRatio<T>(sources: RatioSource<T>[]): MergedSizes<T> {
+  const byRatio = new Map<RatioId, RatioSource<T>>();
+  for (const src of sources) if (!byRatio.has(src.ratio)) byRatio.set(src.ratio, src);
+
+  const sizes: MappedSize[] = [];
+  const from = new Map<string, T>();
+  const letterboxed: string[] = [];
+
+  for (const ladderSize of SHOP_SIZE_LADDER) {
+    const owner = byRatio.get(ladderSize.ratio as RatioId);
+    const ownerRow = owner?.sizes.find((s) => s.sizeId === ladderSize.id);
+    if (ownerRow) {
+      sizes.push(ownerRow);
+      from.set(ladderSize.id, owner!.product);
+      continue;
+    }
+    const fallback = sources.find((s) => s.sizes.some((r) => r.sizeId === ladderSize.id));
+    const row = fallback?.sizes.find((r) => r.sizeId === ladderSize.id);
+    if (!row || !fallback) continue;
+    sizes.push(row);
+    from.set(ladderSize.id, fallback.product);
+    letterboxed.push(ladderSize.id);
+  }
+
+  return { sizes, from, letterboxed };
+}
+
 export type ImportFinish = "unframed" | "framed" | "canvas";
 
 /**
@@ -173,10 +229,35 @@ export function splitVersion(baseTitle: string): { title: string; version: strin
   return { title: m[1].trim(), version: m[2].trim() };
 }
 
-/** Artwork title and version from a Fourthwall product name, finish suffix removed. */
-export function splitProductName(name: string): { title: string; version: string | null; finish: ImportFinish } {
+/**
+ * The aspect-ratio tag, which sits after the version and before the finish:
+ * "Brooklyn Neighborhood Map (Earth) [2x3] | Framed". An untagged name is the default ratio,
+ * because every product made before 2026-09-17 is named that way with a 4:5 master behind it.
+ */
+export function splitRatio(baseTitle: string): { baseTitle: string; ratio: RatioId } {
+  const m = baseTitle.match(/^(.*\S)\s*\[([0-9]+x[0-9]+)\]\s*$/i);
+  if (!m) return { baseTitle: baseTitle.trim(), ratio: DEFAULT_RATIO };
+  const ratio = ratioFromTag(m[2]);
+  // An unrecognised tag is left in the title on purpose: silently dropping it would merge a
+  // product into an artwork it does not belong to, and a visibly odd title is easier to notice.
+  return ratio ? { baseTitle: m[1].trim(), ratio } : { baseTitle: baseTitle.trim(), ratio: DEFAULT_RATIO };
+}
+
+/**
+ * Artwork title, version, ratio and finish from a Fourthwall product name.
+ *
+ * Strip order is finish, then ratio, then version: the tag sits between the version and the finish,
+ * and splitVersion matches a trailing parenthesis that the tag would otherwise hide.
+ */
+export function splitProductName(name: string): {
+  title: string;
+  version: string | null;
+  ratio: RatioId;
+  finish: ImportFinish;
+} {
   const { baseTitle, finish } = splitFinish(name);
-  return { ...splitVersion(baseTitle), finish };
+  const { baseTitle: untagged, ratio } = splitRatio(baseTitle);
+  return { ...splitVersion(untagged), ratio, finish };
 }
 
 /**
@@ -184,10 +265,14 @@ export function splitProductName(name: string): { title: string; version: string
  * always pick the same one, else the first product given.
  */
 export function sanityIdForArtwork(products: FwProduct[]): string {
-  const unframed = [...products]
-    .filter((p) => splitFinish(p.name).finish === "unframed")
-    .sort((a, b) => a.name.localeCompare(b.name));
-  return sanityIdForFourthwallProduct((unframed[0] ?? products[0]).id);
+  // The default-ratio unframed product, so adding a [2x3] sibling to an artwork that already
+  // exists does not move its Sanity id and orphan everything Kenny wrote in Studio.
+  const rank = (p: FwProduct) => {
+    const { ratio, finish } = splitProductName(p.name);
+    return (finish === "unframed" ? 0 : 1) + (ratio === DEFAULT_RATIO ? 0 : 2);
+  };
+  const ordered = [...products].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  return sanityIdForFourthwallProduct((ordered[0] ?? products[0]).id);
 }
 
 /** Deterministic Sanity id for a Fourthwall product, so re-runs update instead of duplicating. */

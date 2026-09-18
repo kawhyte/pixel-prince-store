@@ -107,8 +107,9 @@ describe("artwork versions", () => {
     expect(splitVersion("Moon (Ivory)")).toEqual({ title: "Moon", version: "Ivory" });
     expect(splitVersion("Moon")).toEqual({ title: "Moon", version: null });
     expect(splitVersion("(Ivory)")).toEqual({ title: "(Ivory)", version: null });
-    expect(splitProductName("Moon (Midnight) | Framed")).toEqual({ title: "Moon", version: "Midnight", finish: "framed" });
-    expect(splitProductName("Moon | Canvas")).toEqual({ title: "Moon", version: null, finish: "canvas" });
+    // ratio joined the shape on 2026-09-17; an untagged name is the default, 4:5.
+    expect(splitProductName("Moon (Midnight) | Framed")).toEqual({ title: "Moon", version: "Midnight", ratio: "4:5", finish: "framed" });
+    expect(splitProductName("Moon | Canvas")).toEqual({ title: "Moon", version: null, ratio: "4:5", finish: "canvas" });
 
     const p = (id: string, name: string) => ({ id, name });
     const products = [p("m", "Moon (Midnight)"), p("mf", "Moon (Midnight) | Framed"), p("i", "Moon (Ivory)")];
@@ -180,5 +181,36 @@ describe("inferCategory and plurals", () => {
     expect(inferCategory("Brooklyn Neighborhood Map")).toBe("Maps");
     expect(inferCategory("Minimalist Moon")).toBe("Minimalist");
     expect(inferCategory("Something Else Entirely")).toBeUndefined();
+  });
+});
+
+describe("aspect ratio in a product name", () => {
+  it("strips the tag so every ratio of one artwork shares a title", async () => {
+    const { splitProductName } = await import("@/lib/fourthwall-import");
+    // The tag sits between the version and the finish. Strip order matters: splitVersion matches a
+    // trailing parenthesis that the tag would otherwise hide.
+    expect(splitProductName("Moon (Midnight) [2x3] | Framed")).toEqual({ title: "Moon", version: "Midnight", ratio: "2:3", finish: "framed" });
+    expect(splitProductName("Sweden Map [3x4]")).toEqual({ title: "Sweden Map", version: null, ratio: "3:4", finish: "unframed" });
+    expect(splitProductName("Sweden Map [11x14] | Framed")).toEqual({ title: "Sweden Map", version: null, ratio: "11:14", finish: "framed" });
+  });
+
+  it("leaves an unrecognised tag in the title rather than guessing", async () => {
+    const { splitProductName } = await import("@/lib/fourthwall-import");
+    // Silently dropping it would merge the product into an artwork it does not belong to.
+    const got = splitProductName("Sweden Map [9x16]");
+    expect(got.title).toBe("Sweden Map [9x16]");
+    expect(got.ratio).toBe("4:5");
+  });
+
+  it("keeps the Sanity id on the default-ratio unframed product", async () => {
+    const { sanityIdForArtwork } = await import("@/lib/fourthwall-import");
+    const p = (id: string, name: string) => ({ id, name });
+    // Adding a [2x3] sibling to an artwork that already exists must not move its id, or everything
+    // Kenny wrote in Studio is orphaned onto a second artwork.
+    const before = [p("a", "Sweden Map"), p("af", "Sweden Map | Framed")];
+    const after = [...before, p("b", "Sweden Map [2x3]"), p("bf", "Sweden Map [2x3] | Framed")];
+    expect(sanityIdForArtwork(before)).toBe("fw-a");
+    expect(sanityIdForArtwork(after)).toBe("fw-a");
+    expect(sanityIdForArtwork([...after].reverse())).toBe("fw-a");
   });
 });

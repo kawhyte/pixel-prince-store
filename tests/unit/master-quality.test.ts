@@ -5,7 +5,7 @@ import {
   dpiAtSize,
   inchesFromSizeName,
   masterQuality,
-  ratioWarning,
+  orientationRefusal,
   SIZE_NAMES,
 } from '@/lib/fourthwall-platform'
 
@@ -65,13 +65,17 @@ describe('masterQuality', () => {
   })
 })
 
-describe('ratioWarning', () => {
-  it('says letterboxed, because that is what the mockup showed', () => {
-    const w = ratioWarning({ width: 6000, height: 4800, contentType: 'image/png' })
-    expect(w).toContain('letterboxed')
+describe('orientationRefusal', () => {
+  it('refuses a landscape master, because Fourthwall has no landscape wall art', () => {
+    // Checked in their catalogue 2026-09-17: both poster templates offer Vertical and Square and
+    // no Horizontal. The only landscape product has no unframed version.
+    const w = orientationRefusal({ width: 6000, height: 4800, contentType: 'image/png' })
+    expect(w).toContain('landscape')
+    expect(w).toContain('Vertical and Square')
   })
 
-  it('is quiet for a 4:5 master', () => {
-    expect(ratioWarning({ width: 8640, height: 10800, contentType: 'image/png' })).toBeNull()
+  it('is quiet for portrait and for square', () => {
+    expect(orientationRefusal({ width: 8640, height: 10800, contentType: 'image/png' })).toBeNull()
+    expect(orientationRefusal({ width: 3000, height: 3000, contentType: 'image/png' })).toBeNull()
   })
 })

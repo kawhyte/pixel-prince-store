@@ -16,12 +16,16 @@
 import { config } from "dotenv";
 import { readdirSync, readFileSync } from "fs";
 import { resolve, join } from "path";
+import { DEFAULT_RATIO, RATIO_FAMILIES, ratioFromTag, ratioTag } from "../config/commerce";
 import {
   createDesignProduct,
   createPlatformClient,
+  detectRatio,
   listMasterFiles,
   masterQuality,
-  ratioWarning,
+  orientationRefusal,
+  ratioTagFromFilename,
+  sizeNamesFor,
   listAllProducts,
   productName,
   readImageDims,
@@ -86,23 +90,50 @@ async function main() {
       summary.failed++;
       continue;
     }
-    // Resolution is a refusal, not a warning: a soft print is a refund and a bad review, and it
-    // cannot be fixed after creation because the Platform API has no endpoint to replace artwork.
-    const quality = masterQuality(dims, SIZE_NAMES.poster);
-    if (!quality.ok) {
-      console.error(`refuse ${title}: ${quality.message}`);
-      console.error(`       Re-export the master at ${Math.ceil(7200)}×${Math.ceil(10800)} px or larger, or drop the big sizes from the ladder.`);
+    // Fourthwall has no landscape wall art, so a landscape master can only ever letterbox.
+    const landscape = orientationRefusal(dims);
+    if (landscape) {
+      console.error(`refuse ${master.path}: ${landscape}`);
       summary.failed++;
       continue;
     }
-    if (quality.message) console.warn(`warn   ${title}: ${quality.message}`);
 
-    const ratio = ratioWarning(dims);
-    if (ratio) console.warn(`warn   ${title}: ${ratio}`);
+    // The ratio comes from the pixels, never the file name. A master saved under the wrong tag
+    // would otherwise build a product whose sizes do not match its artwork, and that mistake only
+    // surfaces on printed paper.
+    const actual = detectRatio(dims);
+    const tag = ratioTagFromFilename(file);
+    const claimed = tag ? ratioFromTag(tag) : null;
+    if (!actual) {
+      console.error(`refuse ${title}: ${dims.width}×${dims.height} px is not one of ${RATIO_FAMILIES.map((f) => f.ratio).join(", ")}.`);
+      console.error(`       Fourthwall fits art to the sheet rather than cropping, so a shape off the ladder prints with blank paper on two edges.`);
+      summary.failed++;
+      continue;
+    }
+    if (claimed && claimed !== actual) {
+      console.error(`refuse ${master.path}: named [${tag}] but the pixels are ${actual} (${dims.width}×${dims.height}).`);
+      console.error(`       Rename it or re-export it; the tag is a label, the pixels are the truth.`);
+      summary.failed++;
+      continue;
+    }
+    if (!tag && actual !== DEFAULT_RATIO) {
+      console.warn(`warn   ${master.path}: no tag in the name but the pixels are ${actual}. Rename it [${ratioTag(actual)}] so the folder reads true.`);
+    }
 
-    const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f)));
-    for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f)))) {
-      console.log(`skip   ${productName(title, f)} (exists)`);
+    // Resolution is a refusal, not a warning: a soft print is a refund and a bad review, and it
+    // cannot be fixed after creation because the Platform API has no endpoint to replace artwork.
+    const ladder = sizeNamesFor(actual, "poster");
+    const quality = masterQuality(dims, ladder);
+    if (!quality.ok) {
+      console.error(`refuse ${title} [${ratioTag(actual)}]: ${quality.message}`);
+      summary.failed++;
+      continue;
+    }
+    if (quality.message) console.warn(`warn   ${title} [${ratioTag(actual)}]: ${quality.message}`);
+
+    const todo = (["poster", "framed"] as const).filter((f) => !existing.has(productName(title, f, actual)));
+    for (const f of (["poster", "framed"] as const).filter((f) => existing.has(productName(title, f, actual)))) {
+      console.log(`skip   ${productName(title, f, actual)} (exists)`);
       summary.skipped++;
     }
     if (todo.length === 0) {
@@ -111,7 +142,9 @@ async function main() {
     }
 
     console.log(
-      `${apply ? "create" : "would create"} ${title} (${dims.width}×${dims.height}): ${todo.map((f) => productName(title, f)).join(", ")}` +
+      `${apply ? "create" : "would create"} ${title} [${ratioTag(actual)}] (${dims.width}×${dims.height}): ` +
+        `${todo.map((f) => productName(title, f, actual)).join(", ")}` +
+        ` | sizes ${sizeNamesFor(actual, "poster").join(", ")}` +
         ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
@@ -126,17 +159,18 @@ async function main() {
           const created = await createDesignProduct(client, {
             finish,
             title,
+            ratio: actual,
             imageId,
             marginUsd: finish === "poster" ? marginPoster : marginFramed,
             frameColors,
             publish,
           });
-          console.log(`ok     ${productName(title, finish)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
+          console.log(`ok     ${productName(title, finish, actual)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
           summary.created++;
-          existing.add(productName(title, finish));
+          existing.add(productName(title, finish, actual));
         } catch (e) {
           const msg = e instanceof PlatformError ? `${e.status} ${e.body}` : String(e);
-          console.error(`fail   ${productName(title, finish)}: ${msg}`);
+          console.error(`fail   ${productName(title, finish, actual)}: ${msg}`);
           summary.failed++;
         }
         await sleep(500);

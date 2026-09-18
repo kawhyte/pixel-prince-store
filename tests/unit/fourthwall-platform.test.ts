@@ -10,7 +10,10 @@ import {
   PlatformError,
   SIZE_NAMES,
   TEMPLATES,
+  sizeNameForId,
+  sizeNamesFor,
 } from "@/lib/fourthwall-platform";
+import { RATIO_FAMILIES, SHOP_SIZE_LADDER } from "@/config/commerce";
 
 function png(width: number, height: number): Uint8Array {
   const b = new Uint8Array(33);
@@ -51,7 +54,10 @@ describe("fourthwall platform helpers", () => {
     // actually sells, so it now says so: the old rule only ever measured 8x10.
     expect(dimsWarning({ width: 4800, height: 6000, contentType: "image/png" })).toMatch(/167 dpi/);
     expect(dimsWarning({ width: 1200, height: 1500, contentType: "image/png" })).toMatch(/below/);
-    expect(dimsWarning({ width: 3000, height: 3000, contentType: "image/png" })).toMatch(/4:5/);
+    // A square is a legal orientation for Fourthwall (the toggle is Vertical | Square), so the
+    // deprecated shim judges it on resolution. The create script still refuses it earlier, because
+    // detectRatio finds no family on the ladder for 1:1.
+    expect(dimsWarning({ width: 3000, height: 3000, contentType: "image/png" })).toMatch(/dpi/);
   });
 
   it("builds the verified create-product body", () => {
@@ -61,13 +67,29 @@ describe("fourthwall platform helpers", () => {
       productTemplateId: TEMPLATES.framed.id,
       name: "Sweden Map | Framed",
       regions: [{ region: "default", imageId: "img1", placementStrategy: "FULL_REGION" }],
-      sizes: [...SIZE_NAMES.framed],
+      // Only the default ratio's sizes: a product carries one master, so it sells only the sizes
+      // whose paper matches that master's shape. The rest live on sibling products.
+      sizes: sizeNamesFor("4:5", "framed"),
       colors: ["Black", "Red Oak", "White"],
       profitMargin: 30,
       publishOnCreate: false,
     });
     expect(designProductBody({ finish: "poster", title: "X", imageId: "i", marginUsd: 18 })).not.toHaveProperty("colors");
     expect(designProductBody({ finish: "framed", title: "X", imageId: "i", marginUsd: 30, frameColors: ["White"] })).toMatchObject({ colors: ["White"] });
+  });
+
+
+  it("a tagged ratio names the product and narrows its sizes", () => {
+    const body = designProductBody({ finish: "poster", title: "Sweden Map", ratio: "2:3", imageId: "i", marginUsd: 18 });
+    expect(body).toMatchObject({ name: "Sweden Map [2x3]", sizes: ['24" x 36"'] });
+    const framed = designProductBody({ finish: "framed", title: "Sweden Map", ratio: "3:4", imageId: "i", marginUsd: 30 });
+    expect(framed).toMatchObject({ name: "Sweden Map [3x4] | Framed", sizes: ['18" x 24"'] });
+  });
+
+  it("every ratio's product together covers the whole ladder exactly once", () => {
+    const all = RATIO_FAMILIES.flatMap((f) => sizeNamesFor(f.ratio, "poster"));
+    expect(new Set(all).size).toBe(all.length);
+    expect(all.sort()).toEqual(SHOP_SIZE_LADDER.map((s) => sizeNameForId(s.id)).sort());
   });
 
   it("client sends basic auth and pages the product list", async () => {

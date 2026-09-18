@@ -25,6 +25,7 @@
  * SANITY_API_WRITE_TOKEN (or SANITY_API_TOKEN). Never publishes: new prints land in
  * drafts.<id> for Kenny to finish (description, category, tags) and publish in Studio.
  */
+import { DEFAULT_RATIO } from "../config/commerce";
 import { createClient } from "@sanity/client";
 import { config } from "dotenv";
 import { resolve } from "path";
@@ -44,6 +45,8 @@ import {
   slugify,
   splitProductName,
   stripHtml,
+  mergeSizesByRatio,
+  type RatioSource,
 } from "../lib/fourthwall-import";
 
 config({ path: resolve(__dirname, "../.env.local") });
@@ -269,11 +272,16 @@ async function main() {
 
   let failures = 0;
   for (const [title, members] of groups) {
-    const finishProducts: FinishProduct[] = [];
+    // An artwork can now be several products per finish: one per aspect ratio, each carrying a
+    // master shaped for the paper its sizes print on. They collapse into one offer, because an
+    // offer's sizes each hold their own providerVariantId and that is what checkout uses.
+    const byFinish = new Map<string, RatioSource<FwProduct>[]>();
     for (const p of members) {
-      const { finish, version } = splitProductName(p.name);
-      if (finishProducts.some((f) => f.finish === finish && f.version === version)) {
-        console.error(`skip   ${p.name}: a second "${version ? `${version} ` : ""}${finish}" product for "${title}", rename one`);
+      const { finish, version, ratio } = splitProductName(p.name);
+      const key = `${version ?? ""}|${finish}`;
+      const sources = byFinish.get(key) ?? [];
+      if (sources.some((src) => src.ratio === ratio)) {
+        console.error(`skip   ${p.name}: a second ${ratio} "${version ? `${version} ` : ""}${finish}" product for "${title}", rename one`);
         failures++;
         continue;
       }
@@ -284,7 +292,29 @@ async function main() {
         failures++;
         continue;
       }
-      finishProducts.push({ product: p, finish, version, sizes });
+      sources.push({ ratio, product: p, sizes });
+      byFinish.set(key, sources);
+    }
+
+    const finishProducts: FinishProduct[] = [];
+    for (const [key, sources] of byFinish) {
+      const [version, finish] = [key.split("|")[0] || null, key.split("|")[1] as ImportFinish];
+      const merged = mergeSizesByRatio(sources);
+      if (merged.sizes.length === 0) continue;
+      // The default-ratio product leads: its id and its mockup stand for the offer, which keeps an
+      // existing offer's providerProductId unchanged when a ratio sibling is added beside it.
+      const primary = sources.find((src) => src.ratio === DEFAULT_RATIO)?.product ?? sources[0].product;
+      if (sources.length > 1) {
+        const covered = sources.map((src) => src.ratio).join(", ");
+        console.log(`ratios ${title}: ${version ? `${version} ` : ""}${finish} served by ${covered}`);
+      }
+      if (merged.letterboxed.length > 0) {
+        console.warn(
+          `warn   ${title}: ${version ? `${version} ` : ""}${finish} has no master for ${merged.letterboxed.join(", ")}, ` +
+            `so those print with blank paper on two edges`
+        );
+      }
+      finishProducts.push({ product: primary, finish, version, sizes: merged.sizes });
     }
     if (finishProducts.length === 0) continue;
     // versions alphabetically (the first one is the default on the page), finishes in FINISH_ORDER

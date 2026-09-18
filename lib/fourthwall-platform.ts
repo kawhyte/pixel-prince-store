@@ -233,18 +233,28 @@ export function masterQuality(d: ImageDims, sizeNames: readonly string[]): Maste
   return { ok: true, dpiAtLargest, largestSize: largest.name, largestAt300, message: null };
 }
 
-/** The aspect the poster template expects. A master outside it is letterboxed, not cropped. */
-export function ratioWarning(d: ImageDims): string | null {
-  const ratio = d.width / d.height;
-  if (ratio < 0.76 || ratio > 0.84) {
-    return `ratio ${ratio.toFixed(2)} is not 4:5. Fourthwall's poster template has a portrait print area, so this is letterboxed onto the sheet with blank paper above and below, not cropped (verified against a real mockup 2026-09-17).`;
-  }
-  return null;
+/**
+ * Fourthwall's wall art is portrait or square, never landscape.
+ *
+ * Checked in their catalogue on 2026-09-17: Enhanced Matte Paper Poster and Framed High-Quality
+ * Matte Poster both offer a "Vertical | Square" toggle and no horizontal option. The only landscape
+ * product is Matte Paper Framed Poster With Mat, which has no unframed version. A landscape master
+ * is therefore fitted onto portrait paper with blank bands above and below, confirmed against a
+ * real mockup the same day.
+ */
+export function orientationRefusal(d: ImageDims): string | null {
+  if (d.width <= d.height) return null;
+  return (
+    `${d.width}×${d.height} px is landscape, and Fourthwall's poster templates are portrait or square only ` +
+    `(checked 2026-09-17: the orientation toggle offers Vertical and Square, no Horizontal). ` +
+    `It would print centred on portrait paper with blank bands above and below. Rotate it, or extend the ` +
+    `background vertically so the master itself is portrait.`
+  );
 }
 
-/** @deprecated kept so older callers still compile; prefer masterQuality + ratioWarning. */
+/** @deprecated kept so older callers still compile; prefer masterQuality + orientationRefusal. */
 export function dimsWarning(d: ImageDims): string | null {
-  return ratioWarning(d) ?? masterQuality(d, SIZE_NAMES.poster).message;
+  return orientationRefusal(d) ?? masterQuality(d, SIZE_NAMES.poster).message;
 }
 
 export interface MasterDirEntry {
@@ -382,6 +392,8 @@ export async function uploadMedia(
 export interface CreateDesignOptions {
   finish: ApiFinish;
   title: string;
+  /** which aspect ratio this product carries; decides its name and which sizes it sells */
+  ratio?: RatioId;
   imageId: string;
   marginUsd: number;
   /** framed only; defaults to every frame color (one variant per color and size) */
@@ -394,10 +406,12 @@ export function designProductBody(o: CreateDesignOptions) {
   return {
     type: "design",
     productTemplateId: TEMPLATES[o.finish].id,
-    name: productName(o.title, o.finish),
+    name: productName(o.title, o.finish, o.ratio ?? DEFAULT_RATIO),
     ...(o.description ? { description: o.description } : {}),
     regions: [{ region: "default", imageId: o.imageId, placementStrategy: "FULL_REGION" }],
-    sizes: [...SIZE_NAMES[o.finish]],
+    // Only this ratio's sizes: that is the whole point of a product per ratio, so every size it
+    // sells is printed from a master shaped for the paper and reaches the edge of the sheet.
+    sizes: sizeNamesFor(o.ratio ?? DEFAULT_RATIO, o.finish),
     ...(o.finish === "framed" ? { colors: [...(o.frameColors ?? FRAME_COLORS)] } : {}),
     profitMargin: o.marginUsd,
     publishOnCreate: o.publish === true,

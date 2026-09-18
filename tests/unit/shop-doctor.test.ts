@@ -212,3 +212,25 @@ describe("auditPrint for a set", () => {
     expect(r.findings.some((f) => /no card image/.test(f.message))).toBe(true);
   });
 });
+
+describe("comparePrices on a ratio product", () => {
+  it("checks only that ratio's sizes, not the whole ladder", async () => {
+    const { comparePrices } = await import("@/lib/shop-doctor");
+    // A [2x3] product sells 24x36 alone. Without the ratio it reported the other four ladder sizes
+    // as missing, and the six rows that mattered were lost in twenty of noise.
+    const live = new Map<string, number | null>([["24x36", 4500]]);
+    const withRatio = comparePrices("unframed", live, "2:3");
+    expect(withRatio.rows.map((r) => r.sizeId)).toEqual(["24x36"]);
+    expect(withRatio.wrong).toEqual([]);
+
+    const without = comparePrices("unframed", live);
+    expect(without.rows.length).toBeGreaterThan(1);
+  });
+
+  it("still checks the whole ladder when no ratio is given, so legacy products are unchanged", async () => {
+    const { comparePrices } = await import("@/lib/shop-doctor");
+    const { SHOP_SIZE_LADDER } = await import("@/config/commerce");
+    const live = new Map<string, number | null>(SHOP_SIZE_LADDER.map((s) => [s.id, 1]));
+    expect(comparePrices("unframed", live).rows).toHaveLength(SHOP_SIZE_LADDER.length);
+  });
+})

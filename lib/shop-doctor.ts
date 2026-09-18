@@ -8,7 +8,7 @@
  * Everything here is pure so it can be tested without a shop. The script feeds it what the two
  * APIs return and prints the result; nothing in this file reads or writes anything.
  */
-import { SHOP_SIZE_LADDER, TARGET_PRICES, type FinishId } from "@/config/commerce";
+import { RATIO_FAMILIES, SHOP_SIZE_LADDER, TARGET_PRICES, type FinishId, type RatioId } from "@/config/commerce";
 import { draftDescription, draftLongDescription } from "@/lib/listing-copy";
 
 /** A price row that disagrees with the ladder, or a size the product does not sell. */
@@ -30,8 +30,18 @@ export interface PriceRow {
 export function comparePrices(
   finish: FinishId | string,
   livePrices: Map<string, number | null>,
+  /**
+   * The ratio this product carries, when it is one of several for an artwork. A ratio product
+   * sells only its own family's sizes, so without this every [2x3] product reported the other four
+   * ladder sizes as missing and the six rows that mattered were lost in twenty of noise.
+   */
+  ratio?: RatioId,
 ): { rows: PriceRow[]; wrong: PriceRow[]; unchecked: string[] } {
-  const targets = (TARGET_PRICES as Record<string, Partial<Record<string, number>>>)[finish] ?? {};
+  const all = (TARGET_PRICES as Record<string, Partial<Record<string, number>>>)[finish] ?? {};
+  const family = ratio ? RATIO_FAMILIES.find((f) => f.ratio === ratio) : undefined;
+  const targets: Partial<Record<string, number>> = family
+    ? Object.fromEntries(Object.entries(all).filter(([sizeId]) => family.sizeIds.includes(sizeId)))
+    : all;
   const rows: PriceRow[] = [];
   const unchecked: string[] = [];
 

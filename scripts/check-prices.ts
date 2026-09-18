@@ -74,7 +74,7 @@ async function main() {
   let unchecked = 0;
 
   for (const product of live) {
-    const { finish } = splitProductName(product.name);
+    const { finish, ratio } = splitProductName(product.name);
     const bySize = pickVariantPerSize(product.variants ?? [], PREFERRED_COLOR);
 
     // The comparison itself lives in lib/shop-doctor.ts, so this report and `npm run shop:doctor`
@@ -84,7 +84,9 @@ async function main() {
     for (const [sizeId, variant] of bySize) {
       live.set(sizeId, typeof variant.unitPrice?.value === "number" ? Math.round(variant.unitPrice.value * 100) : null);
     }
-    const compared = comparePrices(finish, live);
+    // A tagged product sells only its own ratio's sizes; an untagged one still covers the ladder.
+    const hasSiblings = products.some((p) => p.name !== product.name && splitProductName(p.name).title === splitProductName(product.name).title && splitProductName(p.name).ratio !== ratio);
+    const compared = comparePrices(finish, live, hasSiblings ? ratio : undefined);
     unchecked += compared.unchecked.length;
 
     const costOf = (sizeId: string) => {

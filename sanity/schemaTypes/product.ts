@@ -159,6 +159,16 @@ export const product = defineType({
       title: 'Card image (the grid, search, related prints)',
       type: 'image',
       components: { input: ImageWithDetails },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description:
+            'What the picture shows, for screen readers and for search. This matters more here than on most sites: Sanity serves images from a content hash, so the file name tells a crawler nothing and the alt text is the only description it gets.',
+          validation: (Rule) => Rule.warning().required(),
+        }),
+      ],
       description:
         'The one picture that represents this print everywhere it appears in a list. Not the big image on its own page: that lives on each offer under Shop, as Main photo. ' +
         SHOP_IMAGE_HINT,
@@ -196,11 +206,22 @@ export const product = defineType({
       name: 'detailImage',
       title: 'Main Image',
       type: 'image',
+      components: { input: ImageWithDetails },
       description: 'The artwork itself, large (1200×1600) — shown as the first/main image on the art page. This is the art, not a room shot. Optional — the preview image is reused if empty.',
       group: 'images',
       options: {
         hotspot: true,
       },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description:
+            'What the picture shows, for screen readers and for search. This matters more here than on most sites: Sanity serves images from a content hash, so the file name tells a crawler nothing and the alt text is the only description it gets.',
+          validation: (Rule) => Rule.warning().required(),
+        }),
+      ],
     }),
     defineField({
       name: 'galleryImages',

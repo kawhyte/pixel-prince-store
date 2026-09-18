@@ -166,6 +166,9 @@ export interface FreeArt {
   heroImage?: string
   previewImageOrientation?: ImageOrientation
   detailImage?: string
+  /** what the card image shows; the only description a crawler gets, because the URL is a hash */
+  previewImageAlt?: string
+  detailImageAlt?: string
   galleryImages?: GalleryImage[]
   artFile?: ArtFile
   listing: ArtworkListing
@@ -270,6 +273,8 @@ function toFreeArt(product: SanityProduct): FreeArt {
       ? urlFor(product.previewImage).width(800).height(1000).fit("crop").url()
       : undefined,
     previewImageOrientation,
+    previewImageAlt: (product.previewImage as { alt?: string } | undefined)?.alt,
+    detailImageAlt: (product.detailImage as { alt?: string } | undefined)?.alt,
     detailImage: product.detailImage
       ? urlFor(product.detailImage).width(1200).height(1600).url()
       : undefined,

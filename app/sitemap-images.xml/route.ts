@@ -37,12 +37,16 @@ function imagesFor(art: FreeArt): SitemapImage[] {
     out.push({ url, title });
   };
 
+  // The title is what Google reads to know what the picture is, and the bare artwork name says
+  // almost nothing: twenty-one shop images went out as "Retro Controllers". Where a human or the
+  // Studio generator has written alt text, that sentence is the description, and the name is only
+  // the fallback for an image nobody has described yet.
   for (const offer of art.offers ?? []) {
-    add(offer.artUrl, art.title);
-    add(offer.mockupUrl, art.title);
+    add(offer.artUrl, offer.artAlt || art.title);
+    add(offer.mockupUrl, offer.mockupAlt || art.title);
   }
-  add(art.detailImage, art.title);
-  add(art.previewImage, art.title);
+  add(art.detailImage, art.detailImageAlt || art.title);
+  add(art.previewImage, art.previewImageAlt || art.title);
   for (const photo of art.galleryImages ?? []) add(photo.url, photo.alt || art.title);
   return out;
 }

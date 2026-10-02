@@ -12,11 +12,14 @@ import {
 const r = (w: number, h: number) => w / h;
 
 describe("shop photo sizing", () => {
-  it("gives a 3:4 photo the full frame and never exceeds either cap", () => {
+  it("gives a 4:3 mockup the full width, a 3:4 photo the full height, and never exceeds either cap", () => {
+    const wide = heroFrame(r(3000, 2250));
+    expect(Math.round(wide.width)).toBe(HERO_MAX_WIDTH);
+    expect(Math.round(wide.height)).toBe(540);
     const f = heroFrame(r(1140, 1520));
-    expect(Math.round(f.width)).toBe(HERO_MAX_WIDTH);
+    expect(Math.round(f.width)).toBe(570);
     expect(Math.round(f.height)).toBe(HERO_MAX_HEIGHT);
-    for (const [w, h] of [[1140, 1520], [1024, 1536], [1280, 1586], [2000, 1000]]) {
+    for (const [w, h] of [[3000, 2250], [1140, 1520], [1024, 1536], [1280, 1586], [2000, 1000]]) {
       const frame = heroFrame(r(w, h));
       expect(frame.width).toBeLessThanOrEqual(HERO_MAX_WIDTH + 0.01);
       expect(frame.height).toBeLessThanOrEqual(HERO_MAX_HEIGHT + 0.01);
@@ -33,6 +36,7 @@ describe("shop photo sizing", () => {
   });
 
   it("asks for exactly the source a 2x screen needs", () => {
+    expect(heroSourceNeeded(r(3000, 2250))).toEqual({ width: 1440, height: 1080 });
     expect(heroSourceNeeded(r(1140, 1520))).toEqual({ width: 1140, height: 1520 });
     expect(heroSourceNeeded(r(1024, 1536))).toEqual({ width: 1014, height: 1520 });
   });
@@ -50,11 +54,13 @@ describe("shop photo sizing", () => {
     const tall = heroShortfall({ width: 800, height: 1200 }); // 2:3, height-capped
     expect(tall.short).toBe("height");
     expect(tall.needed).toEqual({ width: 1014, height: 1520 });
-    const wide = heroShortfall({ width: 900, height: 1200 }); // 3:4, width-capped
+    const wide = heroShortfall({ width: 1200, height: 900 }); // 4:3, width-capped
     expect(wide.short).toBe("width");
-    expect(wide.needed).toEqual({ width: 1140, height: 1520 });
+    expect(wide.needed).toEqual({ width: 1440, height: 1080 });
     // proportionally short by the same amount either way
-    expect(900 / 1140).toBeCloseTo(1200 / 1520, 6);
+    expect(1200 / 1440).toBeCloseTo(900 / 1080, 6);
+    // the Etsy-shrunk copy of a mockup is not enough; the original is
+    expect(heroShortfall({ width: 1140, height: 855 }).short).toBe("width");
   });
 
   it("does not divide by zero on a missing or nonsense ratio", () => {

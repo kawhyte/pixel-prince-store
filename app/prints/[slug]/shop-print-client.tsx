@@ -9,7 +9,7 @@ import { type FreeArt } from "@/sanity/lib/client";
 import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, getVersions, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, versionImage, resolveFinish, resolveVersion } from "@/lib/commerce";
 import { getShopSize, inchesLabel, VERSION_LABEL, type FinishId } from "@/config/commerce";
 // The same numbers Studio validates uploads against, so the check and the layout cannot drift.
-import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
+import { HERO_MAX_WIDTH, HERO_MAX_WIDTH_LG, heroFrame } from "@/config/shop-image";
 import { imageAlt } from "@/lib/listing-copy";
 import {
   SHOP_FEATURES,
@@ -92,6 +92,8 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
   // photo is never cropped and never gets grey bars. 760 is the 3:4 photo's own height at 570 wide,
   // so the tallest frame now matches the shape we already had.
   const heroMaxWidth = heroRatio ? Math.round(heroFrame(heroRatio).width) : HERO_MAX_WIDTH;
+  // lg to xl the column stops at 570 so the buy stack keeps its room; a 3:4 photo is 570 either way.
+  const heroMaxWidthLg = Math.min(heroMaxWidth, HERO_MAX_WIDTH_LG);
   // The page owns the chosen size for the same reason it owns finish and version: the price belongs
   // under the title, above the rating, and it has to move when the picker does.
   const [sizeByOffer, setSizeByOffer] = useState<Record<string, string>>({});
@@ -127,22 +129,21 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
 
       {/* Hero: print + buy stack */}
       {/* Both columns have a real ceiling, so the grid states them rather than dividing what is
-          there. 570 is the widest a 1140 px photo goes before a 2x screen starts inventing pixels.
-          640 is about as wide as the buy stack should get: past that the finish tiles blow up and
+          there. The photo column is the photo's own frame (config/shop-image.ts): 720 for a 4:3
+          mockup from xl up, 570 below that. 640 is about as wide as the buy stack should get: past that the finish tiles blow up and
           push the size picker off the screen. Below lg the second track shrinks to whatever is
           left. justify-center keeps the pair in the middle, so the room left over on a wide screen
           sits in the page margins instead of opening a gap between the print and the buy stack. */}
-      <main className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[570px_minmax(0,640px)] lg:justify-center lg:items-start lg:gap-10 lg:pt-6">
+      <main
+        className="container mx-auto px-4 pb-12 pt-5 lg:grid lg:grid-cols-[var(--hero-w-lg)_minmax(0,640px)] xl:grid-cols-[var(--hero-w)_minmax(0,640px)] lg:justify-center lg:items-start lg:gap-10 lg:pt-6"
+        style={{ "--hero-w": `${heroMaxWidth}px`, "--hero-w-lg": `${heroMaxWidthLg}px` } as React.CSSProperties}
+      >
         {/* No wall panel behind the photo: the photo already has a room in it, and the panel only
-            showed as a beige border down each side. Shop photos are 1140x1520
-            (sanity/lib/image-rules.ts), so on a 2x screen the photo can fill 570 css px before the
-            browser starts inventing pixels and going soft. Letting it grow past that also made the
-            column taller than a sticky viewport can show, which cropped the thumbnails off the
-            bottom. These caps are the photo's own width, so they match the `sizes` hint below. */}
-        <div
-          className="mx-auto w-full max-w-[416px] sm:max-w-[480px] lg:max-w-[var(--hero-w)] lg:sticky lg:top-24"
-          style={{ "--hero-w": `${heroMaxWidth}px` } as React.CSSProperties}
-        >
+            showed as a beige border down each side. Shop photos are the 3000 x 2250 mockup
+            originals, so even the 720 px frame is sharp on a 3x screen; the frame is capped so the
+            column fits a sticky viewport with its thumbnails. These caps are the photo's own width,
+            so they match the `sizes` hint below. */}
+        <div className="mx-auto w-full max-w-[416px] sm:max-w-[480px] lg:max-w-[var(--hero-w-lg)] xl:max-w-[var(--hero-w)] lg:sticky lg:top-24">
           <ArtGallery
             key={`${activeVersion ?? ""}-${activeFinish ?? "default"}`}
             images={slides}
@@ -150,7 +151,10 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
             aspectClass="aspect-[4/5]"
             aspectRatio={heroRatio}
             thumbs="bottom"
-            sizes={`(max-width: 640px) 416px, (max-width: 1024px) 480px, ${heroMaxWidth}px`}
+            thumbAspect="aspect-[4/3] w-20"
+            sizes={`(min-width: 1280px) ${heroMaxWidth}px, (min-width: 1024px) ${heroMaxWidthLg}px, (min-width: 640px) 480px, 416px`}
+            quality={90}
+            zoom
           />
         </div>
 
@@ -329,8 +333,16 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {roomPhotos.map((img) => (
               <figure key={img.url}>
-                <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-muted shadow-card">
-                  <Image src={img.url} alt={img.alt} fill className="object-contain" sizes="(max-width: 640px) 100vw, 33vw" />
+                {/* 4:3, the shape of the Etsy mockups, so they fill the box with no crop and no bars */}
+                <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted shadow-card">
+                  <Image
+                    src={img.url}
+                    alt={img.alt}
+                    fill
+                    className="object-contain"
+                    quality={90}
+                    sizes="(min-width: 1536px) 480px, (min-width: 640px) 33vw, 100vw"
+                  />
                 </div>
                 {!/mockup \d/i.test(img.alt) && (
                   <figcaption className="mt-3 text-sm text-soft-charcoal">{img.alt}</figcaption>
@@ -352,7 +364,7 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
           <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-[543px_minmax(0,640px)] lg:justify-center lg:items-center lg:gap-14">
             {/* 3:4 to match the photo, so the 24x36 label at the top is not cropped away */}
             <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-cream shadow-card">
-              <Image src={SIZE_GUIDE_SLIDE.url} alt={SIZE_GUIDE_SLIDE.alt} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+              <Image src={SIZE_GUIDE_SLIDE.url} alt={SIZE_GUIDE_SLIDE.alt} fill className="object-cover" quality={90} sizes="(min-width: 1024px) 543px, 100vw" />
             </div>
             <div>
               <SectionLabel>Pick the right size</SectionLabel>

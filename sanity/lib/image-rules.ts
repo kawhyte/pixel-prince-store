@@ -7,8 +7,8 @@ import {
 } from '../../config/shop-image'
 
 /**
- * Kenny's Etsy exports are 1140 x 1520 and reusing them here rather than remaking every image is
- * the point (2026-09-10). What "big enough" means depends on the photo's shape, because the print
+ * The Etsy mockup originals are 3000 x 2250 (4:3) and reusing them here rather than remaking every
+ * image is the point (2026-09-10, full-size since 2026-10-02). What "big enough" means depends on the photo's shape, because the print
  * page cuts its frame to that shape: see config/shop-image.ts. A width-only rule used to flag a
  * 1024 x 1536 room photo that was in fact sharp, so the check now asks the same question the
  * layout does.
@@ -17,7 +17,7 @@ export const MIN_SHOP_IMAGE_WIDTH = SHOP_IMAGE_WIDTH
 
 export const IDEAL_SHOP_IMAGE_WIDTH = SHOP_IMAGE_WIDTH
 
-export const SHOP_IMAGE_HINT = `${SHOP_IMAGE_WIDTH} x ${SHOP_IMAGE_HEIGHT} works, the same as your Etsy images. A taller shape is fine and is shown narrower rather than cropped, but it then needs the full ${SHOP_IMAGE_HEIGHT} px of height. Studio will say so if it is short.`
+export const SHOP_IMAGE_HINT = `Upload the full-size ${SHOP_IMAGE_WIDTH} x ${SHOP_IMAGE_HEIGHT} original from the MOCKUPS _hq folder, not Etsy's copy or a shrunk export: the site makes the smaller versions itself. Other shapes are shown whole, never cropped. Studio will say so if a photo is too small.`
 
 /**
  * Warns when an uploaded image is too small for the frame the print page will give it. The asset's

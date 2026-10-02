@@ -280,7 +280,12 @@ function toFreeArt(product: SanityProduct): FreeArt {
       : undefined,
     galleryImages: mapGalleryImages(
       product.galleryImages,
-      (img) => urlFor(img as SanityImageSource).width(1200).url(),
+      // Shop photos stay full size (the 3000 px mockup originals): next/image makes the smaller
+      // copies, and the zoom view shows this one whole.
+      (img) =>
+        product.listing === 'shop'
+          ? urlFor(img as SanityImageSource).url()
+          : urlFor(img as SanityImageSource).width(1200).url(),
       product.title,
     ),
     artFile: product.artFile,

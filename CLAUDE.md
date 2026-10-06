@@ -63,7 +63,7 @@ Ownership: Fourthwall owns prices, sizes and images; Studio owns title, descript
    - Upload preview images (600×800) and detail images (1200×1600) to Sanity
    - Upload the ONE print file to Cloudinary via custom input component (`sanity/components/HighResAssetInput.tsx`)
    - Use AI generator to create descriptions (Gemini API)
-   - Curated sidebar (`sanity/structure.ts`): Artworks, Blog Posts, Subscribers. Studio forced into dark mode (`scheme="dark"` on `NextStudio`).
+   - Curated sidebar (`sanity/structure.ts`): Artworks, Blog Posts, Subscribers. **Analytics** tool in the top bar (`sanity/tools/analytics.tsx`) links to the Umami dashboard and explains each event. Studio forced into dark mode (`scheme="dark"` on `NextStudio`).
 
 2. **Data Layer** (`sanity/lib/client.ts`)
    - `getAllProducts()`: Fetch all products for gallery

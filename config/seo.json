@@ -1,9 +1,9 @@
 {
   "title": {
     "template": "%s | The Pixel Prince",
-    "default": "The Pixel Prince | Free retro gaming and map wall art"
+    "default": "The Pixel Prince | Retro gaming and map art prints"
   },
-  "description": "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
+  "description": "Retro gaming and map art prints, designed by humans, printed to order and shipped free in the US. Plus a free printable every month.",
   "keywords": [
     "Digital Art Downloads",
     "Printable Wall Art",
@@ -30,14 +30,14 @@
     "type": "website",
     "locale": "en_US",
     "siteName": "The Pixel Prince",
-    "title": "The Pixel Prince | Free retro gaming and map wall art",
-    "description": "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
+    "title": "The Pixel Prince | Retro gaming and map art prints",
+    "description": "Retro gaming and map art prints, designed by humans, printed to order and shipped free in the US. Plus a free printable every month.",
     "images": [
       {
         "url": "/og",
         "width": 1200,
         "height": 630,
-        "alt": "The Pixel Prince | Free retro gaming and map wall art"
+        "alt": "The Pixel Prince | Retro gaming and map art prints"
       }
     ]
   },
@@ -45,8 +45,8 @@
     "card": "summary_large_image",
     "site": "@thepixelprince",
     "creator": "@thepixelprince",
-    "title": "The Pixel Prince | Free retro gaming and map wall art",
-    "description": "Free printable wall art: retro gaming prints, city maps, and more. Download a print free and get a new one every month.",
+    "title": "The Pixel Prince | Retro gaming and map art prints",
+    "description": "Retro gaming and map art prints, designed by humans, printed to order and shipped free in the US. Plus a free printable every month.",
     "images": [
       "/og"
     ]

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAllProducts, getProductBySlug, getRelatedProducts, getRelatedShopPrints } from "@/sanity/lib/client";
-import { generateMetadata as seoMeta } from "@/lib/seo";
+import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import { freeArtBreadcrumb, freeArtSchema } from "@/lib/artwork-schema";
 import ArtDetailClient from "./art-detail-client";
 
@@ -56,11 +56,11 @@ export default async function ArtDetailPage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeArtSchema(art)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(freeArtSchema(art)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeArtBreadcrumb(art)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(freeArtBreadcrumb(art)) }}
       />
       <ArtDetailClient art={art} relatedArt={relatedArt} shopPrints={shopPrints} />
     </>

@@ -85,48 +85,12 @@ export function generateMetadata({
   };
 }
 
-interface Product {
-  name: string;
-  description: string;
-  price: number;
-  currency?: string;
-  images: string[];
-  category?: string;
-  sku?: string;
-  brand?: string;
-  availability?: 'InStock' | 'OutOfStock' | 'PreOrder' | 'Discontinued';
-  url?: string;
-}
-
 /**
- * Generate Product Schema JSON-LD for rich search results
+ * Serialize a JSON-LD object for a <script> tag. Escapes "<" so a "</script>" in Studio text
+ * cannot close the tag early.
  */
-export function generateProductSchema(product: Product, url: string) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.description,
-    image: product.images,
-    brand: {
-      '@type': 'Brand',
-      name: product.brand || 'The Pixel Prince',
-    },
-    offers: {
-      '@type': 'Offer',
-      url: url,
-      priceCurrency: product.currency || 'USD',
-      price: product.price.toFixed(2),
-      availability: `https://schema.org/${product.availability || 'InStock'}`,
-      priceValidUntil: new Date(
-        new Date().setFullYear(new Date().getFullYear() + 1)
-      )
-        .toISOString()
-        .split('T')[0],
-    },
-    ...(product.sku && { sku: product.sku }),
-    ...(product.category && { category: product.category }),
-  };
+export function jsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
 /**
@@ -138,12 +102,10 @@ export function generateOrganizationSchema() {
     '@type': 'Organization',
     name: 'The Pixel Prince',
     url: seoConfig.metadataBase,
-    logo: `${seoConfig.metadataBase}/logo.png`,
+    logo: `${seoConfig.metadataBase}/android-chrome-512x512.png`,
     sameAs: [
-      // Add your social media URLs here
-      'https://twitter.com/thepixelprince',
-      'https://instagram.com/thepixelprince',
-      'https://facebook.com/thepixelprince',
+      'https://thepixelprince.etsy.com',
+      'https://pixelprinceprintable.etsy.com',
     ],
   };
 }
@@ -171,7 +133,7 @@ export function generateAboutPageSchema() {
 }
 
 /**
- * Generate WebSite Schema JSON-LD with search action
+ * Generate WebSite Schema JSON-LD. No SearchAction: the site has no search page to point it at.
  */
 export function generateWebsiteSchema() {
   return {
@@ -179,13 +141,5 @@ export function generateWebsiteSchema() {
     '@type': 'WebSite',
     name: 'The Pixel Prince',
     url: seoConfig.metadataBase,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${seoConfig.metadataBase}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
   };
 }

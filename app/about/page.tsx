@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { generateMetadata as buildMetadata, generateAboutPageSchema } from "@/lib/seo";
+import { generateMetadata as buildMetadata, generateAboutPageSchema, jsonLd } from "@/lib/seo";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-cream">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(aboutSchema) }}
       />
 
       {/* 1. Photo-led hero */}

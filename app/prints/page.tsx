@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { generateMetadata as seoMeta } from "@/lib/seo";
+import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import { getShopPrints } from "@/sanity/lib/client";
 import PrintsGridClient from "./prints-grid-client";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
@@ -34,7 +34,7 @@ export default async function PrintsPage() {
     <div className="min-h-screen bg-cream">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }}
       />
       <main className="container mx-auto px-4 py-16 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">

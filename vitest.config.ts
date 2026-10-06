@@ -14,7 +14,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["lib/**/*.ts", "config/**/*.ts"],
-      exclude: ["lib/types/**", "lib/use-download-tracking.ts"],
+      exclude: ["lib/types/**"],
       reporter: ["text", "html"],
     },
   },

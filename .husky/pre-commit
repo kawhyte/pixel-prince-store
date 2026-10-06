@@ -9,10 +9,6 @@ npx lint-staged || exit 1
 echo "-> unit tests"
 npm test || exit 1
 
-echo "-> e2e tests"
-npm run test:e2e || exit 1
-
-echo "-> build"
-npm run build || exit 1
-
+# e2e and the production build need live Sanity data and take minutes: run them before a
+# release (npm run test:e2e && npm run build). CI runs typecheck, lint and unit tests on every push.
 echo "All pre-commit checks passed."

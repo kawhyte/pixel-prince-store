@@ -48,12 +48,6 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  console.log('[Sanity Webhook] ========================================');
-  console.log('[Sanity Webhook] Received webhook request');
-
-  // Log all headers to find event type
-  console.log('[Sanity Webhook] Headers:', Object.fromEntries(request.headers.entries()));
-
   try {
     // 1. Validate webhook secret exists
     const webhookSecret = process.env.SANITY_WEBHOOK_SECRET;
@@ -69,11 +63,6 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const signature = request.headers.get('sanity-webhook-signature');
 
-    console.log('[Sanity Webhook] Verifying signature...');
-    console.log('[Sanity Webhook] Received signature:', signature);
-    console.log('[Sanity Webhook] Secret (first 10 chars):', webhookSecret?.substring(0, 10));
-    console.log('[Sanity Webhook] Body length:', rawBody.length);
-
     // 3. Verify webhook signature
     const isValid = verifyWebhookSignature(rawBody, signature, webhookSecret);
     if (!isValid) {
@@ -84,8 +73,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[Sanity Webhook] Signature verified successfully');
-
     // 4. Get operation type from header
     const operation = request.headers.get('sanity-operation') as 'create' | 'update' | 'delete' | null;
 
@@ -94,10 +81,15 @@ export async function POST(request: NextRequest) {
     console.log('[Sanity Webhook] Operation:', operation);
     console.log('[Sanity Webhook] Document ID:', payload._id);
     console.log('[Sanity Webhook] Document type:', payload._type);
-    console.log('[Sanity Webhook] Full payload:', JSON.stringify(payload, null, 2));
 
     // 6. Handle different event types
     let idsToDelete: string[] = [];
+
+    // A draft's delete fires on every publish or discard, while the published
+    // artwork still uses the same files: only a published document's delete may clean up.
+    if (payload._id?.startsWith('drafts.')) {
+      return NextResponse.json({ success: true, message: 'Draft event - no action required', processed: 0 });
+    }
 
     if (operation === 'delete') {
       // Case A: Document was deleted - remove ALL Cloudinary assets
@@ -194,13 +186,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Sanity Webhook] Error processing webhook:', error);
-    console.error('[Sanity Webhook] Stack:', error instanceof Error ? error.stack : 'N/A');
 
     return NextResponse.json(
-      {
-        error: 'Webhook processing failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Webhook processing failed' },
       { status: 500 }
     );
   }

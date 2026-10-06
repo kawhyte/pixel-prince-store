@@ -49,20 +49,25 @@ export function extractCloudinaryIds(doc: unknown): string[] {
   return Array.from(new Set(ids));
 }
 
+/** How old a signed delivery may be before it is treated as a replay. */
+export const SIGNATURE_TOLERANCE_MS = 5 * 60 * 1000;
+
 /**
  * Verify Sanity webhook signature using HMAC-SHA256
  *
  * @param body - Raw request body (string or Buffer)
  * @param signature - Value from 'sanity-webhook-signature' header
  * @param secret - Your SANITY_WEBHOOK_SECRET environment variable
- * @returns true if signature is valid, false otherwise
+ * @param now - current time in ms (for tests)
+ * @returns true if signature is valid and recent, false otherwise
  *
  * @see https://www.sanity.io/docs/webhooks#signing-and-validating-requests
  */
 export function verifyWebhookSignature(
   body: string | Buffer,
   signature: string | null | undefined,
-  secret: string
+  secret: string,
+  now: number = Date.now()
 ): boolean {
   if (!signature) {
     console.error('[Sanity Webhook] Missing signature header');
@@ -84,7 +89,14 @@ export function verifyWebhookSignature(
 
     if (!receivedSignature || !timestamp) {
       console.error('[Sanity Webhook] Invalid signature format');
-      console.error('[Sanity Webhook] Parsed parts:', parts);
+      return false;
+    }
+
+    // Sanity sends milliseconds; accept seconds too.
+    const t = Number(timestamp);
+    const sentAt = t < 1e12 ? t * 1000 : t;
+    if (!Number.isFinite(sentAt) || Math.abs(now - sentAt) > SIGNATURE_TOLERANCE_MS) {
+      console.error('[Sanity Webhook] Signature timestamp outside tolerance');
       return false;
     }
 
@@ -99,14 +111,11 @@ export function verifyWebhookSignature(
       .replace(/\//g, '_')
       .replace(/=+$/, ''); // Remove padding
 
-    console.log('[Sanity Webhook] Expected signature:', expectedSignature);
-    console.log('[Sanity Webhook] Received signature:', receivedSignature);
-
+    const received = Buffer.from(receivedSignature);
+    const expected = Buffer.from(expectedSignature);
+    if (received.length !== expected.length) return false;
     // Constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(receivedSignature),
-      Buffer.from(expectedSignature)
-    );
+    return crypto.timingSafeEqual(received, expected);
   } catch (error) {
     console.error('[Sanity Webhook] Signature verification error:', error);
     return false;

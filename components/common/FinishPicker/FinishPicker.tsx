@@ -38,7 +38,7 @@ export default function FinishPicker({ options, value, onChange }: FinishPickerP
             <label
               key={o.finish}
               className={cn(
-                "flex cursor-pointer flex-col overflow-hidden rounded-md border bg-card text-left transition-colors",
+                "flex cursor-pointer flex-col overflow-hidden rounded-md border bg-card text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-sage-500",
                 active ? "border-charcoal ring-1 ring-charcoal" : "border-border hover:border-charcoal",
               )}
             >

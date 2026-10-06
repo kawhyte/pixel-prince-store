@@ -26,7 +26,7 @@ import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 import CheckoutButton from "@/components/common/CheckoutButton/CheckoutButton";
-import { isSet, sellableSet, setMembers } from "@/lib/sets";
+import { isSet, resolveSetFinish, sellableSet, setFromPriceCents, setMembers, setSizeRows } from "@/lib/sets";
 import Testimonials from "@/components/common/Testimonials/Testimonials";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 
@@ -53,10 +53,18 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
   // Finish first (PLAN-46): the page owns the finish so the gallery's first slide can follow it.
   const [finish, setFinish] = useState<FinishId | null>(null);
   const [version, setVersion] = useState<string | null>(null);
-  const activeVersion = resolveVersion(art, version);
-  const activeFinish = resolveFinish(art, finish, activeVersion);
-  const offer = getActiveOffer(art, activeFinish, activeVersion);
-  const sizes = offer ? orderedSizes(offer) : [];
+  // A set has no offers of its own (PLAN-54): its finishes, sizes and prices are its members'.
+  const asSet = isSet(art) && sellableSet(art);
+  const activeVersion = asSet ? null : resolveVersion(art, version);
+  const activeFinish = asSet ? resolveSetFinish(art, finish) : resolveFinish(art, finish, activeVersion);
+  const offer = asSet ? null : getActiveOffer(art, activeFinish, activeVersion);
+  const sizes: { sizeId: string; priceCents: number }[] = asSet
+    ? activeFinish
+      ? setSizeRows(art, activeFinish)
+      : []
+    : offer
+      ? orderedSizes(offer)
+      : [];
   // Room photos belong to the artwork and show whichever finish is on screen (PLAN-52).
   const galleryImages = art.galleryImages ?? [];
   const roomPhotos = galleryImages.slice(0, 3);
@@ -96,9 +104,16 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
   // under the title, above the rating, and it has to move when the picker does.
   const [sizeByOffer, setSizeByOffer] = useState<Record<string, string>>({});
   const offerKey = `${activeVersion ?? ""}:${activeFinish ?? "none"}`;
-  const activeSizeId = sizeByOffer[offerKey] ?? popularSizeId(offer);
+  // A size picked under one finish only carries over when this finish sells it too.
+  const pickedSizeId = sizeByOffer[offerKey];
+  const activeSizeId =
+    pickedSizeId && sizes.some((s) => s.sizeId === pickedSizeId)
+      ? pickedSizeId
+      : asSet
+        ? (sizes[0]?.sizeId ?? null)
+        : popularSizeId(offer);
   const selectedSize = sizes.find((s) => s.sizeId === activeSizeId);
-  const fromCents = fromPriceCents(offer);
+  const fromCents = asSet ? setFromPriceCents(art) : fromPriceCents(offer);
   const priceText = selectedSize
     ? formatPrice(selectedSize.priceCents)
     : fromCents !== null
@@ -219,7 +234,7 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
           {/* What is actually in a set, each linking to its own page. A buyer should be able to
               see the two prints they are being sold and go and read about either, because both are
               still on sale on their own and this is not a bundle of things they cannot inspect. */}
-          {isSet(art) && sellableSet(art) && (
+          {asSet && (
             <div className="rounded-md border border-border bg-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 What is in this set

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { getAllProducts, getShopPrints } from "@/sanity/lib/client";
 import { cardCommerce } from "@/lib/commerce";
 import { gridClass, gridSizes } from "@/lib/grid";
-import { generateMetadata as seoMeta } from "@/lib/seo";
+import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import { COLLECTIONS, getCollection, matchProductsToCollection } from "@/config/collections";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
@@ -68,7 +68,7 @@ export default async function CollectionPage({ params }: PageProps) {
     <div className="min-h-screen bg-cream">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }}
       />
 
       <main className="container mx-auto px-4 py-12 sm:py-16">

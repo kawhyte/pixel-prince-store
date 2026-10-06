@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { getAllProducts } from "@/sanity/lib/client";
-import { generateMetadata as seoMeta } from "@/lib/seo";
+import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import { freeGalleryBreadcrumb, freeGallerySchema } from "@/lib/artwork-schema";
 import FreeDownloadsClient from "./free-downloads-client";
 
@@ -22,11 +22,11 @@ export default async function FreeDownloadsPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeGallerySchema(products)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(freeGallerySchema(products)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(freeGalleryBreadcrumb()) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(freeGalleryBreadcrumb()) }}
       />
       <FreeDownloadsClient products={products} />
     </>

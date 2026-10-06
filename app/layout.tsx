@@ -10,7 +10,7 @@ import { primaryNav } from "@/config/nav";
 import ConditionalFooter from "@/components/common/Footer/ConditionalFooter";
 import { CartProvider } from "@/components/common/Cart/CartProvider";
 import CartDrawer from "@/components/common/Cart/CartDrawer";
-import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
+import { generateOrganizationSchema, generateWebsiteSchema, jsonLd } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -72,13 +72,13 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
+            __html: jsonLd(organizationSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema),
+            __html: jsonLd(websiteSchema),
           }}
         />
         {/* The Cloudinary upload widget is NOT loaded here. It is only usable inside Studio's

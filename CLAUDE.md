@@ -126,7 +126,8 @@ Ratio (`4:5` portrait only) and print sizes are derived from `artFile.width/heig
 NEXT_PUBLIC_SANITY_PROJECT_ID=<project-id>
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2025-11-27
-SANITY_API_TOKEN=<token-with-editor-permissions>
+SANITY_API_WRITE_TOKEN=<token-with-editor-permissions>  # server writes: download limit, counts, webhooks
+SANITY_WEBHOOK_SECRET=<secret>  # /api/webhooks/sanity
 
 # Cloudinary (for high-res asset uploads)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=<cloud-name>
@@ -162,6 +163,7 @@ NEXT_PUBLIC_FOURTHWALL_STOREFRONT_TOKEN=ptkn_...
 FOURTHWALL_STOREFRONT_TOKEN=ptkn_...   # read products for the import
 FOURTHWALL_API_USER=...                # Platform API user (Settings > For Developers > Create API User), PLAN-47 product creation
 FOURTHWALL_API_PASSWORD=...
+SANITY_API_TOKEN=...                    # fallback Sanity token for scripts/
 ```
 
 **Development Only:**
@@ -209,7 +211,7 @@ npm run dev
 The project uses `@/*` alias for imports:
 ```typescript
 import { getAllProducts } from '@/sanity/lib/client'
-import { DOWNLOAD_COOKIE_NAME } from '@/config/free-art'
+import { WEEKLY_DOWNLOAD_LIMIT } from '@/config/free-art'
 ```
 
 Configured in `tsconfig.json`:

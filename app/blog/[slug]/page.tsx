@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getAllPosts, getPostBySlug, getRelatedPosts } from "@/sanity/lib/blog";
-import { generateMetadata as seoMeta } from "@/lib/seo";
+import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm";
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 import PortableBody from "@/components/blog/PortableBody";
@@ -86,16 +86,16 @@ export default async function BlogPostPage({ params }: PageProps) {
     <div className="min-h-screen bg-cream">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }}
       />
       {faqSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }}
         />
       )}
 

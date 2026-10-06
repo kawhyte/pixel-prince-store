@@ -16,7 +16,7 @@ import { requireAdminSecret } from '@/lib/admin-auth';
  * - CLOUDINARY_API_SECRET (server-side only)
  *
  * Note: This endpoint is used by the UI for manual deletions.
- * Automated garbage collection is handled by the Sanity webhook at /api/webhooks/sanity
+ * Automated garbage collection is handled by the Sanity webhook at /api/revalidate
  */
 export async function DELETE(request: NextRequest) {
   try {

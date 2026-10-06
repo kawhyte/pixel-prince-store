@@ -285,7 +285,7 @@ This provides:
 - `/api/gemini/alt-text` → looks at an image and writes its alt text (POST, `x-admin-secret`). Used by the button on any image field with an `alt` (PLAN-53). Sanity serves images from a content hash, so file names never reach a crawler; alt text, the Product image array and `/sitemap-images.xml` are what do.
 - `/api/cloudinary/delete` → Delete Cloudinary assets (DELETE, requires `x-admin-secret` header)
 - `/api/revalidate` → the one Sanity webhook (POST, signed with `SANITY_WEBHOOK_SECRET`; projection in `SiteWebhookPayload`, `lib/sanity-webhook-utils.ts`): ignores drafts, `revalidatePath("/", "layout")` so a publish shows site-wide on the next visit, and on a published artwork's delete removes its print file from Cloudinary unless a draft survives (unpublish). Logs `[REVALIDATE]`.
-- `/api/webhooks/fourthwall` → Fourthwall ORDER_PLACED handler (POST, base64 HMAC-SHA256 in `X-Fourthwall-Hmac-SHA256`): records an `fwOrder` doc once, increments `sales` on matched artworks, adds the buyer to Resend. Logs `[FW-WEBHOOK]`. Test deliveries (`testMode`) write nothing.
+- `/api/webhooks/fourthwall` → Fourthwall ORDER_PLACED handler (POST, base64 HMAC-SHA256 in `X-Fourthwall-Hmac-SHA256`): records an `fwOrder` doc once, increments `sales` on matched artworks, then (in `after()`) adds the buyer to Resend and sends Umami `purchase` (with `revenue`/`currency`) + one `print_sold` per artwork (`lib/umami-server.ts`). Logs `[FW-WEBHOOK]`. Test deliveries (`testMode`) write nothing.
 
 ### ZIP Streaming
 `lib/build-download-zip.ts` pipes the fetched master PNG straight into `archiver`, which pipes into the response — nothing is buffered fully in memory. `maxDuration = 60` on the claim-art route covers slow first-byte from Cloudinary.

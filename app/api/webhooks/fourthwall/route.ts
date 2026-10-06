@@ -5,7 +5,8 @@
  *   1. verify the base64 HMAC-SHA256 signature over the raw body (FOURTHWALL_WEBHOOK_SECRET)
  *   2. record the order once (fwOrder document, deterministic id, so retries are no-ops)
  *   3. increment `sales` on every artwork whose Fourthwall variant ids appear in the order
- *   4. add the buyer to the Resend audience (best effort, never blocks the 200)
+ *   4. add the buyer to the Resend audience and send `purchase` + `print_sold` events to Umami
+ *      (best effort, after the 200)
  *
  * Test deliveries (testMode: true, from the dashboard's "Send test notification") are
  * acknowledged and logged but write nothing.
@@ -14,7 +15,7 @@
  * https://www.thepixelprince.com/api/webhooks/fourthwall, subscribe to ORDER_PLACED,
  * copy the secret into FOURTHWALL_WEBHOOK_SECRET.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import {
   FOURTHWALL_SIGNATURE_HEADER,
   parseOrderEvent,
@@ -23,6 +24,7 @@ import {
 } from "@/lib/fourthwall-webhook";
 import { writeClient } from "@/sanity/lib/write-client";
 import { emailProvider } from "@/lib/email";
+import { orderEvents, sendUmamiEvent } from "@/lib/umami-server";
 
 export const runtime = "nodejs";
 
@@ -83,13 +85,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Artworks whose Fourthwall offer carries one of the ordered variant ids.
-  const artworkIds: string[] =
+  const artworks: { _id: string; slug: string }[] =
     event.variantIds.length > 0
-      ? await writeClient.fetch<string[]>(
-          `*[_type == "product" && count(offers[provider == "fourthwall"].sizes[providerVariantId in $ids]) > 0]._id`,
+      ? await writeClient.fetch<{ _id: string; slug: string }[]>(
+          `*[_type == "product" && count(offers[provider == "fourthwall"].sizes[providerVariantId in $ids]) > 0]{ _id, "slug": slug.current }`,
           { ids: event.variantIds }
         )
       : [];
+  const artworkIds = artworks.map((a) => a._id);
 
   // create (not createIfNotExists): a retry racing this one makes the whole transaction
   // fail, so its sales increments never land twice.
@@ -119,11 +122,16 @@ export async function POST(request: NextRequest) {
   }
   console.log(`${LOG} recorded ${event.orderId} (${event.friendlyId ?? "no number"}): ${artworkIds.length} artwork(s)`);
 
-  if (event.email) {
-    emailProvider
-      .addToAudience(event.email)
-      .catch((e) => console.error(`${LOG} audience add failed`, e));
-  }
+  // After the 200: Fourthwall gets its answer at once, and the platform keeps the function
+  // alive until these finish (a bare floating promise can be cut off when the response ends).
+  // Only a first delivery gets here, so a retried order is never counted twice in Umami.
+  const email = event.email;
+  after(async () => {
+    if (email) {
+      await emailProvider.addToAudience(email).catch((e) => console.error(`${LOG} audience add failed`, e));
+    }
+    for (const e of orderEvents({ ...event, artworks })) await sendUmamiEvent(e);
+  });
 
   return NextResponse.json({ ok: true, artworks: artworkIds.length });
 }

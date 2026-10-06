@@ -100,7 +100,7 @@ async function draftMode(force: boolean) {
     }
   }
 
-  const { GoogleGenerativeAI } = await import('@google/generative-ai')
+  const { createGemini, generateText } = await import('../lib/gemini')
   const { writeClient, hasWriteAccess } = await import('../sanity/lib/write-client')
 
   if (!hasWriteAccess() || !writeClient) {
@@ -121,22 +121,20 @@ async function draftMode(force: boolean) {
   )
   console.log(`Fetched ${products.length} products.`)
 
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const gemini = createGemini(apiKey)
+  const ask = (prompt: string) => generateText(gemini, 'gemini-2.5-flash', prompt)
 
   const rows: ReviewRow[] = []
   for (const p of products) {
     let proposed = ''
     let needsHuman = false
     try {
-      const first = (await model.generateContent(buildPrompt(p))).response.text().trim()
+      const first = (await ask(buildPrompt(p))).trim()
       let check = checkDescription(first)
       proposed = first
       if (!check.ok) {
         await new Promise((r) => setTimeout(r, 1000))
-        const retry = (await model.generateContent(buildPrompt(p, check.problems)))
-          .response.text()
-          .trim()
+        const retry = (await ask(buildPrompt(p, check.problems))).trim()
         check = checkDescription(retry)
         proposed = retry
         if (!check.ok) needsHuman = true

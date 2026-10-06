@@ -153,7 +153,7 @@ export default function ShopPrintClient({ art, deliveryBy, belowBuy, afterHero }
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="flex gap-0.5" aria-label={`${REVIEW_SUMMARY.rating} out of 5 stars`}>
+              <span role="img" className="flex gap-0.5" aria-label={`${REVIEW_SUMMARY.rating} out of 5 stars`}>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="size-3.5 fill-current text-sage-500" aria-hidden />
                 ))}

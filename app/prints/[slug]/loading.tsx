@@ -1,7 +1,7 @@
 // Shown while a print page loads: the same two-column frame, so nothing jumps when it arrives.
 export default function Loading() {
   return (
-    <div aria-busy="true" aria-label="Loading print">
+    <div role="status" aria-busy="true" aria-label="Loading print">
       <div className="container mx-auto px-4 pt-5 sm:pt-6">
         <div className="h-4 w-40 animate-pulse rounded bg-muted" />
       </div>

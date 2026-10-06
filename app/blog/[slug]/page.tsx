@@ -125,7 +125,8 @@ export default async function BlogPostPage({ params }: PageProps) {
               src={post.hero}
               alt={post.title}
               fill
-              priority
+              loading="eager"
+              fetchPriority="high"
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 768px"
             />

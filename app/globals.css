@@ -23,7 +23,8 @@
   --color-sage-200: #edc0a9;
   --color-sage-300: #e09570;
   --color-sage-400: #d16a3a;
-  --color-sage-500: #c2521f;
+  /* #c2521f darkened 3%: 4.84:1 on cream (was 4.38), so small terracotta text passes WCAG AA */
+  --color-sage-500: #b74d1d;
 
   /* Shadcn Design System Integration */
   --color-background: var(--background);
@@ -74,7 +75,7 @@
   --popover-foreground: #1a1a1a;
 
   /* Primary: terracotta accent (sage-500) */
-  --primary: #c2521f;
+  --primary: #b74d1d;
   --primary-foreground: #ffffff;
 
   /* Secondary: Warm neutral */
@@ -95,7 +96,7 @@
   /* Borders and inputs: warm neutral */
   --border: #ddd9cf;
   --input: #ddd9cf;
-  --ring: #c2521f;
+  --ring: #b74d1d;
 }
 
 @layer base {

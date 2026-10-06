@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { describe, expect, it } from "vitest";
-import { verifyWebhookSignature, SIGNATURE_TOLERANCE_MS } from "@/lib/sanity-webhook-utils";
+import { orphanedPublicIds, verifyWebhookSignature, SIGNATURE_TOLERANCE_MS } from "@/lib/sanity-webhook-utils";
 
 const SECRET = "test-secret";
 const BODY = '{"_id":"abc","_type":"product"}';
@@ -34,5 +34,34 @@ describe("verifyWebhookSignature", () => {
     expect(verifyWebhookSignature(BODY, null, SECRET, now)).toBe(false);
     expect(verifyWebhookSignature(BODY, "v1=abc", SECRET, now)).toBe(false);
     expect(verifyWebhookSignature(BODY, `t=${now},v1=short`, SECRET, now)).toBe(false);
+  });
+});
+
+describe("orphanedPublicIds", () => {
+  const deleted = {
+    _id: "abc",
+    _type: "product",
+    operation: "delete" as const,
+    deletedPublicIds: ["free-art/moon", null, "free-art/moon"],
+  };
+
+  it("returns a deleted artwork's print file, once", () => {
+    expect(orphanedPublicIds(deleted, false)).toEqual(["free-art/moon"]);
+  });
+
+  it("keeps the file when a draft survives (unpublish)", () => {
+    expect(orphanedPublicIds(deleted, true)).toEqual([]);
+  });
+
+  it("ignores updates, creates, posts, drafts and versions", () => {
+    expect(orphanedPublicIds({ ...deleted, operation: "update" }, false)).toEqual([]);
+    expect(orphanedPublicIds({ ...deleted, operation: "create" }, false)).toEqual([]);
+    expect(orphanedPublicIds({ ...deleted, _type: "post" }, false)).toEqual([]);
+    expect(orphanedPublicIds({ ...deleted, _id: "drafts.abc" }, false)).toEqual([]);
+    expect(orphanedPublicIds({ ...deleted, _id: "versions.r1.abc" }, false)).toEqual([]);
+  });
+
+  it("ignores a delivery without the signed operation field", () => {
+    expect(orphanedPublicIds({ ...deleted, operation: undefined }, false)).toEqual([]);
   });
 });

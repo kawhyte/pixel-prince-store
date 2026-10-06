@@ -127,7 +127,7 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=<project-id>
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2025-11-27
 SANITY_API_WRITE_TOKEN=<token-with-editor-permissions>  # server writes: download limit, counts, webhooks
-SANITY_WEBHOOK_SECRET=<secret>  # /api/webhooks/sanity
+SANITY_WEBHOOK_SECRET=<secret>  # signs the Sanity webhook to /api/revalidate
 
 # Cloudinary (for high-res asset uploads)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=<cloud-name>
@@ -284,7 +284,7 @@ This provides:
 - `/api/gemini/generate` → AI description generator (POST, requires `x-admin-secret` header)
 - `/api/gemini/alt-text` → looks at an image and writes its alt text (POST, `x-admin-secret`). Used by the button on any image field with an `alt` (PLAN-53). Sanity serves images from a content hash, so file names never reach a crawler; alt text, the Product image array and `/sitemap-images.xml` are what do.
 - `/api/cloudinary/delete` → Delete Cloudinary assets (DELETE, requires `x-admin-secret` header)
-- `/api/revalidate` → Sanity publish webhook (POST, signed with `SANITY_WEBHOOK_SECRET`): ignores drafts, then `revalidatePath("/", "layout")` so a publish shows site-wide on the next visit. Logs `[REVALIDATE]`.
+- `/api/revalidate` → the one Sanity webhook (POST, signed with `SANITY_WEBHOOK_SECRET`; projection in `SiteWebhookPayload`, `lib/sanity-webhook-utils.ts`): ignores drafts, `revalidatePath("/", "layout")` so a publish shows site-wide on the next visit, and on a published artwork's delete removes its print file from Cloudinary unless a draft survives (unpublish). Logs `[REVALIDATE]`.
 - `/api/webhooks/fourthwall` → Fourthwall ORDER_PLACED handler (POST, base64 HMAC-SHA256 in `X-Fourthwall-Hmac-SHA256`): records an `fwOrder` doc once, increments `sales` on matched artworks, adds the buyer to Resend. Logs `[FW-WEBHOOK]`. Test deliveries (`testMode`) write nothing.
 
 ### ZIP Streaming

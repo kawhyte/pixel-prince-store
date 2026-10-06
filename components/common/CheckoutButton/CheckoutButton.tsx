@@ -30,7 +30,7 @@ import {
 } from "@/lib/sets";
 import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
 import { SHOP_TRUST_LINE } from "@/config/shop-copy";
-import { trackAddToCart, trackCheckoutOpened } from "@/lib/analytics";
+import { trackAddToCart, trackCheckoutOpened, trackOptionPicked } from "@/lib/analytics";
 import { buildCartCheckoutUrl } from "@/lib/fourthwall-cart";
 import { useCart } from "@/components/common/Cart/CartProvider";
 import FinishPicker from "@/components/common/FinishPicker/FinishPicker";
@@ -112,14 +112,17 @@ export default function CheckoutButton({
   const setSizeId = (id: string) => {
     setPickedByFinish((prev) => ({ ...prev, [finishKey]: id }));
     onSizeChange?.(id);
+    trackOptionPicked(art.id, "size", id);
   };
   const changeFinish = (f: FinishId) => {
     setLocalFinish(f);
     onFinishChange?.(f);
+    trackOptionPicked(art.id, "finish", f);
   };
   const changeVersion = (v: string) => {
     setLocalVersion(v);
     onVersionChange?.(v);
+    trackOptionPicked(art.id, "version", v);
   };
 
   const finishOptions = asSet
@@ -173,7 +176,7 @@ export default function CheckoutButton({
     if (!lines || lines.length === 0) return;
     const next = await cartCtx.add(lines);
     if (!next) return;
-    trackAddToCart(art.id, `${finishKey}:${sizeId ?? "none"}`);
+    trackAddToCart(art.id, { finish: activeFinish, version: activeVersion, size: sizeId });
     cartCtx.setOpen(true);
   };
 

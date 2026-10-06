@@ -13,6 +13,7 @@ import {apiVersion, dataset, projectId} from './sanity/env'
 import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
 import StudioIcon from './sanity/components/StudioIcon'
+import {analyticsTool} from './sanity/tools/analytics'
 // PLAN-13 fallback #1: the `buildLegacyTheme` palette in ./sanity/theme.ts is an
 // older theming layer that overrides `scheme` and suppresses the Appearance menu.
 // Removed so the light/dark toggle works. Brand accent colors are sacrificed.
@@ -36,4 +37,6 @@ export default defineConfig({
     // https://www.sanity.io/docs/the-vision-plugin
     visionTool({defaultApiVersion: apiVersion}),
   ],
+  // Analytics sits in the top bar next to Structure, so checking Umami is one click away.
+  tools: (prev) => [...prev, analyticsTool],
 })

@@ -7,6 +7,7 @@ import { deliveryWindow } from "@/lib/delivery";
 import { shopPrintMetaTitle } from "@/config/shop-copy";
 import { shopPrintBreadcrumb, shopPrintFaqSchema, shopPrintSchema } from "@/lib/product-schema";
 import ShopPrintClient from "./shop-print-client";
+import { AfterHero, BelowSizeGuide, BuyStackDetails, PrintBreadcrumb } from "./shop-print-sections";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -54,7 +55,17 @@ export default async function ShopPrintPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(shopPrintFaqSchema()) }}
       />
-      <ShopPrintClient art={art} related={related} deliveryBy={deliveryWindow(new Date()).label} />
+      <div className="min-h-screen bg-cream pb-24 lg:pb-0">
+        <PrintBreadcrumb category={art.category?.trim()} />
+        {/* Only the gallery, price and picker run in the browser; the rest is plain server HTML. */}
+        <ShopPrintClient
+          art={art}
+          deliveryBy={deliveryWindow(new Date()).label}
+          belowBuy={<BuyStackDetails art={art} />}
+          afterHero={<AfterHero art={art} />}
+        />
+        <BelowSizeGuide art={art} related={related} />
+      </div>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createGemini, generateText } from "@/lib/gemini";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSecret } from "@/lib/admin-auth";
 import { buildAltTextPrompt } from "@/lib/gemini-prompt";
@@ -54,16 +54,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     const base64 = Buffer.from(await imageResponse.arrayBuffer()).toString("base64");
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: GEMINI_ALT_TEXT_MODEL });
-    const result = await model.generateContent([
+    const text = await generateText(
+      createGemini(apiKey),
+      GEMINI_ALT_TEXT_MODEL,
       buildAltTextPrompt({ title, version: body.version, finish: body.finish, category: body.category }),
-      { inlineData: { data: base64, mimeType: imageResponse.headers.get("content-type") || "image/jpeg" } },
-    ]);
+      { data: base64, mimeType: imageResponse.headers.get("content-type") || "image/jpeg" },
+    );
 
     // The model is asked for a bare sentence, but tidy it anyway rather than trust it.
-    const alt = (await result.response)
-      .text()
+    const alt = text
       .replace(/^["'\s]+|["'\s.]+$/g, "")
       .replace(/\s+/g, " ")
       .slice(0, MAX_ALT_LENGTH);

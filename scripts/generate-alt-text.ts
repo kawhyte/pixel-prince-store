@@ -16,7 +16,7 @@
  *
  * Needs GOOGLE_API_KEY and SANITY_API_WRITE_TOKEN in .env.local.
  */
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createGemini, generateText } from "../lib/gemini";
 import { createClient } from "@sanity/client";
 import { config } from "dotenv";
 import { resolve } from "path";
@@ -122,20 +122,20 @@ async function targets(): Promise<Target[]> {
   return out.filter((t) => overwrite || !t.current?.trim());
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY ?? "");
-const model = genAI.getGenerativeModel({ model: GEMINI_ALT_TEXT_MODEL });
+const gemini = createGemini(process.env.GOOGLE_API_KEY ?? "");
 
 async function describe(t: Target): Promise<string> {
   const res = await fetch(t.url);
   if (!res.ok) throw new Error(`could not fetch the image (${res.status})`);
   const base64 = Buffer.from(await res.arrayBuffer()).toString("base64");
-  const result = await model.generateContent([
+  const text = await generateText(
+    gemini,
+    GEMINI_ALT_TEXT_MODEL,
     buildAltTextPrompt({ title: t.title, version: t.version, finish: t.finish, category: t.category }),
-    { inlineData: { data: base64, mimeType: res.headers.get("content-type") || "image/jpeg" } },
-  ]);
+    { data: base64, mimeType: res.headers.get("content-type") || "image/jpeg" },
+  );
   // The model is asked for a bare sentence; tidy it anyway rather than trust it.
-  const alt = (await result.response)
-    .text()
+  const alt = text
     .replace(/^["'\s]+|["'\s.]+$/g, "")
     .replace(/\s+/g, " ")
     .slice(0, MAX_ALT_LENGTH);

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { createGemini, generateText } from '@/lib/gemini'
 import { GEMINI_DESCRIPTION_MODEL } from '@/config/gemini'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSecret } from '@/lib/admin-auth'
@@ -82,28 +82,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const imageBuffer = await imageResponse.arrayBuffer()
     const base64Image = Buffer.from(imageBuffer).toString('base64')
     
-    // Initialize Google Generative AI
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
-    // *** FIX: Use the specific pinned version ***
-    const model = genAI.getGenerativeModel({ model: GEMINI_DESCRIPTION_MODEL })
-
     const prompt = buildDescriptionPrompt({ title, category, tags, keywords })
 
     console.log('Calling Gemini API...')
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: imageResponse.headers.get('content-type') || 'image/jpeg',
-        },
-      },
-    ])
-
-    const response = await result.response
-    const text = response.text()
+    const text = await generateText(createGemini(apiKey), GEMINI_DESCRIPTION_MODEL, prompt, {
+      data: base64Image,
+      mimeType: imageResponse.headers.get('content-type') || 'image/jpeg',
+    })
     console.log('Gemini response:', text)
 
     // Parse the JSON response

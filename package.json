@@ -29,7 +29,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/merriweather": "^5.2.11",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.27.0",
     "@portabletext/react": "^6.2.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",

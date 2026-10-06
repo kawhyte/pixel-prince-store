@@ -31,7 +31,7 @@ npm run lint             # Run ESLint
 
 ### Build & Deploy
 ```bash
-npm run build            # Build for production (includes sitemap generation)
+npm run build            # Build for production (sitemap.xml and robots.txt are runtime routes: app/sitemap.ts, app/robots.ts)
 npm start                # Start production server
 ```
 

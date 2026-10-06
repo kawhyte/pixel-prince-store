@@ -10,7 +10,7 @@ import EmailSignupForm from "@/components/common/EmailSignupForm/EmailSignupForm
 import FaqAccordion from "@/components/common/FaqAccordion/FaqAccordion";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 export const dynamicParams = false;
 
 interface PageProps {

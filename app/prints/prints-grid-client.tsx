@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { FreeArt } from "@/sanity/lib/client";
 import { cardCommerce } from "@/lib/commerce";
@@ -22,11 +23,39 @@ interface PrintsGridClientProps {
 }
 
 const ALL = "All prints";
-const subscribeNoop = () => () => {};
 const SETS = "Sets";
 
-/** Category chips + card grid for /prints (PLAN-43). Filters the already-fetched list, no refetch. */
-export default function PrintsGridClient({ prints, newIds }: PrintsGridClientProps) {
+/**
+ * Category chips + card grid for /prints (PLAN-43). Filters the already-fetched list, no refetch.
+ * The URL (?category= / ?kind=set) is the only filter state, so nav links, chips, Back and shared
+ * links all agree. The server renders the full grid (the Suspense fallback) for crawlers.
+ */
+export default function PrintsGridClient(props: PrintsGridClientProps) {
+  return (
+    <Suspense fallback={<PrintsGrid {...props} active={ALL} />}>
+      <FilteredPrintsGrid {...props} />
+    </Suspense>
+  );
+}
+
+function FilteredPrintsGrid(props: PrintsGridClientProps) {
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const active = params.get("kind") === "set" ? SETS : (params.get("category") ?? ALL);
+  const setActive = (c: string) => {
+    const next = c === ALL ? "" : c === SETS ? "?kind=set" : `?category=${encodeURIComponent(c)}`;
+    router.replace(`${pathname}${next}`, { scroll: false });
+  };
+  return <PrintsGrid {...props} active={active} onPick={setActive} />;
+}
+
+function PrintsGrid({
+  prints,
+  newIds,
+  active: requested,
+  onPick,
+}: PrintsGridClientProps & { active: string; onPick?: (c: string) => void }) {
   const isNew = useMemo(() => new Set(newIds), [newIds]);
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -38,14 +67,8 @@ export default function PrintsGridClient({ prints, newIds }: PrintsGridClientPro
     if (prints.some((p) => p.kind === "set")) list.push(SETS);
     return list;
   }, [prints]);
-  // URL filter (?category= / ?kind=set) read as an external store: the server renders the full
-  // grid (SEO), the client picks up the filter after hydration without a setState-in-effect.
-  const search = useSyncExternalStore(subscribeNoop, () => window.location.search, () => "");
-  const params = new URLSearchParams(search);
-  const fromUrl = params.get("kind") === "set" ? SETS : params.get("category");
-  const [picked, setPicked] = useState<string | null>(null);
-  const active = picked ?? (fromUrl && categories.includes(fromUrl) ? fromUrl : ALL);
-  const setActive = setPicked;
+  const active = categories.includes(requested) ? requested : ALL;
+  const setActive = (c: string) => onPick?.(c);
   const shown =
     active === ALL ? prints : active === SETS ? prints.filter((p) => p.kind === "set") : prints.filter((p) => p.category?.trim() === active);
 

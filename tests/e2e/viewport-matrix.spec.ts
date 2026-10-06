@@ -41,13 +41,14 @@ test("art detail: no horizontal overflow", async ({ page }) => {
 test("nav: mobile menu opens (mobile) / desktop links visible (wide)", async ({ page }) => {
   await page.goto("/");
   if (isMobile(page)) {
-    const toggle = page.getByRole("button", { name: /toggle menu/i });
+    const toggle = page.getByRole("button", { name: /open menu/i });
     await expect(toggle).toBeVisible();
     // Hit-target size guard for the hamburger.
     const box = await toggle.boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     await toggle.click();
+    await expect(page.getByRole("button", { name: /close menu/i })).toHaveAttribute("aria-expanded", "true");
     await expect(
       page.getByRole("link", { name: "Free Prints" }).last()
     ).toBeVisible();

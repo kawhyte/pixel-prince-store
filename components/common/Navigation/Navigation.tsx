@@ -18,13 +18,18 @@ import CartButton from "@/components/common/Cart/CartButton";
 export default function Navigation({ primary = NAV_PRIMARY }: { primary?: NavLink[] }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Lock body scroll while the mobile menu overlay is open.
+  // Lock body scroll while the mobile menu overlay is open, and let Escape close it.
   useEffect(() => {
     if (!isMobileMenuOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
     };
   }, [isMobileMenuOpen]);
 
@@ -66,7 +71,9 @@ export default function Navigation({ primary = NAV_PRIMARY }: { primary?: NavLin
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="z-50 flex size-11 items-center justify-center rounded-md text-charcoal transition-colors hover:bg-sage-100"
-                aria-label="Toggle menu"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-menu"
               >
                 {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
               </button>
@@ -76,7 +83,10 @@ export default function Navigation({ primary = NAV_PRIMARY }: { primary?: NavLin
       </nav>
 
       {/* Mobile menu, outside nav to escape the backdrop-filter stacking context */}
+      {/* inert while closed: off-screen links must not take Tab focus or be read out */}
       <div
+        id="mobile-menu"
+        inert={!isMobileMenuOpen}
         className={`fixed inset-0 top-16 z-40 transform bg-background transition-transform duration-300 md:hidden ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}

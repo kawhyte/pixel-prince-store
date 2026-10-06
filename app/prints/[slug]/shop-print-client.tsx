@@ -6,8 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Check, CheckCircle2, Gift, Star, Truck, Clock, ShieldCheck, Lock, Mail } from "lucide-react";
 
 import { type FreeArt } from "@/sanity/lib/client";
-import { getActiveOffer, orderedSizes, fromPriceCents, formatPrice, getVersions, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, versionImage, resolveFinish, resolveVersion } from "@/lib/commerce";
-import { getShopSize, inchesLabel, VERSION_LABEL, type FinishId } from "@/config/commerce";
+import { cardCommerce, getActiveOffer, orderedSizes, fromPriceCents, formatPrice, offerImage, offerImageAlt, offerImageRatio, popularSizeId, versionGallery, resolveFinish, resolveVersion } from "@/lib/commerce";
+import { getShopSize, inchesLabel, type FinishId } from "@/config/commerce";
 // The same numbers Studio validates uploads against, so the check and the layout cannot drift.
 import { HERO_MAX_WIDTH, heroFrame } from "@/config/shop-image";
 import { imageAlt } from "@/lib/listing-copy";
@@ -413,17 +413,18 @@ export default function ShopPrintClient({ art, related, deliveryBy }: ShopPrintC
             </div>
             <div className="mt-8 flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4 lg:gap-6 [&::-webkit-scrollbar]:hidden">
               {related.slice(0, 4).map((item) => {
-                const from = fromPriceCents(getActiveOffer(item));
+                // Same card numbers as the /prints grid, sets included.
+                const card = cardCommerce(item);
                 return (
                   <div key={item.id} className="w-[70%] shrink-0 snap-start sm:w-auto">
                     <ArtCard
                       art={item}
-                      href={`/prints/${item.id}`}
+                      href={card.href}
                       subtitle={item.category}
-                      meta="Art print"
-                      value={from !== null ? `From ${formatPrice(from)}` : ""}
-                      versions={getVersions(item).map((v) => ({ label: v.version, imageUrl: versionImage(v.offer) }))}
-                      versionNoun={VERSION_LABEL}
+                      meta={card.meta}
+                      value={card.value}
+                      versions={card.versions}
+                      versionNoun={card.versionNoun}
                       sizes="(max-width: 640px) 70vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>

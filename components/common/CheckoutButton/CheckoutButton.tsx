@@ -269,7 +269,7 @@ export default function CheckoutButton({
                 <label
                   key={s.sizeId}
                   className={cn(
-                    "relative cursor-pointer rounded-md border bg-card text-sm transition-colors",
+                    "relative cursor-pointer rounded-md border bg-card text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-sage-500",
                     sizeLayout === "columns"
                       ? "flex h-14 flex-col items-center justify-center gap-0.5 px-2"
                       : "flex h-12 items-center justify-between gap-2 px-3",

@@ -39,7 +39,7 @@ export default function VersionPicker({ options, value, onChange }: VersionPicke
               key={o.version}
               title={o.version}
               className={cn(
-                "cursor-pointer overflow-hidden rounded-md border bg-card transition-colors",
+                "cursor-pointer overflow-hidden rounded-md border bg-card transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-sage-500",
                 active ? "border-charcoal ring-1 ring-charcoal" : "border-border hover:border-charcoal",
               )}
             >

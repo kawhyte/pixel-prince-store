@@ -12,7 +12,7 @@ import ArtGallery from "@/components/common/ArtGallery/ArtGallery";
 import EmailGateDialog from "@/components/common/EmailGateDialog/EmailGateDialog";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
 import { LICENSE_SUMMARY } from "@/config/license";
-import { getActiveOffer, fromPriceCents, formatPrice } from "@/lib/commerce";
+import { cardCommerce } from "@/lib/commerce";
 import { PRINT_SIZES, deriveRatio } from "@/config/print-sizes";
 
 interface ArtDetailClientProps {
@@ -162,7 +162,7 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
               {shopPrints.length > 0 ? (
                 <ul className="divide-y divide-border">
                   {shopPrints.slice(0, 3).map((item) => {
-                    const from = fromPriceCents(getActiveOffer(item));
+                    const { value } = cardCommerce(item);
                     return (
                       <li key={item.id}>
                         <Link
@@ -173,9 +173,7 @@ export default function ArtDetailClient({ art, relatedArt, shopPrints = [] }: Ar
                             <Image src={item.previewImage} alt={item.title} fill className="object-cover" sizes="56px" />
                           </span>
                           <span className="min-w-0 flex-1 truncate text-sm font-medium text-charcoal">{item.title}</span>
-                          {from !== null && (
-                            <span className="shrink-0 text-sm text-soft-charcoal">From {formatPrice(from)}</span>
-                          )}
+                          {value && <span className="shrink-0 text-sm text-soft-charcoal">{value}</span>}
                         </Link>
                       </li>
                     );

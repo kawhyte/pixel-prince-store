@@ -68,7 +68,7 @@ export default function Testimonials({
       <div className="grid gap-6 sm:grid-cols-3">
         {shown.map((r) => (
           <figure key={`${r.name}-${r.quote.slice(0, 24)}`} className="rounded-md border border-border bg-card p-5">
-            <div className="flex gap-0.5" aria-label="5 out of 5 stars">
+            <div role="img" className="flex gap-0.5" aria-label="5 out of 5 stars">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="size-4 fill-current text-sage-500" aria-hidden />
               ))}

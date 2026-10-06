@@ -86,7 +86,10 @@ export default function ShopHero({ items }: ShopHeroProps) {
                         src={item.heroImage || item.previewImage}
                         alt={item.title}
                         fill
-                        priority
+                        // All above the fold on desktop, so none wait; only the first competes for
+                        // bandwidth first, instead of four "priority" images splitting it.
+                        loading="eager"
+                        fetchPriority={i === 0 ? "high" : undefined}
                         sizes={single ? "(max-width: 1024px) 90vw, 45vw" : "(max-width: 1024px) 45vw, 25vw"}
                         className="object-cover"
                       />
@@ -105,7 +108,7 @@ export default function ShopHero({ items }: ShopHeroProps) {
         {/* The offer */}
         <div className="order-1 space-y-6 lg:order-2">
           <div className="flex items-center gap-2">
-            <span className="flex gap-0.5" aria-label={`${REVIEW_SUMMARY.rating} out of 5 stars`}>
+            <span role="img" className="flex gap-0.5" aria-label={`${REVIEW_SUMMARY.rating} out of 5 stars`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="size-4 fill-current text-sage-500" aria-hidden />
               ))}

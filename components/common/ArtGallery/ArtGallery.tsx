@@ -86,7 +86,10 @@ export default function ArtGallery({
           fill
           className="object-contain"
           sizes={sizes}
-          priority
+          // The main photo is the page's LCP: fetch it first. (Next 16's `priority` only preloads;
+          // without fetchPriority the browser still queues it behind scripts.)
+          loading="eager"
+          fetchPriority="high"
         />
       </div>
       </div>
@@ -127,8 +130,9 @@ export default function ArtGallery({
                 fill
                 className="object-contain"
                 sizes={sizes}
-                priority={i === 0}
-                loading={i === 0 ? undefined : "lazy"}
+                // Only the first slide is on screen at load: it is the page's LCP, the rest wait.
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : undefined}
               />
             </div>
           ))}
@@ -157,7 +161,7 @@ export default function ArtGallery({
       </div>
 
       {/* Dots: mobile (44px tall hit area, small visual dot) */}
-      <div className="-my-3 flex justify-center gap-1 md:hidden">
+      <div className="-my-3 flex justify-center md:hidden">
         {images.map((_, i) => (
           <button
             type="button"
@@ -165,7 +169,8 @@ export default function ArtGallery({
             aria-label={`Go to photo ${i + 1}`}
             aria-current={i === active}
             onClick={() => scrollToSlide(i)}
-            className="flex h-11 items-center px-1"
+            // 44px tall, at least 24px wide: the smallest tap target that passes WCAG 2.5.8
+            className="flex h-11 min-w-6 items-center justify-center px-1"
           >
             <span
               className={`h-2 rounded-full transition-all ${

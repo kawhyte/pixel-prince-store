@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { toast } from "sonner";
 
 import { CART_STORAGE_KEY } from "@/config/commerce";
+import { unavailableItems, type CartCatalog } from "@/lib/cart-catalog";
 import {
   addToCart,
   CartError,
@@ -29,7 +30,13 @@ interface CartContextValue {
   checkoutCart: (line: CartLine | CartLine[]) => Promise<Cart | null>;
   setQuantity: (variantId: string, quantity: number) => Promise<void>;
   remove: (variantId: string) => Promise<void>;
+  /** what the shop still sells and can suggest; null until loaded, and if the lookup failed */
+  catalog: CartCatalog | null;
+  /** removes every line that can no longer be bought, in one call */
+  removeUnavailable: () => Promise<void>;
 }
+
+const CATALOG_MAX_AGE_MS = 5 * 60 * 1000;
 
 // Only a cart Fourthwall no longer knows is stale; anything else is a real failure.
 function isStaleCart(error: unknown): boolean {
@@ -70,6 +77,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const loaded = useRef(false);
+  const [catalog, setCatalog] = useState<CartCatalog | null>(null);
+  const catalogAt = useRef(0);
+  const catalogLoading = useRef(false);
 
   // Restore a stored cart after mount; a dead id is dropped silently.
   useEffect(() => {
@@ -83,6 +93,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         storeId(null);
       });
   }, [enabled]);
+
+  // The catalog is only worth fetching once there is something in the bag, and again when the
+  // drawer opens on a stale copy. A failed fetch leaves it null: nothing gets flagged.
+  const hasItems = (cart?.items.length ?? 0) > 0;
+  useEffect(() => {
+    if (!enabled || !hasItems || catalogLoading.current) return;
+    if (catalog && (!open || Date.now() - catalogAt.current < CATALOG_MAX_AGE_MS)) return;
+    catalogLoading.current = true;
+    fetch("/api/cart-catalog")
+      .then((res) => (res.ok ? (res.json() as Promise<CartCatalog>) : null))
+      .then((c) => {
+        if (c) {
+          setCatalog(c);
+          catalogAt.current = Date.now();
+        }
+      })
+      .catch((error) => console.error("[CART] catalog", error))
+      .finally(() => {
+        catalogLoading.current = false;
+      });
+  }, [enabled, hasItems, open, catalog]);
 
   const apply = useCallback((c: Cart) => {
     setCart(c);
@@ -164,9 +195,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const remove = useCallback((variantId: string) => setQuantity(variantId, 0), [setQuantity]);
 
+  const removeUnavailable = useCallback(async () => {
+    const gone = unavailableItems(cart, catalog);
+    if (!cart?.id || gone.length === 0) return;
+    setBusy(true);
+    try {
+      try {
+        apply(await removeFromCart(cart.id, gone.map((i) => ({ variantId: i.variant.id, quantity: i.quantity }))));
+      } catch {
+        // Fourthwall may refuse to touch a variant it no longer has: start a bag from what is left.
+        const goneIds = new Set(gone.map((i) => i.variant.id));
+        const keep = cart.items
+          .filter((i) => !goneIds.has(i.variant.id))
+          .map((i) => ({ variantId: i.variant.id, quantity: i.quantity }));
+        if (keep.length > 0) {
+          apply(await createCart(keep));
+        } else {
+          setCart(null);
+          storeId(null);
+        }
+      }
+    } catch (error) {
+      reportCartError(error);
+    } finally {
+      setBusy(false);
+    }
+  }, [apply, cart, catalog]);
+
   const value = useMemo(
-    () => ({ enabled, cart, busy, open, setOpen, add, checkoutCart, setQuantity, remove }),
-    [enabled, cart, busy, open, add, checkoutCart, setQuantity, remove],
+    () => ({ enabled, cart, busy, open, setOpen, add, checkoutCart, setQuantity, remove, catalog, removeUnavailable }),
+    [enabled, cart, busy, open, add, checkoutCart, setQuantity, remove, catalog, removeUnavailable],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

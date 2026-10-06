@@ -51,4 +51,11 @@ export function trackOptionPicked(artId: string, option: "finish" | "version" | 
 export function trackCartCheckout(items: string) {
   track("cart_checkout", { items });
 }
-
+/** A "Pairs well with" print opened from the cart. */
+export function trackCartSuggestion(slug: string) {
+  track("cart_suggestion_clicked", { slug });
+}
+/** Lines dropped from a saved bag because they can no longer be bought. */
+export function trackCartUnavailableRemoved(count: number) {
+  track("cart_unavailable_removed", { count: String(count) });
+}

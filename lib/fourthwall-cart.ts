@@ -14,6 +14,8 @@ export interface CartVariant {
   attributes?: { size?: { name?: string } };
   images?: { url: string }[];
   product?: { id?: string; name?: string; slug?: string };
+  /** not in the 2026-09-08 check; read defensively, unknown means in stock */
+  stock?: { type?: string; inStock?: number };
 }
 
 export interface CartItem {

@@ -3,6 +3,7 @@ import { getProductBySlug } from "@/sanity/lib/client";
 import { verifyDownloadToken } from "@/lib/download-token";
 import { writeClient } from "@/sanity/lib/write-client";
 import { buildDownloadZip } from "@/lib/build-download-zip";
+import { recordLinkUse } from "@/lib/subscriber-store";
 
 /**
  * Secure API Route for Downloading Free Digital Art
@@ -26,7 +27,9 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get("token");
 
     // Dev bypass keeps the old query-param form working locally
-    const downloadLimitDisabled = process.env.DISABLE_DOWNLOAD_LIMIT === "true";
+    // Never honoured in production: there it would serve every master file to anyone.
+    const downloadLimitDisabled =
+      process.env.NODE_ENV !== "production" && process.env.DISABLE_DOWNLOAD_LIMIT === "true";
 
     let artId: string | null;
 
@@ -36,6 +39,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(
           { error: "This download link is invalid or has expired (links last 72 hours). Request the art again to get a fresh link." },
           { status: 403 }
+        );
+      }
+      // A Sanity hiccup should not block a valid link, so a failed count lets it through.
+      const linkUsable = claim.key
+        ? await recordLinkUse(claim.email, claim.key).catch((e) => {
+            console.error("[CLAIM-ART] link use not recorded", e);
+            return true;
+          })
+        : true;
+      if (!linkUsable) {
+        return NextResponse.json(
+          { error: "This download link has already been used. Request the art again to get a fresh link." },
+          { status: 410 }
         );
       }
       artId = claim.artId;
@@ -100,7 +116,7 @@ export async function GET(request: NextRequest) {
         headers: {
           "Content-Type": "application/zip",
           "Content-Disposition": `attachment; filename="${safeTitle}-print.zip"`,
-          "Cache-Control": "no-cache",
+          "Cache-Control": "private, no-store",
         },
       });
     } catch (error) {

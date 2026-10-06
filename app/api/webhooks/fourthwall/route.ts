@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
         )
       : [];
 
-  let tx = writeClient.transaction().createIfNotExists({
+  // create (not createIfNotExists): a retry racing this one makes the whole transaction
+  // fail, so its sales increments never land twice.
+  let tx = writeClient.transaction().create({
     _id: orderDocId,
     _type: "fwOrder",
     orderId: event.orderId,
@@ -106,7 +108,15 @@ export async function POST(request: NextRequest) {
   for (const id of artworkIds) {
     tx = tx.patch(id, (p) => p.setIfMissing({ sales: 0 }).inc({ sales: 1 }));
   }
-  await tx.commit();
+  try {
+    await tx.commit();
+  } catch (error) {
+    if ((error as { statusCode?: number })?.statusCode === 409) {
+      console.log(`${LOG} duplicate delivery for ${event.orderId}, recorded by a parallel request`);
+      return NextResponse.json({ ok: true, duplicate: true });
+    }
+    throw error;
+  }
   console.log(`${LOG} recorded ${event.orderId} (${event.friendlyId ?? "no number"}): ${artworkIds.length} artwork(s)`);
 
   if (event.email) {

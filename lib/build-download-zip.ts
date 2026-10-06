@@ -30,6 +30,12 @@ export async function buildDownloadZip(opts: {
 
   const archive = archiver("zip", { zlib: { level: 1 } }); // PNGs are pre-compressed; level 1 = fast
   const out = new PassThrough();
+  // Without a listener, a failed master stream would throw out of the process.
+  archive.on("warning", (e) => console.warn("[CLAIM-ART] zip warning", e));
+  archive.on("error", (e) => {
+    console.error("[CLAIM-ART] zip failed mid-stream", e);
+    out.destroy(e);
+  });
   archive.pipe(out);
 
   archive.append(Readable.fromWeb(res.body as import("stream/web").ReadableStream), { name: opts.pngName });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProductBySlug } from "@/sanity/lib/client";
 import { signDownloadToken } from "@/lib/download-token";
-import { getSubscriber, isOverWeeklyLimit, recordDownloadRequest, normalizeEmail } from "@/lib/subscriber-store";
+import { claimDownloadSlot, releaseDownloadSlot, normalizeEmail } from "@/lib/subscriber-store";
 import { emailProvider } from "@/lib/email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,6 +10,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ipHits = new Map<string, { count: number; windowStart: number }>();
 function ipThrottled(ip: string): boolean {
   const now = Date.now();
+  if (ipHits.size > 1000) {
+    for (const [key, r] of ipHits) if (now - r.windowStart > 60_000) ipHits.delete(key);
+  }
   const rec = ipHits.get(ip);
   if (!rec || now - rec.windowStart > 60_000) {
     ipHits.set(ip, { count: 1, windowStart: now });
@@ -51,25 +54,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This artwork's file isn't available yet." }, { status: 404 });
     }
 
-    const existing = await getSubscriber(email);
-    if (isOverWeeklyLimit(existing)) {
+    const slot = await claimDownloadSlot(email, artId, `art/${artId}`);
+    if (!slot.ok) {
       return NextResponse.json(
         { error: "You've claimed 3 free prints this week. Your next one unlocks within 7 days. (A new featured print drops monthly!)" },
         { status: 429 }
       );
     }
+    const { isNewSubscriber } = slot;
 
-    const { isNewSubscriber } = await recordDownloadRequest(email, artId, `art/${artId}`);
+    try {
+      const token = await signDownloadToken({ email, artId, key: slot.key });
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.thepixelprince.com";
+      const downloadUrl = `${siteUrl}/api/claim-art?token=${encodeURIComponent(token)}`;
 
-    const token = await signDownloadToken({ email, artId });
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.thepixelprince.com";
-    const downloadUrl = `${siteUrl}/api/claim-art?token=${encodeURIComponent(token)}`;
-
-    await emailProvider.sendDownloadEmail({
-      to: email,
-      artTitle: art.title,
-      downloadUrl,
-    });
+      await emailProvider.sendDownloadEmail({
+        to: email,
+        artTitle: art.title,
+        downloadUrl,
+      });
+    } catch (error) {
+      // No email went out, so the request should not count against the weekly limit.
+      await releaseDownloadSlot(email, slot.key).catch((e) => console.error("[REQUEST-DL] slot release failed", e));
+      throw error;
+    }
 
     // Non-blocking: audience add + welcome
     if (isNewSubscriber) {

@@ -2,9 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import { toast } from "sonner";
+
 import { CART_STORAGE_KEY } from "@/config/commerce";
 import {
   addToCart,
+  CartError,
   cartEnabled,
   changeQuantity,
   createCart,
@@ -22,8 +25,20 @@ interface CartContextValue {
   setOpen: (open: boolean) => void;
   /** one line, or several at once for a set (PLAN-54): they must land in the bag together */
   add: (line: CartLine | CartLine[]) => Promise<Cart | null>;
+  /** a one-off cart holding only these lines, for Buy now: the bag is left as it is */
+  checkoutCart: (line: CartLine | CartLine[]) => Promise<Cart | null>;
   setQuantity: (variantId: string, quantity: number) => Promise<void>;
   remove: (variantId: string) => Promise<void>;
+}
+
+// Only a cart Fourthwall no longer knows is stale; anything else is a real failure.
+function isStaleCart(error: unknown): boolean {
+  return error instanceof CartError && (error.status === 404 || error.status === 410);
+}
+
+function reportCartError(error: unknown) {
+  console.error("[CART]", error);
+  toast.error("Couldn't update your bag", { description: "Please try again in a moment." });
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -87,7 +102,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (cart?.id) {
           try {
             next = await addToCart(cart.id, lines);
-          } catch {
+          } catch (error) {
+            if (!isStaleCart(error)) throw error;
             next = await createCart(lines); // stale cart id: start over
           }
         } else {
@@ -95,11 +111,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         apply(next);
         return next;
+      } catch (error) {
+        reportCartError(error);
+        return null;
       } finally {
         setBusy(false);
       }
     },
     [apply, cart?.id, enabled],
+  );
+
+  const checkoutCart = useCallback(
+    async (line: CartLine | CartLine[]) => {
+      if (!enabled) return null;
+      const lines = Array.isArray(line) ? line : [line];
+      if (lines.length === 0) return null;
+      setBusy(true);
+      try {
+        return await createCart(lines);
+      } catch (error) {
+        reportCartError(error);
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [enabled],
   );
 
   const setQuantity = useCallback(
@@ -112,6 +149,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ? await removeFromCart(cart.id, [{ variantId, quantity: 99 }])
             : await changeQuantity(cart.id, [{ variantId, quantity }]);
         apply(next);
+      } catch (error) {
+        if (isStaleCart(error)) {
+          setCart(null);
+          storeId(null);
+        }
+        reportCartError(error);
       } finally {
         setBusy(false);
       }
@@ -122,8 +165,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const remove = useCallback((variantId: string) => setQuantity(variantId, 0), [setQuantity]);
 
   const value = useMemo(
-    () => ({ enabled, cart, busy, open, setOpen, add, setQuantity, remove }),
-    [enabled, cart, busy, open, add, setQuantity, remove],
+    () => ({ enabled, cart, busy, open, setOpen, add, checkoutCart, setQuantity, remove }),
+    [enabled, cart, busy, open, add, checkoutCart, setQuantity, remove],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

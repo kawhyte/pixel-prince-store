@@ -1,6 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// The store only needs Sanity at call time; keep these pure tests free of env vars.
+vi.mock("@/sanity/lib/write-client", () => ({ writeClient: null }));
+
 import {
   normalizeEmail,
+  canonicalEmail,
   weeklyDownloadCount,
   isOverWeeklyLimit,
   type SubscriberDoc,
@@ -9,6 +14,21 @@ import {
 describe("normalizeEmail", () => {
   it("lowercases and trims", () => {
     expect(normalizeEmail("  Kenny@Example.com  ")).toBe("kenny@example.com");
+  });
+});
+
+describe("canonicalEmail", () => {
+  it("drops a +tag so one inbox gets one weekly limit", () => {
+    expect(canonicalEmail("Me+one@Example.com")).toBe("me@example.com");
+  });
+
+  it("drops Gmail dots and folds googlemail.com", () => {
+    expect(canonicalEmail("m.e+x@gmail.com")).toBe("me@gmail.com");
+    expect(canonicalEmail("m.e@googlemail.com")).toBe("me@gmail.com");
+  });
+
+  it("keeps dots for other providers", () => {
+    expect(canonicalEmail("first.last@example.com")).toBe("first.last@example.com");
   });
 });
 

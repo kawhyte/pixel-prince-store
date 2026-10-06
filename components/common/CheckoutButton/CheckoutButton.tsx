@@ -161,25 +161,27 @@ export default function CheckoutButton({
     ? cartCtx.enabled && !!setLines
     : cartCtx.enabled && offer!.provider === "fourthwall" && !!selected?.providerVariantId;
 
-  const addSelected = async () => {
-    const lines = asSet
-      ? setLines?.map((variantId) => ({ variantId, quantity: 1 }))
+  const selectedLines = () =>
+    asSet
+      ? setLines?.map((variantId) => ({ variantId, quantity: 1 })) ?? null
       : selected?.providerVariantId
         ? [{ variantId: selected.providerVariantId, quantity: 1 }]
         : null;
-    if (!lines || lines.length === 0) return null;
-    const next = await cartCtx.add(lines);
-    trackAddToCart(art.id, `${finishKey}:${sizeId ?? "none"}`);
-    return next;
-  };
 
   const onAddToCart = async () => {
-    const next = await addSelected();
-    if (next) cartCtx.setOpen(true);
+    const lines = selectedLines();
+    if (!lines || lines.length === 0) return;
+    const next = await cartCtx.add(lines);
+    if (!next) return;
+    trackAddToCart(art.id, `${finishKey}:${sizeId ?? "none"}`);
+    cartCtx.setOpen(true);
   };
 
+  // Buy now pays for this print only, never whatever else is already in the bag.
   const onBuyNow = async () => {
-    const next = await addSelected();
+    const lines = selectedLines();
+    if (!lines || lines.length === 0) return;
+    const next = await cartCtx.checkoutCart(lines);
     const href = next ? buildCartCheckoutUrl(next.id, campaign) : null;
     if (href) {
       trackCheckoutOpened(art.id, sizeId ?? "", "fourthwall");

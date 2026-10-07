@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, Mail, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import PixelIcon from "@/components/common/PixelIcon/PixelIcon";
 import { triggerConfetti } from "@/lib/confetti";
+import { notifyError } from "@/lib/notify";
 import { trackEmailSignup, trackDownloadClaimed } from "@/lib/analytics";
 
 interface EmailGateDialogProps {
@@ -74,9 +74,7 @@ export default function EmailGateDialog({
       trackEmailSignup(`art/${artId}`);
       trackDownloadClaimed(artId);
     } catch {
-      toast.error("Network error", {
-        description: "Please check your connection and try again.",
-      });
+      notifyError("Network error", "Please check your connection and try again.");
     } finally {
       setPending(false);
     }

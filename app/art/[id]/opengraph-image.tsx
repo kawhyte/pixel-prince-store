@@ -18,7 +18,6 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
         background: "#f3f1e8", alignItems: "center", padding: 48, gap: 48,
       }}>
         {art?.previewImage && (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={art.previewImage} width={420} height={534}
                style={{ borderRadius: 24, objectFit: "cover", flexShrink: 0 }} alt="" />
         )}

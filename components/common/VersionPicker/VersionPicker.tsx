@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import { VERSION_LABEL } from "@/config/commerce";
 
 export interface VersionOption {

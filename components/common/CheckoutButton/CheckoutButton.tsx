@@ -35,7 +35,7 @@ import { buildCartCheckoutUrl } from "@/lib/fourthwall-cart";
 import { useCart } from "@/components/common/Cart/CartProvider";
 import FinishPicker from "@/components/common/FinishPicker/FinishPicker";
 import VersionPicker from "@/components/common/VersionPicker/VersionPicker";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 
 interface CheckoutButtonProps {
   art: FreeArt;

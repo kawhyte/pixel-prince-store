@@ -8,7 +8,6 @@ import {
   createPlatformClient,
   listAllProducts,
   PlatformError,
-  SIZE_NAMES,
   TEMPLATES,
   sizeNameForId,
   sizeNamesFor,

@@ -2,9 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
-import { toast } from "sonner";
 
 import { CART_STORAGE_KEY } from "@/config/commerce";
+import { notifyError } from "@/lib/notify";
 import { unavailableItems, type CartCatalog } from "@/lib/cart-catalog";
 import {
   addToCart,
@@ -45,7 +45,7 @@ function isStaleCart(error: unknown): boolean {
 
 function reportCartError(error: unknown) {
   console.error("[CART]", error);
-  toast.error("Couldn't update your bag", { description: "Please try again in a moment." });
+  notifyError("Couldn't update your bag", "Please try again in a moment.");
 }
 
 const CartContext = createContext<CartContextValue | null>(null);

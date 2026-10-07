@@ -59,6 +59,9 @@ export default function EmailSignupForm({ source, className }: EmailSignupFormPr
       <div className="flex h-12 w-full max-w-xl overflow-hidden rounded-full border border-border bg-card focus-within:border-sage-500 focus-within:ring-2 focus-within:ring-sage-200">
         <input
           type="email"
+          name="email"
+          autoComplete="email"
+          aria-label="Email address"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +99,7 @@ export default function EmailSignupForm({ source, className }: EmailSignupFormPr
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

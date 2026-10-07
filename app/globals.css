@@ -90,7 +90,7 @@
   --accent: #f6dfd3;
   --accent-foreground: #1a1a1a;
 
-  --destructive: #c05555;
+  --destructive: #b54a4a; /* 4.9:1 on cream (was #c05555, 4.24), white on it 5.2:1 */
   --destructive-foreground: #ffffff;
 
   /* Borders and inputs: warm neutral */

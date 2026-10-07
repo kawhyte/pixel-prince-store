@@ -35,8 +35,7 @@ export function GeminiGenerator() {
     : undefined
 
   // Build image URL
-  const builder = imageUrlBuilder(client)
-  const urlFor = (source: ImageAsset) => builder.image(source)
+  const urlFor = useCallback((source: ImageAsset) => imageUrlBuilder(client).image(source), [client])
 
   const handleGenerate = useCallback(async () => {
     // Validate required fields

@@ -6,7 +6,6 @@
 
 import {
   DEFAULT_RATIO,
-  FULL_LADDER,
   RATIO_FAMILIES,
   ratioTag,
   sizeIdsForScope,

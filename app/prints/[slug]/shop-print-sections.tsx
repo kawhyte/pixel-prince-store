@@ -168,7 +168,7 @@ export function AfterHero({ art }: { art: FreeArt }) {
             {roomPhotos.map((img) => (
               <figure key={img.url}>
                 <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-muted shadow-card">
-                  <Image src={img.url} alt={img.alt} fill className="object-contain" sizes="(max-width: 640px) 100vw, 33vw" />
+                  <Image src={img.url} alt={img.alt} fill className="object-contain" sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1536px) 31vw, 485px" />
                 </div>
                 {!/mockup \d/i.test(img.alt) && (
                   <figcaption className="mt-3 text-sm text-soft-charcoal">{img.alt}</figcaption>

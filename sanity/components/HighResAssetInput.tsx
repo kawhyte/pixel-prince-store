@@ -13,7 +13,7 @@ import type { HighResAsset } from '@/lib/types/high-res-asset';
  * with Sanity's form system, handling value updates and persistence.
  */
 export function HighResAssetInput(props: ObjectInputProps) {
-  const { value, onChange, path } = props;
+  const { value, onChange } = props;
 
   // Convert Sanity value to our HighResAsset type
   const currentAsset: HighResAsset | null = value
@@ -69,7 +69,7 @@ export function HighResAssetInput(props: ObjectInputProps) {
         ]);
       }
     },
-    [onChange, path]
+    [onChange]
   );
 
   return (

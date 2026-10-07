@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
+import LazyToaster from "@/components/common/LazyToaster";
 import ConditionalNavigation from "@/components/common/Navigation/ConditionalNavigation";
 import { getShopSetCount } from "@/sanity/lib/client";
 import { primaryNav } from "@/config/nav";
 import ConditionalFooter from "@/components/common/Footer/ConditionalFooter";
 import { CartProvider } from "@/components/common/Cart/CartProvider";
-import CartDrawer from "@/components/common/Cart/CartDrawer";
+import LazyCartDrawer from "@/components/common/Cart/LazyCartDrawer";
 import { generateOrganizationSchema, generateWebsiteSchema, jsonLd } from "@/lib/seo";
 
 const inter = Inter({
@@ -91,9 +91,9 @@ export default async function RootLayout({
           <ConditionalNavigation primary={primaryNav(setCount)} />
           {children}
           <ConditionalFooter />
-          <CartDrawer />
+          <LazyCartDrawer />
         </CartProvider>
-        <Toaster />
+        <LazyToaster />
         {process.env.NODE_ENV === "production" &&
           process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
             <Script

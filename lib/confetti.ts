@@ -1,6 +1,6 @@
-import confetti from "canvas-confetti";
-
-export function triggerConfetti() {
+/** Fired once, after a sign-up, so canvas-confetti loads then rather than with the page. */
+export async function triggerConfetti() {
+  const { default: confetti } = await import("canvas-confetti");
   const duration = 3000;
   const animationEnd = Date.now() + duration;
   const defaults = {

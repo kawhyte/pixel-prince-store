@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { getFinish, type FinishId } from "@/config/commerce";
 import { formatPrice } from "@/lib/commerce";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 
 export interface FinishOption {
   finish: FinishId;

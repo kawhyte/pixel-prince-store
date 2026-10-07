@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FreeArt } from "@/sanity/lib/client";
 import { cardCommerce } from "@/lib/commerce";
 import ArtCard from "@/components/common/ArtCard/ArtCard";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import { gridClass, gridSizes } from "@/lib/grid";
 
 interface PrintsGridClientProps {

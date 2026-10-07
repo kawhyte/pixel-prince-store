@@ -215,7 +215,7 @@ export default function ShopPrintClient({ art, deliveryBy, belowBuy, afterHero }
           <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-[543px_minmax(0,640px)] lg:justify-center lg:items-center lg:gap-14">
             {/* 3:4 to match the photo, so the 24x36 label at the top is not cropped away */}
             <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-cream shadow-card">
-              <Image src={SIZE_GUIDE_SLIDE.url} alt={SIZE_GUIDE_SLIDE.alt} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+              <Image src={SIZE_GUIDE_SLIDE.url} alt={SIZE_GUIDE_SLIDE.alt} fill className="object-cover" sizes="(max-width: 1024px) calc(100vw - 32px), 543px" />
             </div>
             <div>
               <SectionLabel>Pick the right size</SectionLabel>

@@ -1,6 +1,6 @@
 import seoConfig from "@/config/seo.json";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import LazyToaster from "@/components/common/LazyToaster";
@@ -12,9 +12,12 @@ import { CartProvider } from "@/components/common/Cart/CartProvider";
 import LazyCartDrawer from "@/components/common/Cart/LazyCartDrawer";
 import { generateOrganizationSchema, generateWebsiteSchema, jsonLd } from "@/lib/seo";
 
-const inter = Inter({
+// Inter trimmed to weights 400-700 and the characters the site uses (scripts/subset-inter.py):
+// 25 KB instead of Google's 48 KB Latin file.
+const inter = localFont({
+  src: "./fonts/inter-subset.woff2",
+  weight: "400 700",
   variable: "--font-sans",
-  subsets: ["latin"],
   display: "swap",
 });
 

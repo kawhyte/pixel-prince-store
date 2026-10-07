@@ -3,6 +3,8 @@ import {
   sizeIdFromLabel,
   mapVariantsToSizes,
   stripHtml,
+  syncSizes,
+  type MappedSize,
   inferCategory,
   inferKind,
   isImportable,
@@ -212,5 +214,40 @@ describe("aspect ratio in a product name", () => {
     expect(sanityIdForArtwork(before)).toBe("fw-a");
     expect(sanityIdForArtwork(after)).toBe("fw-a");
     expect(sanityIdForArtwork([...after].reverse())).toBe("fw-a");
+  });
+});
+
+describe("syncSizes", () => {
+  const row = (sizeId: string, priceCents: number, providerVariantId = `v-${sizeId}`): MappedSize => ({
+    _type: "shopSize",
+    _key: `fw-${sizeId}`,
+    sizeId,
+    priceCents,
+    providerVariantId,
+  });
+
+  it("reports nothing when Fourthwall matches Studio", () => {
+    const stored = [{ sizeId: "8x10", priceCents: 2399, providerVariantId: "v-8x10" }];
+    expect(syncSizes(stored, [row("8x10", 2399)]).changes).toEqual([]);
+  });
+
+  it("names price changes, new and dropped sizes, and new variant ids", () => {
+    const stored = [
+      { sizeId: "8x10", priceCents: 2399, providerVariantId: "v-8x10" },
+      { sizeId: "11x14", priceCents: 2700, providerVariantId: "old" },
+      { sizeId: "24x36", priceCents: 4500, providerVariantId: "v-24x36" },
+    ];
+    const { changes } = syncSizes(stored, [row("8x10", 2500), row("11x14", 2700), row("16x20", 3400)]);
+    expect(changes).toEqual([
+      "8x10 $23.99 -> $25.00",
+      "11x14 variant id changed",
+      "16x20 added at $34.00",
+      "24x36 removed",
+    ]);
+  });
+
+  it("keeps Studio's Popular flag", () => {
+    const stored = [{ sizeId: "18x24", priceCents: 3700, providerVariantId: "v-18x24", popular: true }];
+    expect(syncSizes(stored, [row("18x24", 3900)]).sizes[0]).toMatchObject({ priceCents: 3900, popular: true });
   });
 });

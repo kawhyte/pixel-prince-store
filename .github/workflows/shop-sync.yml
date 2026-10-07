@@ -1,0 +1,54 @@
+name: Shop sync (Fourthwall -> Sanity)
+
+# Prices, sizes and variant ids from Fourthwall onto the shop prints in Sanity, so a price changed
+# in the Fourthwall dashboard shows on the site without anyone running `npm run shop:sync`.
+# Only prints that actually changed are written; the rest log "same". Never touches photos or copy.
+#
+# Run it now: GitHub > Actions > Shop sync > Run workflow. Wait a minute or two after a dashboard
+# edit first: Fourthwall's storefront publishes changes a little late.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   FOURTHWALL_STOREFRONT_TOKEN   ptkn_... (read-only storefront token)
+#   SANITY_API_WRITE_TOKEN        Editor token
+#   SANITY_PROJECT_ID             already set for the monthly backup
+
+on:
+  schedule:
+    - cron: "17 */3 * * *" # every 3 hours
+  workflow_dispatch:
+    inputs:
+      create_drafts:
+        description: "Also create Studio drafts for new Fourthwall products"
+        type: boolean
+        default: false
+
+concurrency:
+  group: shop-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FOURTHWALL_STOREFRONT_TOKEN: ${{ secrets.FOURTHWALL_STOREFRONT_TOKEN }}
+      SANITY_API_WRITE_TOKEN: ${{ secrets.SANITY_API_WRITE_TOKEN }}
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # New drafts upload a trimmed mockup, and the trim runs in Chromium. Price syncs never need it.
+      - name: Install Chromium
+        if: ${{ inputs.create_drafts }}
+        run: npx playwright install --with-deps chromium
+      - name: Sync prices
+        if: ${{ !inputs.create_drafts }}
+        run: npx tsx scripts/import-fourthwall-products.ts --sync --apply
+      - name: Sync prices and create drafts
+        if: ${{ inputs.create_drafts }}
+        run: npx tsx scripts/import-fourthwall-products.ts --apply

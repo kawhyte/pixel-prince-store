@@ -104,6 +104,41 @@ export function mapVariantsToSizes(variants: FwVariant[], preferredColor: string
   return { sizes, skipped };
 }
 
+/** A size row as Studio holds it now, for comparing against what Fourthwall says. */
+export interface StoredSize {
+  sizeId?: string;
+  priceCents?: number;
+  providerVariantId?: string;
+  popular?: boolean;
+}
+
+const dollars = (cents: number | undefined) => (typeof cents === "number" ? `$${(cents / 100).toFixed(2)}` : "no price");
+
+/**
+ * Fourthwall's sizes merged onto Studio's, and what that changes.
+ *
+ * Fourthwall owns price, variant id and which sizes exist; Studio owns "Mark as Popular", which
+ * a plain overwrite used to drop on every sync. An empty `changes` means there is nothing to write,
+ * so a scheduled sync leaves Sanity (and the site's cache) alone when nothing moved.
+ */
+export function syncSizes(stored: StoredSize[] | undefined, incoming: MappedSize[]): { sizes: (MappedSize & { popular?: boolean })[]; changes: string[] } {
+  const before = new Map((stored ?? []).filter((s) => s.sizeId).map((s) => [s.sizeId!, s]));
+  const changes: string[] = [];
+  const sizes = incoming.map((row) => {
+    const old = before.get(row.sizeId);
+    if (!old) changes.push(`${row.sizeId} added at ${dollars(row.priceCents)}`);
+    else {
+      if (old.priceCents !== row.priceCents) changes.push(`${row.sizeId} ${dollars(old.priceCents)} -> ${dollars(row.priceCents)}`);
+      if (old.providerVariantId !== row.providerVariantId) changes.push(`${row.sizeId} variant id changed`);
+    }
+    return old?.popular ? { ...row, popular: true } : row;
+  });
+  for (const id of before.keys()) {
+    if (!incoming.some((row) => row.sizeId === id)) changes.push(`${id} removed`);
+  }
+  return { sizes, changes };
+}
+
 export function stripHtml(html: string | undefined): string {
   return (html ?? "")
     .replace(/<[^>]+>/g, " ")

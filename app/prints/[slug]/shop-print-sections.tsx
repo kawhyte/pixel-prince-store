@@ -41,7 +41,7 @@ export function PrintBreadcrumb({ category }: { category?: string }) {
 }
 
 /** Everything in the buy column below the picker. */
-export function BuyStackDetails({ art }: { art: FreeArt }) {
+export function BuyStackDetails({ art, pairs }: { art: FreeArt; pairs: FreeArt[] }) {
   const asSet = isSet(art) && sellableSet(art);
   // Cost, timing and returns are the three the buy stack answers up front; the rest stay lower down.
   const quickFaq = SHOP_SHIPPING_FAQ.filter((f) => /delivery|shipping\?|return/i.test(f.q));
@@ -82,6 +82,45 @@ export function BuyStackDetails({ art }: { art: FreeArt }) {
           <p className="mt-3 text-xs text-soft-charcoal">
             Both prints ship together. Each is also sold on its own.
           </p>
+        </div>
+      )}
+
+      {/* The same "Pairs well with" the bag shows, here while the buyer is still deciding. A set
+          holding this print leads, then its category. Clicks counted by Umami's data attributes,
+          so this stays server HTML. */}
+      {pairs.length > 0 && (
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Pairs well with</p>
+          <ul className="mt-3 space-y-3">
+            {pairs.map((p) => {
+              const card = cardCommerce(p);
+              const thumb = p.previewImage || setMembers(p)[0]?.previewImage?.asset?.url;
+              return (
+                <li key={p.id}>
+                  <Link
+                    href={card.href}
+                    data-umami-event="print_pairing_clicked"
+                    data-umami-event-slug={p.id}
+                    data-umami-event-from={art.id}
+                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sage-500"
+                  >
+                    <span className="relative size-12 shrink-0 overflow-hidden rounded border border-border bg-muted">
+                      {thumb && <Image src={thumb} alt="" fill className="object-cover" sizes="48px" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-charcoal group-hover:text-sage-500">
+                        {p.title}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {isSet(p) ? `${card.meta}, includes this print` : card.meta}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold text-charcoal">{card.value}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
 

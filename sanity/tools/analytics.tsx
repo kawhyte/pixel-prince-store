@@ -21,6 +21,8 @@ const EVENTS: [string, string][] = [
   ['add_to_cart', 'A print went in the bag, with the finish, version and size chosen.'],
   ['option_picked', 'A finish, version or size was clicked on a print page.'],
   ['checkout_opened', 'Someone went to checkout.'],
+  ['print_pairing_clicked', 'A "Pairs well with" print opened from a print page (slug = opened, from = the page).'],
+  ['cart_suggestion_clicked', 'A "Pairs well with" print opened from the bag.'],
   ['email_signup', 'A new subscriber, with the page they signed up on.'],
 ]
 

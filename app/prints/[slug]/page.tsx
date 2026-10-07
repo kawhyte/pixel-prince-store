@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { getShopPrints, getShopPrintBySlug, getRelatedShopPrints } from "@/sanity/lib/client";
+import { getShopPrints, getShopPrintBySlug } from "@/sanity/lib/client";
+import { pairsForPrint, relatedForPrint } from "@/lib/print-pairings";
 import { generateMetadata as seoMeta, jsonLd } from "@/lib/seo";
 import { deliveryWindow } from "@/lib/delivery";
 import { shopPrintMetaTitle } from "@/config/shop-copy";
@@ -37,7 +38,9 @@ export default async function ShopPrintPage({ params }: PageProps) {
   const art = await getShopPrintBySlug(slug);
   if (!art) notFound();
 
-  const related = await getRelatedShopPrints(art.category || "", slug);
+  const shopPrints = await getShopPrints();
+  const pairs = pairsForPrint(art, shopPrints);
+  const related = relatedForPrint(art, shopPrints, pairs);
 
   return (
     <>
@@ -61,7 +64,7 @@ export default async function ShopPrintPage({ params }: PageProps) {
         <ShopPrintClient
           art={art}
           deliveryBy={deliveryWindow(new Date()).label}
-          belowBuy={<BuyStackDetails art={art} />}
+          belowBuy={<BuyStackDetails art={art} pairs={pairs} />}
           afterHero={<AfterHero art={art} />}
         />
         <BelowSizeGuide art={art} related={related} />

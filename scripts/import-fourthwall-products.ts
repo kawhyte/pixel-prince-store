@@ -43,6 +43,8 @@ import {
   sanityIdForArtwork,
   shouldReplaceGallery,
   slugify,
+  syncSizes,
+  type StoredSize,
   splitProductName,
   stripHtml,
   mergeSizesByRatio,
@@ -130,6 +132,7 @@ interface ExistingOffer {
   version?: string;
   providerProductId?: string;
   hasMockup?: boolean;
+  sizes?: StoredSize[];
 }
 interface ExistingDoc {
   _id: string;
@@ -148,7 +151,8 @@ async function findExisting(artworkId: string, productIds: string[], title: stri
   return sanity.fetch<ExistingDoc[]>(
     `*[_type == "product" && listing == "shop" && (_id in [$id, $draft] || count(offers[provider == "fourthwall" && providerProductId in $pids]) > 0 || title == $title)]{
       _id, title, defaultVersion, "galleryCount": count(galleryImages),
-      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset) }
+      offers[]{ _key, provider, finish, version, providerProductId, "hasMockup": defined(mockup.asset),
+        sizes[]{ sizeId, priceCents, providerVariantId, popular } }
     }`,
     { id: artworkId, draft: `drafts.${artworkId}`, pids: productIds, title }
   );
@@ -361,7 +365,31 @@ async function main() {
 
     if (existing.length > 0) {
       for (const doc of existing) {
+        // Which offers would change, worked out before anything is written, so an unchanged print
+        // is reported as such and left alone: no revision, no webhook, no cache flush.
+        const pending: string[] = [];
+        const seen = new Set<string>();
+        for (const fp of finishProducts) {
+          const fw = (doc.offers ?? []).filter((o) => o.provider === "fourthwall" && !seen.has(o._key));
+          const offer =
+            fw.find((o) => o.providerProductId === fp.product.id) ??
+            fw.find((o) => (o.finish ?? "unframed") === fp.finish && (o.version ?? null) === fp.version);
+          if (!offer) {
+            pending.push(`${offerLabel(fp)} added`);
+            continue;
+          }
+          seen.add(offer._key);
+          const { changes } = syncSizes(offer.sizes, fp.sizes);
+          if (offer.providerProductId !== fp.product.id) changes.push("product id changed");
+          if ((offer.finish ?? "unframed") !== fp.finish || (fp.version && offer.version !== fp.version)) changes.push("finish or version relabelled");
+          for (const c of changes) pending.push(`${offerLabel(fp)}: ${c}`);
+        }
+        if (pending.length === 0 && !resetImages && !wantPhotos) {
+          console.log(`same   ${doc._id}  ${doc.title ?? title}`);
+          continue;
+        }
         console.log(`${apply ? "sync  " : "would sync"} ${doc._id}  ${doc.title ?? title}: ${finishList}`);
+        for (const line of pending) console.log(`         ${line}`);
         if (!apply) continue;
         if (resetImages) {
           const photos = (doc.offers ?? []).filter((o) => o.hasMockup).length;
@@ -379,7 +407,7 @@ async function main() {
           if (offer) {
             claimed.add(offer._key);
             const patch: Record<string, unknown> = {
-              [`offers[_key=="${offer._key}"].sizes`]: fp.sizes,
+              [`offers[_key=="${offer._key}"].sizes`]: syncSizes(offer.sizes, fp.sizes).sizes,
               [`offers[_key=="${offer._key}"].providerProductId`]: fp.product.id,
               [`offers[_key=="${offer._key}"].finish`]: fp.finish,
             };

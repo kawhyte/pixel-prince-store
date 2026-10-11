@@ -13,6 +13,23 @@ export const ON_SITE_PROVIDERS: readonly CommerceProvider[] = ["fourthwall", "st
 /** Highest priority first. `getActiveOffer()` picks the first active offer in this order. */
 export const PROVIDER_PRIORITY: readonly CommerceProvider[] = ["fourthwall", "stripe", "etsy"];
 
+/**
+ * Put one provider first, for trying a checkout that is not the live one (2026-10-11).
+ *
+ * Fourthwall outranks Stripe, which is correct and should stay that way: it is the merchant of
+ * record and it handles the sales tax. But that also means a Stripe offer added beside it can
+ * never be reached, so there is no way to try the direct-to-Printful path on a real print.
+ *
+ * Setting NEXT_PUBLIC_COMMERCE_PROVIDER=stripe in .env.local moves it to the front for that one
+ * machine. Never set it in Vercel: it would hand every real order to a checkout that is deliberately
+ * running on test keys, and nobody would be charged for the print they just bought.
+ */
+export function providerPriority(): readonly CommerceProvider[] {
+  const first = process.env.NEXT_PUBLIC_COMMERCE_PROVIDER?.trim() as CommerceProvider | undefined;
+  if (!first || !COMMERCE_PROVIDERS.includes(first)) return PROVIDER_PRIORITY;
+  return [first, ...PROVIDER_PRIORITY.filter((p) => p !== first)];
+}
+
 export const CURRENCY = "USD";
 
 export interface ShopSize {

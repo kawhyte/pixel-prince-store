@@ -9,6 +9,7 @@ import {
   type FinishId,
   ON_SITE_PROVIDERS,
   PROVIDER_PRIORITY,
+  providerPriority,
   SHOP_SIZE_LADDER,
   VERSION_LABEL,
 } from "@/config/commerce";
@@ -30,9 +31,26 @@ export function offerFinish(offer: PrintOffer): FinishId {
   return offer.finish ?? DEFAULT_FINISH;
 }
 
-/** Every on-site offer, in document order (Studio drag order decides how versions are shown). */
+/**
+ * Every on-site offer, in document order (Studio drag order decides how versions are shown), but
+ * with the provider order applied first.
+ *
+ * Document order used to decide which provider served a finish, which was fine while every print
+ * had exactly one on-site offer per finish. Add a second provider for the same finish - which is
+ * the whole shape of the direct-to-Printful trial - and the winner became wherever Studio happened
+ * to put it. Priority is the rule, and `providerPriority()` is where the override lives.
+ */
 function onSiteOffers(art: WithOffers): PrintOffer[] {
-  return activeOffers(art).filter((o) => ON_SITE_PROVIDERS.includes(o.provider));
+  const order = providerPriority();
+  const rank = (o: PrintOffer) => {
+    const i = order.indexOf(o.provider);
+    return i === -1 ? order.length : i;
+  };
+  return activeOffers(art)
+    .filter((o) => ON_SITE_PROVIDERS.includes(o.provider))
+    .map((offer, i) => ({ offer, i }))
+    .sort((a, b) => rank(a.offer) - rank(b.offer) || a.i - b.i)
+    .map((x) => x.offer);
 }
 
 /** The artwork version an offer sells (Ivory, Midnight), or null when the print comes one way only. */
@@ -109,7 +127,7 @@ export function getActiveOffer(
   if (match) return match.offer;
   if (byFinish.length > 0) return byFinish[0].offer;
   const list = activeOffers(art);
-  for (const provider of PROVIDER_PRIORITY) {
+  for (const provider of providerPriority()) {
     const found = list.find((o) => o.provider === provider);
     if (found) return found;
   }
@@ -290,7 +308,18 @@ export function resolveCheckout(
       ? { href: etsyUrl(offer.checkoutUrl, campaign), external: true, label: "Buy on Etsy", provider: "etsy" }
       : null;
   }
-  return null; // stripe: Phase 2
+  if (offer.provider === "stripe") {
+    // Stripe needs a session created server-side, which an href cannot do. So the button points at
+    // our own route and that route redirects to the session it just made. Keeping the contract as
+    // a plain href is what lets this exist without touching CheckoutButton at all.
+    const size = (offer.sizes ?? []).find((s) => s.sizeId === sizeId);
+    if (!size?.providerVariantId) return null;
+    const q = new URLSearchParams({ variant: size.providerVariantId, size: size.sizeId, campaign });
+    if (offer.version) q.set("version", offer.version);
+    if (offer.finish) q.set("finish", offer.finish);
+    return { href: `/api/checkout/stripe?${q}`, external: false, label: "Buy now", provider: "stripe" };
+  }
+  return null;
 }
 
 export interface CardCommerce {

@@ -7,6 +7,8 @@ import {
   HERO_MAX_HEIGHT,
   SHOP_IMAGE_WIDTH,
   SHOP_IMAGE_HEIGHT,
+  SHOP_IMAGE_IDEAL_WIDTH,
+  SHOP_IMAGE_IDEAL_HEIGHT,
 } from "@/config/shop-image";
 
 const r = (w: number, h: number) => w / h;
@@ -62,3 +64,29 @@ describe("shop photo sizing", () => {
     expect(heroFrame(Number.NaN)).toEqual({ width: HERO_MAX_WIDTH, height: HERO_MAX_HEIGHT });
   });
 });
+
+// Two numbers that used to be one: the floor the frame needs, and what Kenny actually exports.
+// They drifted apart when his Etsy photos moved to 3000 x 2250 and the Studio hint kept telling
+// him 1140 x 1520 was "the same as your Etsy images".
+describe('the recommended export', () => {
+  it('clears the floor rather than sitting on it', () => {
+    expect(heroShortfall({ width: SHOP_IMAGE_IDEAL_WIDTH, height: SHOP_IMAGE_IDEAL_HEIGHT }).short).toBeNull()
+    expect(SHOP_IMAGE_IDEAL_WIDTH).toBeGreaterThan(SHOP_IMAGE_WIDTH)
+    expect(SHOP_IMAGE_IDEAL_HEIGHT).toBeGreaterThan(SHOP_IMAGE_HEIGHT)
+  })
+
+  it('keeps the portrait shape the hero is built for', () => {
+    const ideal = SHOP_IMAGE_IDEAL_WIDTH / SHOP_IMAGE_IDEAL_HEIGHT
+    expect(ideal).toBeCloseTo(SHOP_IMAGE_WIDTH / SHOP_IMAGE_HEIGHT, 3)
+    // and it fills the frame, where Etsy's own 4:3 would leave it 44% short on height
+    expect(Math.round(heroFrame(ideal).height)).toBe(HERO_MAX_HEIGHT)
+    expect(Math.round(heroFrame(3000 / 2250).height)).toBeLessThan(HERO_MAX_HEIGHT * 0.6)
+  })
+
+  it('is what the Studio hint and the too-small warning both name', async () => {
+    const { SHOP_IMAGE_HINT } = await import('@/sanity/lib/image-rules')
+    expect(SHOP_IMAGE_HINT).toContain(`${SHOP_IMAGE_IDEAL_WIDTH} x ${SHOP_IMAGE_IDEAL_HEIGHT}`)
+    // the floor is still offered, so an older export is not made to look wrong
+    expect(SHOP_IMAGE_HINT).toContain(`${SHOP_IMAGE_WIDTH} x ${SHOP_IMAGE_HEIGHT}`)
+  })
+})

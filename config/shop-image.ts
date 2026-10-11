@@ -9,9 +9,26 @@
  * 1024 x 1536 room shot that was in fact sharp on the page.
  */
 
-/** Kenny's Etsy export, the shape everything is designed around. */
+/**
+ * The floor: what the hero frame needs on a 2x panel, HERO_MAX_WIDTH x HERO_MAX_HEIGHT doubled.
+ * Below this the browser starts inventing pixels. It is the shape the page is designed around,
+ * and for a long time it was also what Kenny exported, which is why one number did both jobs.
+ */
 export const SHOP_IMAGE_WIDTH = 1140;
 export const SHOP_IMAGE_HEIGHT = 1520;
+
+/**
+ * What to export now (2026-10-11).
+ *
+ * Kenny's Etsy photos are 3000 x 2250: JPEG at quality 95, sRGB, 4:4:4, half a megabyte to two.
+ * The quality bar is worth copying here; the 4:3 shape is not. Etsy's grid is landscape and the
+ * print page is portrait, and because the frame is cut to the photo's own shape rather than
+ * cropped, a 4:3 photo renders 570 x 428 where a 3:4 one renders 570 x 760 - the hero loses 44%
+ * of its height. So: same export settings, portrait shape, twice the pixels the floor asks for,
+ * which leaves headroom if the hero ever grows.
+ */
+export const SHOP_IMAGE_IDEAL_WIDTH = 2250;
+export const SHOP_IMAGE_IDEAL_HEIGHT = 3000;
 
 /** The print page's frame caps (app/prints/[slug]/shop-print-client.tsx). */
 export const HERO_MAX_WIDTH = 570;

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "note": "Written by scripts/seo-audit.ts --record. A print stays optimized until its copy or alt text changes, then the fingerprint stops matching and it comes back as changed. Do not hand-edit.",
+  "prints": {
+    "brooklyn-neighborhood-map": {
+      "optimized": "2026-09-18",
+      "fingerprint": "44861228c5ea",
+      "title": "Brooklyn Neighborhood Map"
+    },
+    "retro-consoles": {
+      "optimized": "2026-09-18",
+      "fingerprint": "3fee4c0c8539",
+      "title": "Retro Video Game Consoles"
+    },
+    "retro-controllers": {
+      "optimized": "2026-09-18",
+      "fingerprint": "87f5827f8371",
+      "title": "Retro Video Game Controllers"
+    }
+  }
+}

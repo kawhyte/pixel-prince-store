@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 
+import { TARGET_PRICES } from "@/config/commerce";
 import { costsByFinish, pickMarginCents } from "@/lib/margin";
+
+const target = (size: string) => TARGET_PRICES.unframed[size]!;
 
 const variant = (size: string, cost: number, color?: string) => ({
   id: `${size}-${color ?? "x"}`,
@@ -25,18 +28,15 @@ describe("pickMarginCents", () => {
   const costs = new Map([["8x10", 850], ["16x20", 1200], ["18x24", 1400], ["24x36", 2000]]);
 
   it("makes a single-size product exactly right", () => {
-    // unframed 24x36 target is $45.00
-    expect(pickMarginCents("unframed", ["24x36"], costs)).toEqual({ marginCents: 2500, exactSize: "24x36" });
+    expect(pickMarginCents("unframed", ["24x36"], costs)).toEqual({ marginCents: target("24x36") - 2000, exactSize: "24x36" });
   });
 
   it("prefers the Popular size when the product sells it", () => {
-    // unframed 18x24 target is $37.00
-    expect(pickMarginCents("unframed", ["8x10", "18x24", "24x36"], costs)).toEqual({ marginCents: 2300, exactSize: "18x24" });
+    expect(pickMarginCents("unframed", ["8x10", "18x24", "24x36"], costs)).toEqual({ marginCents: target("18x24") - 1400, exactSize: "18x24" });
   });
 
   it("otherwise the largest size", () => {
-    // unframed 16x20 target is $34.00
-    expect(pickMarginCents("unframed", ["8x10", "16x20"], costs)).toEqual({ marginCents: 2200, exactSize: "16x20" });
+    expect(pickMarginCents("unframed", ["8x10", "16x20"], costs)).toEqual({ marginCents: target("16x20") - 1200, exactSize: "16x20" });
   });
 
   it("gives up without a cost, so the caller keeps its default", () => {

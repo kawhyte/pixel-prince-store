@@ -7,6 +7,9 @@
  *   ...same but add it to the artwork's room photos instead of one offer:
  *     --room --apply
  *
+ *   ...or make it the card image (grids, search, related prints):
+ *     --card --apply
+ *
  * Names the asset and writes alt text from the product facts, the same as the import does, and
  * refuses quietly small files unless you insist with --force.
  */
@@ -32,11 +35,12 @@ const title = opt("--title");
 const version = opt("--version") || null;
 const finish = opt("--finish", "unframed")!;
 const asRoom = flag("--room");
+const asCard = flag("--card");
 const apply = flag("--apply");
 const force = flag("--force");
 
 if (!file || !title) {
-  console.error('Need --file <path> and --title "Artwork title". Add --version and --finish, or --room.');
+  console.error('Need --file <path> and --title "Artwork title". Add --version and --finish, or --room, or --card.');
   process.exit(1);
 }
 const path = resolve(file.replace(/^~/, process.env.HOME ?? "~"));
@@ -87,14 +91,18 @@ async function main() {
 
   const naming = { title: title!, version, finish, kind: asRoom ? ("room" as const) : ("main" as const) };
   for (const doc of docs) {
-    const target = asRoom
+    const target = asRoom || asCard
       ? null
       : (doc.offers ?? []).find((o) => (o.version ?? null) === version && (o.finish ?? "unframed") === finish);
-    if (!asRoom && !target) {
+    if (!asRoom && !asCard && !target) {
       console.error(`   ${doc._id}: no ${version ?? "single version"} ${finish} offer. Offers are: ${(doc.offers ?? []).map((o) => `${o.version ?? "-"} ${o.finish}`).join(", ")}`);
       continue;
     }
-    const where = asRoom ? `room photo ${doc.galleryCount + 1}` : `${version ?? ""} ${finish} main photo`.trim();
+    const where = asCard
+      ? "card image"
+      : asRoom
+        ? `room photo ${doc.galleryCount + 1}`
+        : `${version ?? ""} ${finish} main photo`.trim();
     console.log(`${apply ? "attach" : "would attach"} to ${doc._id}: ${where}`);
     if (!apply) continue;
 
@@ -110,8 +118,10 @@ async function main() {
         .setIfMissing({ galleryImages: [] })
         .append("galleryImages", [{ ...image, _key: `photo-${Date.now()}`, alt: imageAlt({ ...naming, index }) }])
         .commit();
+    } else if (asCard) {
+      await sanity.patch(doc._id).set({ previewImage: { ...image, alt: imageAlt(naming) } }).commit();
     } else {
-      await sanity.patch(doc._id).set({ [`offers[_key=="${target!._key}"].mockup`]: image }).commit();
+      await sanity.patch(doc._id).set({ [`offers[_key=="${target!._key}"].mockup`]: { ...image, alt: imageAlt(naming) } }).commit();
     }
     console.log(`   done, ${dims.width} px`);
   }

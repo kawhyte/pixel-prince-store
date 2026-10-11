@@ -45,10 +45,13 @@ npx sanity dataset export <dataset> <file>  # Export data
 
 ### Utilities
 ```bash
+npm run shop:list -- "<print folder>" --publish   # ONE command per new print: products (margins tuned, lib/margin.ts), draft, art, photos, listing.json, doctor, price rows to fix
 npm run shop:new         # masters/ -> Fourthwall products (add -- --apply --publish)
 npm run shop:doctor      # is every print finished? the one check before making a listing public
 npm run shop:sync        # Fourthwall -> Sanity: prices and images, the one command after any dashboard edit
 npm run shop:art         # masters/ -> the flat artwork on each offer (add -- --apply --preview)
+npm run shop:photo       # one photo -> an offer's main photo, a room photo (--room) or the card image (--card)
+npm run shop:copy        # listing.json -> the Studio DRAFT's copy, tags, category, rooms, defaults, Popular size (lib/listing-spec.ts validates)
 npx tsx scripts/fourthwall-ids.ts   # list Fourthwall product + variant ids
 ```
 

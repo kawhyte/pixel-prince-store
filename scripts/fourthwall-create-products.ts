@@ -5,6 +5,11 @@
  *   npx tsx scripts/fourthwall-create-products.ts --dir ./masters --apply         upload + create (hidden)
  *   options: --margin-poster 18  --margin-framed 30  --frames "Black,Red Oak,White"  --publish  --only "Sweden Map"  --canvas
  *
+ * Margins: without --margin-*, each product gets the margin that puts its Popular size (else its
+ * largest) exactly on TARGET_PRICES, from the printer costs on the shop's existing products
+ * (lib/margin.ts). A product that sells one size, which every [3x4], [2x3] and [11x14] product
+ * does, is then priced right with nothing to fix. The flags force a flat margin instead.
+ *
  * Per file (title = file name without extension): one media upload, then the unframed poster
  * ("Title") and the framed poster ("Title | Framed"). Existing names are skipped, so re-runs are
  * safe. Canvas cannot be created through the API and is on hold; pass --canvas for a per print
@@ -16,8 +21,9 @@
 import { config } from "dotenv";
 import { readdirSync, readFileSync } from "fs";
 import { resolve, join } from "path";
-import { DEFAULT_RATIO, FULL_LADDER, RATIO_FAMILIES, ratioTag, scopeFromTag, type LadderScope } from "../config/commerce";
+import { DEFAULT_RATIO, FULL_LADDER, RATIO_FAMILIES, ratioTag, scopeFromTag, sizeIdsForScope, type LadderScope } from "../config/commerce";
 import { scopeRivals } from "../lib/fourthwall-import";
+import { costsByFinish, pickMarginCents } from "../lib/margin";
 import {
   createDesignProduct,
   createPlatformClient,
@@ -63,6 +69,8 @@ const canvasReminder = (title: string) => {
 };
 const marginPoster = Number(opt("--margin-poster", "18"));
 const marginFramed = Number(opt("--margin-framed", "30"));
+/** Tune per product unless a flat margin was asked for. */
+const autoMargin = !args.includes("--margin-poster") && !args.includes("--margin-framed");
 const frameColors = (opt("--frames", FRAME_COLORS.join(",")) ?? "").split(",").map((s) => s.trim()).filter(Boolean) as (typeof FRAME_COLORS)[number][];
 if (frameColors.length === 0 || frameColors.some((c) => !FRAME_COLORS.includes(c))) throw new Error(`--frames must list some of ${FRAME_COLORS.join(", ")}`);
 
@@ -120,7 +128,17 @@ async function main() {
     console.log(`No .png or .jpg masters in ${dir} (subfolders are searched; "." and "_" folders are skipped)`);
     return;
   }
-  const existing = new Set((await listAllProducts(client)).filter((p) => p.access?.type !== "ARCHIVED").map((p) => p.name));
+  const all = (await listAllProducts(client)).filter((p) => p.access?.type !== "ARCHIVED");
+  const existing = new Set(all.map((p) => p.name));
+  const costs = costsByFinish(all as Parameters<typeof costsByFinish>[0]);
+  /** Dollars for this product, and the size it makes exact (null: the flat default). */
+  const marginFor = (finish: "poster" | "framed", scope: LadderScope) => {
+    const flat = finish === "poster" ? marginPoster : marginFramed;
+    if (!autoMargin) return { usd: flat, exact: null as string | null };
+    const f = finish === "poster" ? "unframed" : "framed";
+    const picked = pickMarginCents(f, sizeIdsForScope(scope), costs[f]);
+    return picked ? { usd: picked.marginCents / 100, exact: picked.exactSize } : { usd: flat, exact: null };
+  };
 
   const summary = { created: 0, skipped: 0, failed: 0 };
   for (const master of masters) {
@@ -215,7 +233,12 @@ async function main() {
       `${apply ? "create" : "would create"} ${title} [${ratioTag(scope)}] (${dims.width}×${dims.height}): ` +
         `${todo.map((f) => productName(title, f, scope)).join(", ")}` +
         ` | sizes ${ladder.join(", ")}` +
-        ` | margins poster $${marginPoster}, framed $${marginFramed} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
+        ` | margins ${todo
+          .map((f) => {
+            const m = marginFor(f, scope);
+            return `${f} $${m.usd.toFixed(2)}${m.exact ? ` (${m.exact} exact)` : " (flat)"}`;
+          })
+          .join(", ")} (${frameColors.join("/")})${publish ? " | PUBLISH" : " | hidden"}`
     );
     if (!apply) {
       canvasReminder(title);
@@ -226,15 +249,17 @@ async function main() {
       const imageId = await uploadMedia(client, bytes, file, dims);
       for (const finish of todo) {
         try {
-          const created = await createDesignProduct(client, {
-            finish,
-            title,
-            ratio: scope,
-            imageId,
-            marginUsd: finish === "poster" ? marginPoster : marginFramed,
-            frameColors,
-            publish,
-          });
+          const margin = marginFor(finish, scope);
+          const body = { finish, title, ratio: scope, imageId, marginUsd: margin.usd, frameColors, publish };
+          let created;
+          try {
+            created = await createDesignProduct(client, body);
+          } catch (e) {
+            // Whole dollars are what has always been accepted; cents are new, so fall back once.
+            if (!(e instanceof PlatformError) || e.status !== 400 || Number.isInteger(margin.usd)) throw e;
+            console.warn(`warn   ${productName(title, finish, scope)}: margin $${margin.usd.toFixed(2)} refused, using $${Math.round(margin.usd)}`);
+            created = await createDesignProduct(client, { ...body, marginUsd: Math.round(margin.usd) });
+          }
           console.log(`ok     ${productName(title, finish, scope)} -> ${created.productId} (${created.images?.length ?? 0} mockups)`);
           summary.created++;
           existing.add(productName(title, finish, scope));
@@ -256,9 +281,8 @@ async function main() {
   console.log(`\n${summary.created} created, ${summary.skipped} skipped, ${summary.failed} failed${apply ? "" : " (dry run; add --apply to write)"}.`);
   if (apply && summary.created > 0) {
     console.log(
-      `\nThe prices are wrong on purpose and need a pass in the dashboard.\n` +
-        `Fourthwall takes one profit margin per product, and the ladder in config/commerce.ts is a\n` +
-        `price per size, so no margin can start them all correct. This names the exact rows:\n\n` +
+      `\nFourthwall takes one profit margin per product, so a product selling several sizes starts with\n` +
+        `one of them exactly on the price list and the rest to fix in the dashboard. This names the rows:\n\n` +
         `  npm run shop:prices\n\n` +
         `Then publish the products and run:  npm run shop:sync   and   npm run shop:art -- --apply`
     );

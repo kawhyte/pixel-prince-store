@@ -22,6 +22,8 @@
     "shop:prices": "npx tsx scripts/check-prices.ts",
     "shop:photo": "npx tsx scripts/attach-photo.ts",
     "shop:doctor": "npx tsx scripts/shop-doctor.ts",
+    "shop:copy": "npx tsx scripts/apply-listing.ts",
+    "shop:list": "npx tsx scripts/list-print.ts",
     "seo:audit": "npx tsx scripts/seo-audit.ts"
   },
   "lint-staged": {

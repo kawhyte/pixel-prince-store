@@ -9,6 +9,12 @@ import { createHash } from "crypto";
  */
 const BASE = "https://api.printful.com";
 
+export class PrintfulError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
+
 /**
  * An external id Printful will actually accept.
  *
@@ -65,7 +71,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   const body = await res.text();
-  if (!res.ok) throw new Error(`Printful ${res.status}: ${body.slice(0, 400)}`);
+  if (!res.ok) throw new PrintfulError(`Printful ${res.status}: ${body.slice(0, 400)}`, res.status);
   return JSON.parse(body).result as T;
 }
 

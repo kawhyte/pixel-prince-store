@@ -10,7 +10,7 @@
  */
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
-import { createDraftOrder, externalId, getOrder, printfulUnavailable, type PrintfulRecipient } from "@/lib/printful";
+import { createDraftOrder, externalId, getOrder, PrintfulError, printfulUnavailable, type PrintfulRecipient } from "@/lib/printful";
 
 export interface FulfilResult {
   ok: boolean;
@@ -55,8 +55,17 @@ export async function fulfilStripeSession(sessionId: string): Promise<FulfilResu
     if (existing?.id) {
       return { ok: true, state: "already", orderId: existing.id, dashboardUrl: existing.dashboard_url };
     }
-  } catch {
-    // not found is the normal path; fall through and create it
+  } catch (e) {
+    // 404 is the normal path: no order yet, so make one. Anything else is not an answer, and
+    // treating "I may not look" as "it does not exist" is how a retry orders the poster twice.
+    const status = e instanceof PrintfulError ? e.status : 0;
+    if (status !== 404) {
+      return {
+        ok: false,
+        state: "error",
+        message: `could not check for an existing order (${e instanceof Error ? e.message : String(e)}). Refusing to create one blind.`,
+      };
+    }
   }
 
   const recipient = recipientFrom(session);

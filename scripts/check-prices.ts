@@ -3,6 +3,7 @@
  *
  *   npm run shop:prices              only the prices that disagree
  *   npm run shop:prices -- --all     every price, including the correct ones
+ *   npm run shop:prices -- --only "Bronx Neighborhood Map"   one print's products
  *
  * Fourthwall has no way to change a price through its API and no bulk edit in the dashboard,
  * so a repricing is done by hand. This turns "check a hundred products" into "change these
@@ -21,6 +22,8 @@ import { comparePrices } from "../lib/shop-doctor";
 config({ path: resolve(__dirname, "../.env.local") });
 
 const showAll = process.argv.includes("--all");
+const onlyAt = process.argv.indexOf("--only");
+const only = onlyAt >= 0 ? process.argv[onlyAt + 1] : undefined;
 
 const user = process.env.FOURTHWALL_API_USER;
 const password = process.env.FOURTHWALL_API_PASSWORD;
@@ -64,7 +67,7 @@ async function main() {
     products.push(...items);
     if (items.length < 100) break;
   }
-  const live = products.filter((p) => p.access?.type !== "ARCHIVED");
+  const live = products.filter((p) => p.access?.type !== "ARCHIVED" && (!only || splitProductName(p.name).title === only));
 
   console.log(`\nChecking prices for ${live.length} product${live.length === 1 ? "" : "s"} in ${shop.name ?? "your shop"}.`);
   console.log(`Target prices come from config/commerce.ts. Nothing here changes anything.\n`);

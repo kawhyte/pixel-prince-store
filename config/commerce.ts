@@ -206,15 +206,22 @@ export type FinishId = (typeof FINISHES)[number]["id"];
  * 2026-09-10): a print's price depends on its size and finish, never on which artwork it is.
  * So this is the whole price list for the shop, and the one place to change it.
  *
+ * Matched to the Etsy standard lineup on 2026-10-11 (Kenny): the site had drifted below Etsy by
+ * up to $11 on a poster and $20 on a framed print, which is a decision worth making on purpose
+ * rather than inheriting. Etsy's own list has more tiers than this one - checklist maps are
+ * cheaper, the personalized Soundtrack print dearer, sets take 10% off - and none of those are
+ * sold here yet. The first one that is will need a per-print tier, not a new number here.
+ *
  * `npm run shop:prices` reads it, compares it against what Fourthwall is actually charging, and
  * names the products that drifted. A size left out is not checked, which is how canvas skips 8x10.
  */
 export const TARGET_PRICES: Record<FinishId, Partial<Record<string, number>>> = {
-  unframed: { "8x10": 2399, "11x14": 2700, "16x20": 3400, "18x24": 3700, "24x36": 4500 },
-  framed: { "8x10": 5800, "11x14": 6500, "16x20": 9500, "18x24": 10500, "24x36": 18500 },
-  // Canvas is on hold (2026-09-10). Kept so the ladder is ready if it returns; with no canvas
-  // products in Fourthwall nothing is checked against it.
-  canvas: { "11x14": 5500, "16x20": 11000, "18x24": 13000, "24x36": 19500 },
+  unframed: { "8x10": 2400, "11x14": 3200, "16x20": 4200, "18x24": 4800, "24x36": 5600 },
+  framed: { "8x10": 5900, "11x14": 7500, "16x20": 10500, "18x24": 12500, "24x36": 18500 },
+  // Canvas is on hold (2026-09-10) but the ladder is kept ready, and it had drifted badly: it
+  // asked $195 at 24x36 where Etsy sells the same canvas for $129. With no canvas products in
+  // Fourthwall nothing was checking it, which is exactly how a number goes wrong unnoticed.
+  canvas: { "11x14": 5900, "16x20": 7900, "18x24": 9200, "24x36": 12900 },
 };
 
 /** What the version picker is called on the page (PLAN-48). "Style" and "Colour" also read well. */

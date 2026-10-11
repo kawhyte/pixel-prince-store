@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { orderEvents, sendUmamiEvent, umamiPayload } from "@/lib/umami-server";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
 describe("orderEvents", () => {
   it("sends one purchase with revenue in dollars, then one print_sold per print", () => {
@@ -32,6 +35,11 @@ describe("orderEvents", () => {
 
 describe("umamiPayload / sendUmamiEvent", () => {
   it("does nothing without a website id", async () => {
+    // sendUmamiEvent defaults its websiteId to NEXT_PUBLIC_UMAMI_WEBSITE_ID, and a default
+    // parameter fires on `undefined`, so passing undefined does not mean "no id" - it means
+    // "read the env". Without clearing it this test posted a real event on any machine with
+    // analytics configured, and failed only there.
+    vi.stubEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID", "");
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     expect(umamiPayload({ name: "x", url: "/" }, undefined)).toBeNull();

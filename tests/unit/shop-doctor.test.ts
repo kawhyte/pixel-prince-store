@@ -4,6 +4,9 @@ import { TARGET_PRICES } from "@/config/commerce";
 import { draftDescription } from "@/lib/listing-copy";
 import { auditPrint, comparePrices, isUntouchedCopy, type FwSnapshot, type StudioSnapshot } from "@/lib/shop-doctor";
 
+/** The ladder's own numbers, never literals: these assertions must survive Kenny repricing. */
+const target = (sizeId: string) => TARGET_PRICES.unframed[sizeId]!;
+
 const priced = (over: Record<string, number | null> = {}) =>
   new Map<string, number | null>(Object.entries({ ...TARGET_PRICES.unframed, ...over } as Record<string, number | null>));
 
@@ -29,8 +32,9 @@ function studio(over: Partial<StudioSnapshot> = {}): StudioSnapshot {
 
 describe("comparePrices", () => {
   it("names the rows that disagree and leaves the rest alone", () => {
-    const { wrong } = comparePrices("unframed", priced({ "8x10": 2500, "24x36": 4500 }));
-    expect(wrong.map((r) => [r.sizeId, r.now, r.target])).toEqual([["8x10", 2500, 2399]]);
+    const off = target("8x10") + 101;
+    const { wrong } = comparePrices("unframed", priced({ "8x10": off }));
+    expect(wrong.map((r) => [r.sizeId, r.now, r.target])).toEqual([["8x10", off, target("8x10")]]);
     expect(comparePrices("unframed", priced()).wrong).toEqual([]);
   });
 
@@ -39,7 +43,7 @@ describe("comparePrices", () => {
     missing.delete("24x36");
     missing.set("30x40", 9900); // sold by Fourthwall, not on our ladder
     const { wrong, unchecked } = comparePrices("unframed", missing);
-    expect(wrong).toEqual([{ sizeId: "24x36", now: null, target: 4500 }]);
+    expect(wrong).toEqual([{ sizeId: "24x36", now: null, target: target("24x36") }]);
     expect(unchecked).toEqual(["30x40"]);
   });
 
@@ -218,7 +222,7 @@ describe("comparePrices on a ratio product", () => {
     const { comparePrices } = await import("@/lib/shop-doctor");
     // A [2x3] product sells 24x36 alone. Without the ratio it reported the other four ladder sizes
     // as missing, and the six rows that mattered were lost in twenty of noise.
-    const live = new Map<string, number | null>([["24x36", 4500]]);
+    const live = new Map<string, number | null>([["24x36", target("24x36")]]);
     const withRatio = comparePrices("unframed", live, "2:3");
     expect(withRatio.rows.map((r) => r.sizeId)).toEqual(["24x36"]);
     expect(withRatio.wrong).toEqual([]);
